@@ -66,7 +66,7 @@ export const dummyTopArtists = {
     {
       id: 'queen',
       name: 'Queen',
-      genres: ['rock', 'classic rock', 'british rock'],
+      genres: ['old school metal', 'classic rock', 'british rock'],
       images: [{ url: 'https://picsum.photos/300/300?random=4', height: 300, width: 300 }],
       popularity: 95,
       followers: { total: 45000000 }
@@ -74,7 +74,7 @@ export const dummyTopArtists = {
     {
       id: 'led-zeppelin',
       name: 'Led Zeppelin',
-      genres: ['rock', 'hard rock', 'classic rock'],
+      genres: ['old school metal', 'hard rock', 'classic rock'],
       images: [{ url: 'https://picsum.photos/300/300?random=5', height: 300, width: 300 }],
       popularity: 92,
       followers: { total: 12000000 }
@@ -82,7 +82,7 @@ export const dummyTopArtists = {
     {
       id: 'eagles',
       name: 'Eagles',
-      genres: ['rock', 'classic rock', 'country rock'],
+      genres: ['old school metal', 'classic rock', 'country rock'],
       images: [{ url: 'https://picsum.photos/300/300?random=6', height: 300, width: 300 }],
       popularity: 89,
       followers: { total: 8500000 }
@@ -104,7 +104,7 @@ export const dummyRecentlyPlayed = {
     },
     {
       track: dummyTopTracks.items[2],
-      played_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(), // 1.5 hours ago
+      played_at: new Date(Date.now() - 1000 * 90).toISOString(), // 1.5 hours ago
       context: null
     }
   ]

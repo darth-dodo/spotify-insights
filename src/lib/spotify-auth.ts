@@ -151,7 +151,8 @@ class SpotifyAuth {
   }
 
   async getCurrentUser(accessToken: string): Promise<any> {
-    return spotifyAPI.getCurrentUser(USE_DUMMY_DATA ? undefined : accessToken);
+    // Always pass the access token - the SpotifyAPI will handle dummy data internally
+    return spotifyAPI.getCurrentUser(accessToken);
   }
 
   // Helper method to check if using dummy data

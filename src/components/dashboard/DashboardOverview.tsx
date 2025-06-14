@@ -222,7 +222,7 @@ export const DashboardOverview = () => {
             </Button>
           </div>
         </CardContent>
-      </div>
+      </Card>
     </div>
   );
 };

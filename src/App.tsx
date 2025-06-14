@@ -11,6 +11,7 @@ import { LoginPage } from "@/components/auth/LoginPage";
 import { CallbackPage } from "@/components/auth/CallbackPage";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { HelpPage } from "@/pages/HelpPage";
+import { LegalPage } from "@/pages/LegalPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -33,6 +34,7 @@ const App = () => (
             <Routes>
               <Route path="/callback" element={<CallbackPage />} />
               <Route path="/help" element={<HelpPage />} />
+              <Route path="/legal" element={<LegalPage />} />
               <Route 
                 path="/" 
                 element={

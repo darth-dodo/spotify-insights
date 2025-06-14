@@ -1,16 +1,14 @@
-
 import { spotifyAPI } from './spotify-api';
 
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || `${window.location.origin}/callback`;
-const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true' || !CLIENT_ID; // Auto-enable dummy data if no Client ID
+const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true' || !CLIENT_ID;
+
+// Reduced scope - only essential permissions for analytics
 const SCOPES = [
-  'user-read-private',
-  'user-read-email',
-  'user-top-read',
-  'user-read-recently-played',
-  'user-read-playback-state',
-  'user-read-currently-playing'
+  'user-read-private',        // Basic profile info (name, country)
+  'user-top-read',           // Top tracks and artists
+  'user-read-recently-played' // Recent listening history
 ].join(' ');
 
 class SpotifyAuth {

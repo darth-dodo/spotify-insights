@@ -11,20 +11,19 @@ import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
 import { PrivacyControls } from '@/components/dashboard/PrivacyControls';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Info, Settings } from 'lucide-react';
+import { Info, Settings, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const Dashboard = () => {
   const { user, isLoading } = useAuth();
   const { theme, accentColor } = useTheme();
   const [activeView, setActiveView] = useState('overview');
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Default to closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Handle settings button click
   const handleSettingsClick = () => {
     setActiveView('privacy');
-    setSidebarOpen(false); // Close sidebar on mobile after selection
+    setSidebarOpen(false);
   };
 
   if (isLoading) {
@@ -36,7 +35,7 @@ export const Dashboard = () => {
   }
 
   if (!user) {
-    return null; // This will be handled by the auth flow
+    return null;
   }
 
   return (
@@ -51,7 +50,7 @@ export const Dashboard = () => {
           activeView={activeView}
           onViewChange={(view) => {
             setActiveView(view);
-            setSidebarOpen(false); // Close sidebar on mobile after selection
+            setSidebarOpen(false);
           }}
         />
         
@@ -82,6 +81,15 @@ export const Dashboard = () => {
                 >
                   <Info className="h-4 w-4" />
                   Help & Security
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/legal')}
+                  className="flex items-center gap-2 w-full sm:w-auto"
+                >
+                  <FileText className="h-4 w-4" />
+                  Privacy & Terms
                 </Button>
               </div>
               

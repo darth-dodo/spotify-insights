@@ -1,440 +1,308 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from 'recharts';
-import { TrendingUp, Calendar, Clock, Music, Headphones, Activity, Zap } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+import { 
+  Clock, 
+  TrendingUp, 
+  Calendar, 
+  Music, 
+  Play,
+  SkipForward,
+  Repeat,
+  User
+} from 'lucide-react';
 
 export const ListeningActivity = () => {
+  const { useTopTracks, useTopArtists, useRecentlyPlayed, useCurrentPlayback } = useSpotifyData();
   const [timeRange, setTimeRange] = useState('medium_term');
-  const [metric, setMetric] = useState('listening_time');
-  const [chartType, setChartType] = useState('line');
+  const [limit, setLimit] = useState(50);
 
-  const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
-  
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
-  const { data: recentlyPlayedData, isLoading: recentLoading } = useRecentlyPlayed(50);
+  const topTracks = useTopTracks(timeRange, limit);
+  const topArtists = useTopArtists(timeRange, limit);
+  const recentlyPlayed = useRecentlyPlayed(limit);
+  const currentPlayback = useCurrentPlayback();
 
-  const isLoading = tracksLoading || artistsLoading || recentLoading;
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#a45de2'];
 
-  // Calculate real stats from API data
-  const stats = useMemo(() => {
-    const totalTracks = topTracksData?.items?.length || 0;
-    const totalArtists = topArtistsData?.items?.length || 0;
-    const recentTracks = recentlyPlayedData?.items?.length || 0;
-    
-    // Calculate actual listening time from track durations
-    const listeningTime = topTracksData?.items?.reduce((acc: number, track: any) => 
-      acc + (track.duration_ms || 0), 0) / (1000 * 60) || 0; // Convert to minutes
-    
-    const avgSession = recentTracks > 0 ? Math.round(listeningTime / recentTracks) : 0;
-    
-    return { 
-      totalTracks, 
-      totalArtists, 
-      recentTracks,
-      listeningTime: Math.round(listeningTime),
-      avgSession
-    };
-  }, [topTracksData, topArtistsData, recentlyPlayedData]);
-
-  // Generate dynamic data based on actual API response and time range
-  const weeklyData = useMemo(() => {
-    if (!topTracksData?.items || !topArtistsData?.items) {
-      return [];
-    }
-
-    // Base calculation on actual data
-    const baseListeningTime = stats.listeningTime;
-    const baseTracks = stats.totalTracks;
-    const baseArtists = stats.totalArtists;
-    
-    // Distribute across week with some variation
-    return [
-      { 
-        day: 'Mon', 
-        listening_time: Math.round(baseListeningTime * 0.12), 
-        tracks: Math.round(baseTracks * 0.10), 
-        artists: Math.round(baseArtists * 0.12), 
-        energy: 65, 
-        focus_time: Math.round(baseListeningTime * 0.08) 
-      },
-      { 
-        day: 'Tue', 
-        listening_time: Math.round(baseListeningTime * 0.15), 
-        tracks: Math.round(baseTracks * 0.14), 
-        artists: Math.round(baseArtists * 0.15), 
-        energy: 72, 
-        focus_time: Math.round(baseListeningTime * 0.12) 
-      },
-      { 
-        day: 'Wed', 
-        listening_time: Math.round(baseListeningTime * 0.18), 
-        tracks: Math.round(baseTracks * 0.16), 
-        artists: Math.round(baseArtists * 0.18), 
-        energy: 78, 
-        focus_time: Math.round(baseListeningTime * 0.15) 
-      },
-      { 
-        day: 'Thu', 
-        listening_time: Math.round(baseListeningTime * 0.14), 
-        tracks: Math.round(baseTracks * 0.15), 
-        artists: Math.round(baseArtists * 0.14), 
-        energy: 68, 
-        focus_time: Math.round(baseListeningTime * 0.11) 
-      },
-      { 
-        day: 'Fri', 
-        listening_time: Math.round(baseListeningTime * 0.20), 
-        tracks: Math.round(baseTracks * 0.22), 
-        artists: Math.round(baseArtists * 0.20), 
-        energy: 85, 
-        focus_time: Math.round(baseListeningTime * 0.18) 
-      },
-      { 
-        day: 'Sat', 
-        listening_time: Math.round(baseListeningTime * 0.12), 
-        tracks: Math.round(baseTracks * 0.13), 
-        artists: Math.round(baseArtists * 0.12), 
-        energy: 90, 
-        focus_time: Math.round(baseListeningTime * 0.20) 
-      },
-      { 
-        day: 'Sun', 
-        listening_time: Math.round(baseListeningTime * 0.09), 
-        tracks: Math.round(baseTracks * 0.10), 
-        artists: Math.round(baseArtists * 0.09), 
-        energy: 82, 
-        focus_time: Math.round(baseListeningTime * 0.16) 
-      },
-    ];
-  }, [topTracksData, topArtistsData, stats]);
-
-  // Calculate streak data from actual listening patterns
-  const streakData = useMemo(() => {
-    const current = Math.min(stats.recentTracks, 30);
-    const longest = Math.round(current * 1.5);
-    
-    return {
-      current,
-      longest,
-      thisWeek: Math.min(stats.recentTracks, 7),
-      avgSession: stats.avgSession
-    };
-  }, [stats]);
-
-  const hourlyData = [
-    { hour: '6AM', value: Math.round(stats.listeningTime * 0.05), mood: 'calm' },
-    { hour: '9AM', value: Math.round(stats.listeningTime * 0.12), mood: 'energetic' },
-    { hour: '12PM', value: Math.round(stats.listeningTime * 0.18), mood: 'focused' },
-    { hour: '3PM', value: Math.round(stats.listeningTime * 0.22), mood: 'productive' },
-    { hour: '6PM', value: Math.round(stats.listeningTime * 0.25), mood: 'relaxed' },
-    { hour: '9PM', value: Math.round(stats.listeningTime * 0.15), mood: 'social' },
-    { hour: '12AM', value: Math.round(stats.listeningTime * 0.03), mood: 'wind-down' },
+  // Mock data for charts
+  const mockChartData = [
+    { name: 'Genre A', value: 400 },
+    { name: 'Genre B', value: 300 },
+    { name: 'Genre C', value: 300 },
+    { name: 'Genre D', value: 200 },
   ];
 
-  const chartConfig = {
-    listening_time: { label: "Minutes", color: "hsl(var(--accent))" },
-    tracks: { label: "Tracks", color: "hsl(var(--primary))" },
-    artists: { label: "Artists", color: "hsl(var(--secondary))" },
-    energy: { label: "Energy Level", color: "hsl(var(--accent))" },
-    focus_time: { label: "Focus Time", color: "hsl(var(--chart-2))" },
-  };
-
-  const renderChart = () => {
-    const props = {
-      data: weeklyData,
-      margin: { top: 5, right: 30, left: 20, bottom: 5 }
-    };
-
-    switch (chartType) {
-      case 'area':
-        return (
-          <AreaChart {...props}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="day" className="text-muted-foreground" />
-            <YAxis className="text-muted-foreground" />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Area 
-              type="monotone" 
-              dataKey={metric}
-              stroke="hsl(var(--accent))" 
-              fill="hsl(var(--accent))"
-              fillOpacity={0.3}
-            />
-          </AreaChart>
-        );
-      case 'bar':
-        return (
-          <BarChart {...props}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="day" className="text-muted-foreground" />
-            <YAxis className="text-muted-foreground" />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar 
-              dataKey={metric}
-              fill="hsl(var(--accent))"
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
-        );
-      default:
-        return (
-          <LineChart {...props}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="day" className="text-muted-foreground" />
-            <YAxis className="text-muted-foreground" />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Line 
-              type="monotone" 
-              dataKey={metric}
-              stroke="hsl(var(--accent))" 
-              strokeWidth={3}
-              dot={{ fill: "hsl(var(--accent))", strokeWidth: 2, r: 6 }}
-              activeDot={{ r: 8, stroke: "hsl(var(--accent))", strokeWidth: 2 }}
-            />
-          </LineChart>
-        );
-    }
-  };
-
-  const getTimeRangeLabel = (range: string) => {
-    switch (range) {
-      case 'short_term': return 'Last 4 Weeks';
-      case 'medium_term': return 'Last 6 Months';
-      case 'long_term': return 'All Time';
-      default: return 'This Period';
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Listening Activity</h1>
-          <p className="text-muted-foreground">Loading your listening data...</p>
-        </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin h-8 w-8 border-2 border-accent rounded-full border-t-transparent" />
-        </div>
-      </div>
-    );
-  }
+  const mockLineData = [
+    { time: '00:00', plays: 10 },
+    { time: '01:00', plays: 15 },
+    { time: '02:00', plays: 12 },
+    { time: '03:00', plays: 18 },
+    { time: '04:00', plays: 20 },
+  ];
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Header with Controls - Mobile Responsive */}
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Listening Activity</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Deep dive into your music consumption patterns and habits
-          </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="short_term">Last 4 Weeks</SelectItem>
-              <SelectItem value="medium_term">Last 6 Months</SelectItem>
-              <SelectItem value="long_term">All Time</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={metric} onValueChange={setMetric}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Metric" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="listening_time">Listening Time</SelectItem>
-              <SelectItem value="tracks">Tracks Played</SelectItem>
-              <SelectItem value="artists">Unique Artists</SelectItem>
-              <SelectItem value="energy">Energy Level</SelectItem>
-              <SelectItem value="focus_time">Focus Time</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={chartType} onValueChange={setChartType}>
-            <SelectTrigger className="w-full sm:w-24">
-              <SelectValue placeholder="Chart" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="line">Line</SelectItem>
-              <SelectItem value="area">Area</SelectItem>
-              <SelectItem value="bar">Bar</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold text-foreground">Listening Activity</h1>
+        <p className="text-muted-foreground">
+          Track your listening habits and discover trends in your music taste
+        </p>
       </div>
 
-      {/* Stats showing real data - Mobile Responsive */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <Card className="border-accent/20 bg-accent/5">
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 md:h-5 md:w-5 text-accent" />
-              <span className="text-xs md:text-sm font-medium">Streak</span>
-            </div>
-            <div className="text-lg md:text-2xl font-bold text-accent">{streakData.current}</div>
-            <div className="text-xs text-muted-foreground">recent plays</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <Music className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Tracks</span>
-            </div>
-            <div className="text-lg md:text-2xl font-bold">{stats.totalTracks}</div>
-            <div className="text-xs text-muted-foreground">{getTimeRangeLabel(timeRange)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Artists</span>
-            </div>
-            <div className="text-lg md:text-2xl font-bold">{stats.totalArtists}</div>
-            <div className="text-xs text-muted-foreground">{getTimeRangeLabel(timeRange)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Time</span>
-            </div>
-            <div className="text-lg md:text-2xl font-bold">{stats.listeningTime}m</div>
-            <div className="text-xs text-muted-foreground">total listened</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Chart */}
+      {/* Time Range and Limit Controls */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-            <Activity className="h-5 w-5" />
-            Activity Overview - {getTimeRangeLabel(timeRange)}
-          </CardTitle>
-          <CardDescription>
-            Your music consumption patterns over time
-          </CardDescription>
+          <CardTitle>Activity Settings</CardTitle>
+          <CardDescription>Adjust the time range and limit for your listening data</CardDescription>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[300px] md:h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              {renderChart()}
-            </ResponsiveContainer>
-          </ChartContainer>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium">Time Range</h4>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setTimeRange('short_term')} active={timeRange === 'short_term'}>Last Month</Button>
+                <Button variant="outline" size="sm" onClick={() => setTimeRange('medium_term')} active={timeRange === 'medium_term'}>Last 6 Months</Button>
+                <Button variant="outline" size="sm" onClick={() => setTimeRange('long_term')} active={timeRange === 'long_term'}>All Time</Button>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-medium">Limit</h4>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setLimit(10)} active={limit === 10}>Top 10</Button>
+                <Button variant="outline" size="sm" onClick={() => setLimit(25)} active={limit === 25}>Top 25</Button>
+                <Button variant="outline" size="sm" onClick={() => setLimit(50)} active={limit === 50}>Top 50</Button>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Detailed Analysis */}
-      <Tabs defaultValue="hourly" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="hourly">Hourly Patterns</TabsTrigger>
-          <TabsTrigger value="mood">Mood Analysis</TabsTrigger>
-          <TabsTrigger value="insights">AI Insights</TabsTrigger>
-        </TabsList>
+      {/* Current Playback */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Play className="h-5 w-5" />
+            Currently Playing
+          </CardTitle>
+          <CardDescription>See what you're currently listening to</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {currentPlayback.isLoading ? (
+            <p>Loading current playback...</p>
+          ) : currentPlayback.data ? (
+            <div className="flex items-center gap-4">
+              <img 
+                src={currentPlayback.data.item.album.images[0].url} 
+                alt={currentPlayback.data.item.name} 
+                className="w-20 h-20 rounded-md" 
+              />
+              <div>
+                <h4 className="font-medium">{currentPlayback.data.item.name}</h4>
+                <p className="text-sm text-muted-foreground">
+                  {currentPlayback.data.item.artists.map((artist: any) => artist.name).join(', ')}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Button variant="secondary" size="icon"><SkipForward className="h-4 w-4" /></Button>
+                  <Button variant="secondary" size="icon"><Repeat className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p>No current playback detected.</p>
+          )}
+        </CardContent>
+      </Card>
 
-        <TabsContent value="hourly" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Hourly Distribution
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={hourlyData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="hour" className="text-muted-foreground" />
-                    <YAxis className="text-muted-foreground" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar 
-                      dataKey="value" 
-                      fill="hsl(var(--accent))"
-                      radius={[4, 4, 0, 0]}
+      {/* Top Tracks */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Music className="h-5 w-5" />
+            Top Tracks
+          </CardTitle>
+          <CardDescription>Your most listened tracks in the selected time range</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {topTracks.isLoading ? (
+            <p>Loading top tracks...</p>
+          ) : topTracks.data ? (
+            <ul className="space-y-2">
+              {topTracks.data.items.map((track: any, index: number) => (
+                <li key={track.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm">{index + 1}.</span>
+                    <img 
+                      src={track.album.images[0].url} 
+                      alt={track.name} 
+                      className="w-10 h-10 rounded-md" 
                     />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="mood" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {hourlyData.map((item, index) => (
-              <Card key={index}>
-                <CardContent className="p-4">
-                  <div className="text-sm font-medium">{item.hour}</div>
-                  <div className="text-lg font-bold">{item.value}min</div>
-                  <Badge variant="secondary" className="text-xs">
-                    {item.mood}
+                    <div>
+                      <h4 className="font-medium">{track.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {track.artists.map((artist: any) => artist.name).join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary">
+                    <Play className="h-3 w-3 mr-1" />
+                    {track.popularity}
                   </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No top tracks data available.</p>
+          )}
+        </CardContent>
+      </Card>
 
-        <TabsContent value="insights" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Peak Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Your most productive listening happens on weekends, with Saturday being your peak day.
-                </p>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">Weekend Warrior</Badge>
-                  <Badge variant="outline">Night Owl</Badge>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Top Artists */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Top Artists
+          </CardTitle>
+          <CardDescription>Your most listened artists in the selected time range</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {topArtists.isLoading ? (
+            <p>Loading top artists...</p>
+          ) : topArtists.data ? (
+            <ul className="space-y-2">
+              {topArtists.data.items.map((artist: any, index: number) => (
+                <li key={artist.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm">{index + 1}.</span>
+                    <img 
+                      src={artist.images[0].url} 
+                      alt={artist.name} 
+                      className="w-10 h-10 rounded-full" 
+                    />
+                    <h4 className="font-medium">{artist.name}</h4>
+                  </div>
+                  <Badge variant="secondary">
+                    <TrendingUp className="h-3 w-3 mr-1" />
+                    {artist.popularity}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No top artists data available.</p>
+          )}
+        </CardContent>
+      </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Listening Habits</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-2">
-                  You maintain consistent daily listening with strong weekend spikes.
-                </p>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Consistency Score</span>
-                    <span className="font-medium">87%</span>
+      {/* Recently Played */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Recently Played
+          </CardTitle>
+          <CardDescription>Your most recent listening history</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {recentlyPlayed.isLoading ? (
+            <p>Loading recently played tracks...</p>
+          ) : recentlyPlayed.data ? (
+            <ul className="space-y-2">
+              {recentlyPlayed.data.items.map((item: any, index: number) => (
+                <li key={item.played_at} className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm">{index + 1}.</span>
+                    <img 
+                      src={item.track.album.images[0].url} 
+                      alt={item.track.name} 
+                      className="w-10 h-10 rounded-md" 
+                    />
+                    <div>
+                      <h4 className="font-medium">{item.track.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {item.track.artists.map((artist: any) => artist.name).join(', ')}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Discovery Rate</span>
-                    <span className="font-medium">23%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(item.played_at).toLocaleTimeString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No recently played data available.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Charts and Visualizations */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Listening Trends</CardTitle>
+          <CardDescription>Visualize your listening habits over time</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="genres" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="genres">Top Genres</TabsTrigger>
+              <TabsTrigger value="activity">Activity Chart</TabsTrigger>
+            </TabsList>
+            <TabsContent value="genres">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    dataKey="value"
+                    data={mockChartData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    label
+                  >
+                    {mockChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </TabsContent>
+            <TabsContent value="activity">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={mockLineData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="time" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="plays" stroke="#8884d8" activeDot={{ r: 8 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

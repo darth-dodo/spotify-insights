@@ -3,6 +3,36 @@
 
 A production-ready, privacy-focused Spotify insights dashboard built with modern web technologies and engineering best practices.
 
+## 🖼️ Product Screenshots
+
+### Interactive Dashboard Overview
+![Dashboard Overview](https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=800&fit=crop&crop=center)
+*Main dashboard showing personalized stats, top tracks, and recent activity with gamification elements*
+
+### Advanced Analytics & Trends
+![Listening Trends](https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop&crop=center)
+*Interactive charts displaying listening patterns over time with detailed breakdowns*
+
+### GitHub-Style Activity Heatmap
+![Activity Heatmap](https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=1200&h=800&fit=crop&crop=center)
+*365-day listening activity visualization with streak tracking and consistency metrics*
+
+### Gamification System
+![Achievement System](https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&h=800&fit=crop&crop=center)
+*Complete achievement system with badges, levels, and XP progression tracking*
+
+### Genre Analysis & Discovery
+![Genre Analysis](https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=800&fit=crop&crop=center)
+*Detailed genre breakdown with recommendations and listening patterns*
+
+### Artist Exploration
+![Artist Network](https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=800&fit=crop&crop=center)
+*Interactive artist discovery with relationship mapping and similarity analysis*
+
+### Mobile-Responsive Design
+![Mobile Interface](https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800&h=600&fit=crop&crop=center)
+*Fully responsive design optimized for mobile and tablet viewing*
+
 ## 🚀 Features
 
 - **Rich Analytics**: Deep insights into listening habits and musical preferences

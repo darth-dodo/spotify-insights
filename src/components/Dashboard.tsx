@@ -94,6 +94,7 @@ export const Dashboard = () => {
                 {activeView === 'privacy' && <PrivacyControls />}
               </div>
             </main>
+          </div>
         </div>
       </div>
     </div>

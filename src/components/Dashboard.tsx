@@ -10,7 +10,7 @@ import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnaly
 import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
 import { PrivacyControls } from '@/components/dashboard/PrivacyControls';
 import { EnhancedListeningTrends } from '@/components/dashboard/EnhancedListeningTrends';
-import { GamificationSettings } from '@/components/dashboard/GamificationSettings';
+import { GamificationSystem } from '@/components/dashboard/GamificationSystem';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Info, Settings, FileText } from 'lucide-react';
@@ -103,7 +103,7 @@ export const Dashboard = () => {
                 {activeView === 'genres' && <EnhancedGenreAnalysis />}
                 {activeView === 'artists' && <ArtistExploration />}
                 {activeView === 'privacy' && <PrivacyControls />}
-                {activeView === 'gamification' && <GamificationSettings />}
+                {activeView === 'gamification' && <GamificationSystem />}
               </div>
             </div>
           </main>

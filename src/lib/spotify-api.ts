@@ -7,23 +7,26 @@ import {
   dummyCurrentPlayback 
 } from './dummy-data';
 
-const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
+const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true' || window.location.pathname === '/sandbox';
 const BASE_URL = 'https://api.spotify.com/v1';
 
 export class SpotifyAPI {
   private async makeRequest(endpoint: string, accessToken?: string) {
-    if (USE_DUMMY_DATA) {
+    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
       // Return dummy data based on endpoint
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API delay
       
       switch (endpoint) {
         case '/me':
           return dummySpotifyUser;
         case '/me/top/tracks':
+        case endpoint.startsWith('/me/top/tracks'):
           return dummyTopTracks;
         case '/me/top/artists':
+        case endpoint.startsWith('/me/top/artists'):
           return dummyTopArtists;
         case '/me/player/recently-played':
+        case endpoint.startsWith('/me/player/recently-played'):
           return dummyRecentlyPlayed;
         case '/me/player':
           return dummyCurrentPlayback;

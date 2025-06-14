@@ -10,8 +10,10 @@ import { Dashboard } from "@/components/Dashboard";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { CallbackPage } from "@/components/auth/CallbackPage";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { SandboxMode } from "@/components/SandboxMode";
 import { HelpPage } from "@/pages/HelpPage";
 import { LegalPage } from "@/pages/LegalPage";
+import Index from "@/pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -32,6 +34,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/index" element={<Index />} />
+              <Route path="/sandbox" element={<SandboxMode />} />
               <Route path="/callback" element={<CallbackPage />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="/legal" element={<LegalPage />} />
@@ -39,7 +43,7 @@ const App = () => (
                 path="/" 
                 element={
                   <AuthGuard 
-                    loginComponent={<LoginPage />}
+                    loginComponent={<Index />}
                     dashboardComponent={<Dashboard />}
                   />
                 } 

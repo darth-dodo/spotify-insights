@@ -1,8 +1,9 @@
+
 import { spotifyAPI } from './spotify-api';
 
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || `${window.location.origin}/callback`;
-const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true' || !CLIENT_ID;
+const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true' || !CLIENT_ID || window.location.pathname === '/sandbox';
 
 // Reduced scope - only essential permissions for analytics
 const SCOPES = [
@@ -40,12 +41,12 @@ class SpotifyAuth {
   }
 
   async login(): Promise<void> {
-    // Always use dummy data if no Client ID is configured
-    if (USE_DUMMY_DATA) {
+    // Always use dummy data if no Client ID is configured or in sandbox mode
+    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
       console.log('Using dummy data for authentication');
       
-      localStorage.setItem('spotify_access_token', 'dummy_access_token');
-      localStorage.setItem('spotify_refresh_token', 'dummy_refresh_token');
+      localStorage.setItem('spotify_access_token', 'sandbox_access_token');
+      localStorage.setItem('spotify_refresh_token', 'sandbox_refresh_token');
       localStorage.setItem('spotify_token_expiry', (Date.now() + 3600 * 1000).toString());
       
       // Simulate a brief delay for UX
@@ -54,7 +55,7 @@ class SpotifyAuth {
     }
 
     if (!CLIENT_ID) {
-      throw new Error('Spotify Client ID not configured. Please set VITE_SPOTIFY_CLIENT_ID in your environment variables or use dummy data.');
+      throw new Error('Spotify Client ID not configured. Please set VITE_SPOTIFY_CLIENT_ID in your environment variables or use sandbox mode.');
     }
 
     const codeVerifier = this.generateRandomString(64);
@@ -81,9 +82,9 @@ class SpotifyAuth {
   }
 
   async handleCallback(code: string, state: string): Promise<void> {
-    if (USE_DUMMY_DATA) {
+    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
       // For dummy data, we shouldn't reach this callback
-      throw new Error('Callback should not be called when using dummy data');
+      throw new Error('Callback should not be called when using dummy data or sandbox mode');
     }
 
     const storedState = localStorage.getItem('auth_state');
@@ -127,10 +128,10 @@ class SpotifyAuth {
   }
 
   async refreshAccessToken(refreshToken: string): Promise<any> {
-    if (USE_DUMMY_DATA) {
+    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
       // Return dummy token response
       return {
-        access_token: 'dummy_access_token_refreshed',
+        access_token: 'sandbox_access_token_refreshed',
         token_type: 'Bearer',
         expires_in: 3600,
         refresh_token: refreshToken // Keep the same refresh token
@@ -163,7 +164,7 @@ class SpotifyAuth {
 
   // Helper method to check if using dummy data
   isDummyMode(): boolean {
-    return USE_DUMMY_DATA;
+    return USE_DUMMY_DATA || window.location.pathname === '/sandbox';
   }
 }
 

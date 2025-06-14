@@ -9,6 +9,8 @@ import { ListeningActivity } from '@/components/dashboard/ListeningActivity';
 import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnalysis';
 import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
 import { PrivacyControls } from '@/components/dashboard/PrivacyControls';
+import { EnhancedListeningTrends } from '@/components/dashboard/EnhancedListeningTrends';
+import { GamificationSettings } from '@/components/dashboard/GamificationSettings';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Info, Settings, FileText } from 'lucide-react';
@@ -97,9 +99,11 @@ export const Dashboard = () => {
               <div className="container-responsive">
                 {activeView === 'overview' && <InteractiveOverview />}
                 {activeView === 'trends' && <ListeningActivity />}
+                {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
                 {activeView === 'genres' && <EnhancedGenreAnalysis />}
                 {activeView === 'artists' && <ArtistExploration />}
                 {activeView === 'privacy' && <PrivacyControls />}
+                {activeView === 'gamification' && <GamificationSettings />}
               </div>
             </div>
           </main>

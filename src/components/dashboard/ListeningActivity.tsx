@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,8 @@ import {
   Line,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  Legend
 } from 'recharts';
 import { 
   Clock, 
@@ -78,19 +80,55 @@ export const ListeningActivity = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h4 className="font-medium">Time Range</h4>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setTimeRange('short_term')} active={timeRange === 'short_term'}>Last Month</Button>
-                <Button variant="outline" size="sm" onClick={() => setTimeRange('medium_term')} active={timeRange === 'medium_term'}>Last 6 Months</Button>
-                <Button variant="outline" size="sm" onClick={() => setTimeRange('long_term')} active={timeRange === 'long_term'}>All Time</Button>
+              <h4 className="font-medium mb-2">Time Range</h4>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant={timeRange === 'short_term' ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setTimeRange('short_term')}
+                >
+                  Last Month
+                </Button>
+                <Button 
+                  variant={timeRange === 'medium_term' ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setTimeRange('medium_term')}
+                >
+                  Last 6 Months
+                </Button>
+                <Button 
+                  variant={timeRange === 'long_term' ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setTimeRange('long_term')}
+                >
+                  All Time
+                </Button>
               </div>
             </div>
             <div>
-              <h4 className="font-medium">Limit</h4>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setLimit(10)} active={limit === 10}>Top 10</Button>
-                <Button variant="outline" size="sm" onClick={() => setLimit(25)} active={limit === 25}>Top 25</Button>
-                <Button variant="outline" size="sm" onClick={() => setLimit(50)} active={limit === 50}>Top 50</Button>
+              <h4 className="font-medium mb-2">Limit</h4>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant={limit === 10 ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setLimit(10)}
+                >
+                  Top 10
+                </Button>
+                <Button 
+                  variant={limit === 25 ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setLimit(25)}
+                >
+                  Top 25
+                </Button>
+                <Button 
+                  variant={limit === 50 ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setLimit(50)}
+                >
+                  Top 50
+                </Button>
               </div>
             </div>
           </div>

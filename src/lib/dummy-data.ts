@@ -21,40 +21,40 @@ export const dummyTopTracks = {
   items: [
     {
       id: 'track1',
-      name: 'Bohemian Rhapsody',
-      artists: [{ id: 'queen', name: 'Queen' }],
+      name: 'Paranoid',
+      artists: [{ id: 'black-sabbath', name: 'Black Sabbath' }],
       album: {
         id: 'album1',
-        name: 'A Night at the Opera',
+        name: 'Paranoid',
         images: [{ url: 'https://picsum.photos/300/300?random=1', height: 300, width: 300 }]
       },
-      duration_ms: 355000,
+      duration_ms: 170000,
       popularity: 95,
       preview_url: null
     },
     {
       id: 'track2',
-      name: 'Stairway to Heaven',
-      artists: [{ id: 'led-zeppelin', name: 'Led Zeppelin' }],
+      name: 'The Number of the Beast',
+      artists: [{ id: 'iron-maiden', name: 'Iron Maiden' }],
       album: {
         id: 'album2',
-        name: 'Led Zeppelin IV',
+        name: 'The Number of the Beast',
         images: [{ url: 'https://picsum.photos/300/300?random=2', height: 300, width: 300 }]
       },
-      duration_ms: 482000,
+      duration_ms: 293000,
       popularity: 92,
       preview_url: null
     },
     {
       id: 'track3',
-      name: 'Hotel California',
-      artists: [{ id: 'eagles', name: 'Eagles' }],
+      name: 'Breaking the Law',
+      artists: [{ id: 'judas-priest', name: 'Judas Priest' }],
       album: {
         id: 'album3',
-        name: 'Hotel California',
+        name: 'British Steel',
         images: [{ url: 'https://picsum.photos/300/300?random=3', height: 300, width: 300 }]
       },
-      duration_ms: 391000,
+      duration_ms: 156000,
       popularity: 89,
       preview_url: null
     }
@@ -64,28 +64,52 @@ export const dummyTopTracks = {
 export const dummyTopArtists = {
   items: [
     {
-      id: 'queen',
-      name: 'Queen',
-      genres: ['old school metal', 'classic rock', 'british rock'],
+      id: 'black-sabbath',
+      name: 'Black Sabbath',
+      genres: ['old school metal', 'heavy metal', 'doom metal'],
       images: [{ url: 'https://picsum.photos/300/300?random=4', height: 300, width: 300 }],
       popularity: 95,
-      followers: { total: 45000000 }
+      followers: { total: 8500000 }
+    },
+    {
+      id: 'iron-maiden',
+      name: 'Iron Maiden',
+      genres: ['old school metal', 'heavy metal', 'nwobhm'],
+      images: [{ url: 'https://picsum.photos/300/300?random=5', height: 300, width: 300 }],
+      popularity: 92,
+      followers: { total: 15000000 }
+    },
+    {
+      id: 'judas-priest',
+      name: 'Judas Priest',
+      genres: ['old school metal', 'heavy metal', 'speed metal'],
+      images: [{ url: 'https://picsum.photos/300/300?random=6', height: 300, width: 300 }],
+      popularity: 89,
+      followers: { total: 7200000 }
+    },
+    {
+      id: 'deep-purple',
+      name: 'Deep Purple',
+      genres: ['old school metal', 'hard rock', 'progressive rock'],
+      images: [{ url: 'https://picsum.photos/300/300?random=7', height: 300, width: 300 }],
+      popularity: 87,
+      followers: { total: 6800000 }
+    },
+    {
+      id: 'motorhead',
+      name: 'Motörhead',
+      genres: ['old school metal', 'speed metal', 'hard rock'],
+      images: [{ url: 'https://picsum.photos/300/300?random=8', height: 300, width: 300 }],
+      popularity: 85,
+      followers: { total: 5400000 }
     },
     {
       id: 'led-zeppelin',
       name: 'Led Zeppelin',
       genres: ['old school metal', 'hard rock', 'classic rock'],
-      images: [{ url: 'https://picsum.photos/300/300?random=5', height: 300, width: 300 }],
-      popularity: 92,
+      images: [{ url: 'https://picsum.photos/300/300?random=9', height: 300, width: 300 }],
+      popularity: 93,
       followers: { total: 12000000 }
-    },
-    {
-      id: 'eagles',
-      name: 'Eagles',
-      genres: ['old school metal', 'classic rock', 'country rock'],
-      images: [{ url: 'https://picsum.photos/300/300?random=6', height: 300, width: 300 }],
-      popularity: 89,
-      followers: { total: 8500000 }
     }
   ]
 };

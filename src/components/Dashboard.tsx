@@ -93,8 +93,8 @@ export const Dashboard = () => {
                 {activeView === 'artists' && <ArtistExploration />}
                 {activeView === 'privacy' && <PrivacyControls />}
               </div>
-            </main>
-          </div>
+            </div>
+          </main>
         </div>
       </div>
     </div>

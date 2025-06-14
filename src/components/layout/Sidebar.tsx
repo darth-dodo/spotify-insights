@@ -2,16 +2,19 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { 
   Home, 
   TrendingUp, 
-  Music, 
-  Users,
-  Shield, 
+  BarChart3, 
+  Users, 
+  Settings, 
   X,
-  Menu
+  Music,
+  Trophy,
+  Target
 } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -20,124 +23,90 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
 }
 
-export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarProps) => {
-  const isMobile = useIsMobile();
-
+export const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onToggle,
+  activeView,
+  onViewChange
+}) => {
   const menuItems = [
-    {
-      id: 'overview',
-      label: 'Overview',
-      icon: Home,
-      description: 'Dashboard home'
-    },
-    {
-      id: 'trends',
-      label: 'Listening Activity',
-      icon: TrendingUp,
-      description: 'Activity patterns'
-    },
-    {
-      id: 'genres',
-      label: 'Genre Analysis',
-      icon: Music,
-      description: 'Musical preferences'
-    },
-    {
-      id: 'artists',
-      label: 'Artist Exploration',
-      icon: Users,
-      description: 'Discover artists'
-    },
-    {
-      id: 'privacy',
-      label: 'Privacy & Data',
-      icon: Shield,
-      description: 'Data controls'
-    }
+    { id: 'overview', label: 'Overview', icon: Home },
+    { id: 'trends', label: 'Activity', icon: TrendingUp },
+    { id: 'enhanced-trends', label: 'Trends', icon: BarChart3, badge: 'Enhanced' },
+    { id: 'genres', label: 'Genres', icon: Music },
+    { id: 'artists', label: 'Artists', icon: Users },
+    { id: 'gamification', label: 'Achievements', icon: Trophy, badge: 'New' },
+    { id: 'privacy', label: 'Settings', icon: Settings }
   ];
-
-  const handleItemClick = (viewId: string) => {
-    onViewChange(viewId);
-  };
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isMobile && isOpen && (
+      {/* Mobile overlay */}
+      {isOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onToggle}
         />
       )}
-
+      
       {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed left-0 top-0 z-50 h-full bg-sidebar border-r border-sidebar-border transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          "w-64 lg:w-72"
-        )}
-      >
-        <div className="flex h-full flex-col">
+      <div className={cn(
+        "fixed left-0 top-0 z-50 h-full w-64 bg-card border-r transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-            <h2 className="text-lg font-semibold text-sidebar-foreground">
-              Spotify Analytics
-            </h2>
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onToggle}
-                className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold">Music Dashboard</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggle}
+              className="lg:hidden"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4">
-            <ul className="space-y-2">
+          <ScrollArea className="flex-1 px-3 py-4">
+            <div className="space-y-2">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeView === item.id;
                 
                 return (
-                  <li key={item.id}>
-                    <Button
-                      variant={isActive ? "default" : "ghost"}
-                      onClick={() => handleItemClick(item.id)}
-                      className={cn(
-                        "w-full justify-start gap-3 h-auto p-3 text-left",
-                        isActive
-                          ? "bg-accent text-accent-foreground shadow-sm"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        "transition-all duration-200"
-                      )}
-                    >
-                      <Icon className="h-5 w-5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{item.label}</div>
-                        <div className="text-xs opacity-70 truncate">
-                          {item.description}
-                        </div>
-                      </div>
-                    </Button>
-                  </li>
+                  <Button
+                    key={item.id}
+                    variant={isActive ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 h-10",
+                      isActive && "bg-accent text-accent-foreground"
+                    )}
+                    onClick={() => onViewChange(item.id)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {item.badge && (
+                      <Badge variant="secondary" className="text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </Button>
                 );
               })}
-            </ul>
-          </nav>
+            </div>
+          </ScrollArea>
 
           {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="text-xs text-sidebar-foreground/60 text-center">
-              Privacy-first analytics
+          <div className="p-4 border-t">
+            <div className="text-xs text-muted-foreground">
+              <p>Music Dashboard v1.0</p>
+              <p className="mt-1">Connect Spotify for insights</p>
             </div>
           </div>
         </div>
-      </aside>
+      </div>
     </>
   );
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -266,7 +265,7 @@ export const DashboardOverview = () => {
                   </div>
                   <div>
                     <p className="font-medium">{artist.name}</p>
-                    <p className="text-sm text-muted-foreground">{String(artist.followers)} followers</p>
+                    <p className="text-sm text-muted-foreground">{artist.followers} followers</p>
                   </div>
                 </div>
                 <div className="text-right">

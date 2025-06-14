@@ -1,6 +1,9 @@
 
+import { spotifyAPI } from './spotify-api';
+
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || `${window.location.origin}/callback`;
+const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
 const SCOPES = [
   'user-read-private',
   'user-read-email',
@@ -31,6 +34,19 @@ class SpotifyAuth {
   }
 
   async login(): Promise<void> {
+    if (USE_DUMMY_DATA) {
+      // Fake login - just set dummy tokens and redirect
+      console.log('Using fake login with dummy data');
+      
+      localStorage.setItem('spotify_access_token', 'dummy_access_token');
+      localStorage.setItem('spotify_refresh_token', 'dummy_refresh_token');
+      localStorage.setItem('spotify_token_expiry', (Date.now() + 3600 * 1000).toString());
+      
+      // Simulate a brief delay for UX
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return;
+    }
+
     if (!CLIENT_ID) {
       throw new Error('Spotify Client ID not configured');
     }
@@ -59,6 +75,11 @@ class SpotifyAuth {
   }
 
   async handleCallback(code: string, state: string): Promise<void> {
+    if (USE_DUMMY_DATA) {
+      // For dummy data, we shouldn't reach this callback
+      throw new Error('Callback should not be called when using dummy data');
+    }
+
     const storedState = localStorage.getItem('auth_state');
     const codeVerifier = localStorage.getItem('code_verifier');
 
@@ -100,6 +121,16 @@ class SpotifyAuth {
   }
 
   async refreshAccessToken(refreshToken: string): Promise<any> {
+    if (USE_DUMMY_DATA) {
+      // Return dummy token response
+      return {
+        access_token: 'dummy_access_token_refreshed',
+        token_type: 'Bearer',
+        expires_in: 3600,
+        refresh_token: refreshToken // Keep the same refresh token
+      };
+    }
+
     const response = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       headers: {
@@ -120,17 +151,7 @@ class SpotifyAuth {
   }
 
   async getCurrentUser(accessToken: string): Promise<any> {
-    const response = await fetch('https://api.spotify.com/v1/me', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to get user profile');
-    }
-
-    return response.json();
+    return spotifyAPI.getCurrentUser(USE_DUMMY_DATA ? undefined : accessToken);
   }
 }
 

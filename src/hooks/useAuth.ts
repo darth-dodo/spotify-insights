@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { sanitizeUserData, hashData } from '@/lib/data-utils';
 
+const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
+
 // Minimal user interface - only essential data
 interface User {
   id: string; // hashed user ID
@@ -48,8 +50,11 @@ export const useAuthState = () => {
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        localStorage.removeItem('spotify_access_token');
-        localStorage.removeItem('spotify_refresh_token');
+        if (!USE_DUMMY_DATA) {
+          // Only clear tokens if not using dummy data
+          localStorage.removeItem('spotify_access_token');
+          localStorage.removeItem('spotify_refresh_token');
+        }
         localStorage.removeItem('user_profile');
       } finally {
         setIsLoading(false);
@@ -76,6 +81,16 @@ export const useAuthState = () => {
     try {
       setIsLoading(true);
       await spotifyAuth.login();
+      
+      if (USE_DUMMY_DATA) {
+        // For dummy data, we need to manually set the user after fake login
+        const userData = await spotifyAuth.getCurrentUser('dummy_token');
+        const sanitizedUser = sanitizeUserData(userData);
+        setUser(sanitizedUser);
+        localStorage.setItem('user_profile', JSON.stringify(sanitizedUser));
+        setIsLoading(false);
+      }
+      // For real auth, the redirect will handle the rest
     } catch (error) {
       console.error('Login error:', error);
       setIsLoading(false);
@@ -104,7 +119,9 @@ export const useAuthState = () => {
       }
     } catch (error) {
       console.error('Token refresh error:', error);
-      logout();
+      if (!USE_DUMMY_DATA) {
+        logout();
+      }
     }
   };
 

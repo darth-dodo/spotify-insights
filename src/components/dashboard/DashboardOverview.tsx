@@ -4,30 +4,58 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Music, Clock, Users, TrendingUp, Play, Heart } from 'lucide-react';
+import { Music, Clock, Users, TrendingUp, Play, Heart, Loader2 } from 'lucide-react';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 
 export const DashboardOverview = () => {
-  // Mock data - in production this would come from Spotify API
+  const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
+  
+  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks('medium_term', 10);
+  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists('medium_term', 10);
+  const { data: recentlyPlayedData, isLoading: recentLoading } = useRecentlyPlayed(10);
+
+  const isLoading = tracksLoading || artistsLoading || recentLoading;
+
+  // Calculate stats from real data
   const stats = {
-    totalTracks: 1234,
-    totalArtists: 456,
-    listeningTime: 789,
-    topGenre: 'Alternative Rock',
-    recentlyPlayed: 25,
-    savedTracks: 567
+    totalTracks: topTracksData?.items?.length || 0,
+    totalArtists: topArtistsData?.items?.length || 0,
+    listeningTime: recentlyPlayedData?.items?.reduce((acc: number, item: any) => 
+      acc + (item.track?.duration_ms || 0), 0) / (1000 * 60) || 0, // Convert to minutes
+    topGenre: topArtistsData?.items?.[0]?.genres?.[0] || 'Unknown',
+    recentlyPlayed: recentlyPlayedData?.items?.length || 0,
+    savedTracks: topTracksData?.items?.length || 0
   };
 
-  const topTracks = [
-    { name: 'Song Title 1', artist: 'Artist Name', plays: 42, duration: '3:45' },
-    { name: 'Song Title 2', artist: 'Artist Name', plays: 38, duration: '4:12' },
-    { name: 'Song Title 3', artist: 'Artist Name', plays: 35, duration: '3:28' },
-  ];
+  const topTracks = topTracksData?.items?.slice(0, 3)?.map((track: any) => ({
+    name: track.name,
+    artist: track.artists?.[0]?.name || 'Unknown Artist',
+    plays: Math.floor(Math.random() * 50) + 10, // Mock play count
+    duration: `${Math.floor(track.duration_ms / 60000)}:${String(Math.floor((track.duration_ms % 60000) / 1000)).padStart(2, '0')}`
+  })) || [];
 
-  const topArtists = [
-    { name: 'Artist 1', plays: 156, followers: '2.1M' },
-    { name: 'Artist 2', plays: 143, followers: '1.8M' },
-    { name: 'Artist 3', plays: 128, followers: '3.2M' },
-  ];
+  const topArtists = topArtistsData?.items?.slice(0, 3)?.map((artist: any) => ({
+    name: artist.name,
+    plays: Math.floor(Math.random() * 200) + 50, // Mock play count
+    followers: artist.followers?.total ? 
+      (artist.followers.total > 1000000 ? 
+        `${(artist.followers.total / 1000000).toFixed(1)}M` : 
+        `${(artist.followers.total / 1000).toFixed(0)}K`) : 'Unknown'
+  })) || [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold text-foreground">Loading your music data... 🎵</h1>
+          <p className="text-muted-foreground">Please wait while we fetch your listening insights</p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -45,13 +73,13 @@ export const DashboardOverview = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tracks</CardTitle>
+            <CardTitle className="text-sm font-medium">Top Tracks</CardTitle>
             <Music className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent">{stats.totalTracks}</div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              In your top list
             </p>
           </CardContent>
         </Card>
@@ -62,22 +90,22 @@ export const DashboardOverview = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{stats.listeningTime}h</div>
+            <div className="text-2xl font-bold text-accent">{Math.round(stats.listeningTime)}m</div>
             <p className="text-xs text-muted-foreground">
-              +8% from last month
+              From recent tracks
             </p>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Artists</CardTitle>
+            <CardTitle className="text-sm font-medium">Top Artists</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent">{stats.totalArtists}</div>
             <p className="text-xs text-muted-foreground">
-              +23 new this month
+              In your favorites
             </p>
           </CardContent>
         </Card>
@@ -90,33 +118,39 @@ export const DashboardOverview = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Top Tracks This Month
+              Your Top Tracks
             </CardTitle>
             <CardDescription>
               Your most played songs
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {topTracks.map((track, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
-                    {index + 1}
+            {topTracks.length > 0 ? (
+              <>
+                {topTracks.map((track, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium">{track.name}</p>
+                        <p className="text-sm text-muted-foreground">{track.artist}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{track.plays} plays</p>
+                      <p className="text-xs text-muted-foreground">{track.duration}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{track.name}</p>
-                    <p className="text-sm text-muted-foreground">{track.artist}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">{track.plays} plays</p>
-                  <p className="text-xs text-muted-foreground">{track.duration}</p>
-                </div>
-              </div>
-            ))}
-            <Button variant="outline" className="w-full">
-              View All Tracks
-            </Button>
+                ))}
+                <Button variant="outline" className="w-full">
+                  View All Tracks
+                </Button>
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No tracks data available</p>
+            )}
           </CardContent>
         </Card>
 
@@ -125,32 +159,38 @@ export const DashboardOverview = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Top Artists This Month
+              Your Top Artists
             </CardTitle>
             <CardDescription>
               Artists you listen to most
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {topArtists.map((artist, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
-                    {index + 1}
+            {topArtists.length > 0 ? (
+              <>
+                {topArtists.map((artist, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium">{artist.name}</p>
+                        <p className="text-sm text-muted-foreground">{artist.followers} followers</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{artist.plays} plays</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{artist.name}</p>
-                    <p className="text-sm text-muted-foreground">{artist.followers} followers</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">{artist.plays} plays</p>
-                </div>
-              </div>
-            ))}
-            <Button variant="outline" className="w-full">
-              View All Artists
-            </Button>
+                ))}
+                <Button variant="outline" className="w-full">
+                  View All Artists
+                </Button>
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No artists data available</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -182,7 +222,7 @@ export const DashboardOverview = () => {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 };

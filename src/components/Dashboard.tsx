@@ -28,6 +28,11 @@ export const Dashboard = () => {
     setSidebarOpen(false);
   };
 
+  const handleViewChange = (view: string) => {
+    setActiveView(view);
+    setSidebarOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -50,10 +55,7 @@ export const Dashboard = () => {
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           activeView={activeView}
-          onViewChange={(view) => {
-            setActiveView(view);
-            setSidebarOpen(false);
-          }}
+          onViewChange={handleViewChange}
         />
         
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -97,7 +99,7 @@ export const Dashboard = () => {
               
               {/* Content Area */}
               <div className="container-responsive">
-                {activeView === 'overview' && <InteractiveOverview />}
+                {activeView === 'overview' && <InteractiveOverview onNavigate={handleViewChange} />}
                 {activeView === 'trends' && <ListeningActivity />}
                 {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
                 {activeView === 'genres' && <EnhancedGenreAnalysis />}

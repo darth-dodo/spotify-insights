@@ -1,14 +1,14 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { spotifyAuth } from '@/lib/spotify-auth';
+import { sanitizeUserData, hashData } from '@/lib/data-utils';
 
+// Minimal user interface - only essential data
 interface User {
-  id: string;
-  display_name: string;
-  email: string;
-  images: Array<{ url: string }>;
-  country: string;
-  followers: { total: number };
+  id: string; // hashed user ID
+  display_name: string; // truncated display name
+  has_image: boolean; // boolean flag instead of storing image URLs
+  country: string; // 2-letter country code only
 }
 
 interface AuthContextType {
@@ -39,16 +39,35 @@ export const useAuthState = () => {
         const token = localStorage.getItem('spotify_access_token');
         if (token) {
           const userData = await spotifyAuth.getCurrentUser(token);
-          setUser(userData);
+          // Sanitize and store minimal user data
+          const sanitizedUser = sanitizeUserData(userData);
+          setUser(sanitizedUser);
+          
+          // Store only essential data in localStorage
+          localStorage.setItem('user_profile', JSON.stringify(sanitizedUser));
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         localStorage.removeItem('spotify_access_token');
         localStorage.removeItem('spotify_refresh_token');
+        localStorage.removeItem('user_profile');
       } finally {
         setIsLoading(false);
       }
     };
+
+    // Check if we have cached user data first
+    const cachedUser = localStorage.getItem('user_profile');
+    if (cachedUser) {
+      try {
+        setUser(JSON.parse(cachedUser));
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        console.error('Error parsing cached user data:', error);
+        localStorage.removeItem('user_profile');
+      }
+    }
 
     initAuth();
   }, []);
@@ -65,9 +84,11 @@ export const useAuthState = () => {
 
   const logout = () => {
     setUser(null);
+    // Clear all stored data
     localStorage.removeItem('spotify_access_token');
     localStorage.removeItem('spotify_refresh_token');
     localStorage.removeItem('spotify_token_expiry');
+    localStorage.removeItem('user_profile');
   };
 
   const refreshToken = async () => {

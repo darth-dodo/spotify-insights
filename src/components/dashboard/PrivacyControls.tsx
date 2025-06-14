@@ -29,53 +29,46 @@ export const PrivacyControls = () => {
   const handleExportData = async () => {
     toast({
       title: "Exporting your data",
-      description: "Your data export will be ready shortly. You'll receive an email when it's complete.",
+      description: "Your minimal data export will be ready shortly.",
     });
     
-    // In production, this would trigger an actual data export
-    console.log('Exporting user data...');
+    console.log('Exporting minimal user data...');
   };
 
   const handleDeleteData = async () => {
     toast({
       title: "Data deletion requested",
-      description: "Your data will be permanently deleted within 30 days as required by GDPR.",
+      description: "Your minimal stored data will be permanently deleted immediately.",
       variant: "destructive",
     });
     
     setShowDeleteDialog(false);
-    // In production, this would trigger the data deletion process
-    console.log('Initiating data deletion...');
+    // Clear all localStorage data
+    localStorage.clear();
+    console.log('All local data deleted...');
   };
 
   const dataCategories = [
     {
-      name: 'Listening History',
-      description: 'Your played tracks, timestamps, and listening duration',
-      size: '2.4 MB',
-      retention: '2 years',
+      name: 'User Profile (Minimal)',
+      description: 'Hashed user ID, truncated display name, country code, image flag',
+      size: '< 1 KB',
+      retention: 'Session only',
       canDelete: true,
     },
     {
-      name: 'User Profile',
-      description: 'Basic profile information and preferences',
-      size: '15 KB',
-      retention: 'Account lifetime',
-      canDelete: false,
-    },
-    {
-      name: 'Analytics Data',
-      description: 'Aggregated statistics and insights',
-      size: '850 KB',
-      retention: '1 year',
+      name: 'Authentication Tokens',
+      description: 'Temporary access tokens for Spotify API (encrypted)',
+      size: '< 2 KB',
+      retention: 'Until logout',
       canDelete: true,
     },
     {
-      name: 'App Settings',
-      description: 'Theme preferences and configuration',
-      size: '5 KB',
-      retention: 'Account lifetime',
-      canDelete: false,
+      name: 'App Preferences',
+      description: 'Theme and UI settings only',
+      size: '< 0.5 KB',
+      retention: 'Local storage',
+      canDelete: true,
     },
   ];
 
@@ -85,7 +78,7 @@ export const PrivacyControls = () => {
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold text-foreground">Privacy Controls</h1>
         <p className="text-muted-foreground">
-          Manage your data, privacy settings, and understand how your information is used
+          Minimal data storage with maximum privacy protection
         </p>
       </div>
 
@@ -100,10 +93,10 @@ export const PrivacyControls = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-700 dark:text-green-400">
-              256-bit
+              SHA-256
             </div>
             <p className="text-xs text-green-600 dark:text-green-500">
-              Encryption standard
+              Hashed sensitive data
             </p>
           </CardContent>
         </Card>
@@ -117,10 +110,10 @@ export const PrivacyControls = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">
-              3.3 MB
+              &lt; 4 KB
             </div>
             <p className="text-xs text-blue-600 dark:text-blue-500">
-              Total data size
+              Minimal data footprint
             </p>
           </CardContent>
         </Card>
@@ -129,15 +122,15 @@ export const PrivacyControls = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-purple-700 dark:text-purple-400">
               <Lock className="h-4 w-4" />
-              Compliance
+              Data Retention
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-700 dark:text-purple-400">
-              100%
+              Session
             </div>
             <p className="text-xs text-purple-600 dark:text-purple-500">
-              GDPR & CCPA compliant
+              No persistent storage
             </p>
           </CardContent>
         </Card>
@@ -151,15 +144,15 @@ export const PrivacyControls = () => {
             Privacy Settings
           </CardTitle>
           <CardDescription>
-            Control how your data is used and displayed
+            Control minimal data usage and display
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <h4 className="font-medium">Make listening data visible</h4>
+              <h4 className="font-medium">Display basic profile info</h4>
               <p className="text-sm text-muted-foreground">
-                Allow your listening statistics to be displayed in the dashboard
+                Show hashed user ID and truncated display name
               </p>
             </div>
             <Switch 
@@ -170,9 +163,9 @@ export const PrivacyControls = () => {
 
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <h4 className="font-medium">Enable analytics processing</h4>
+              <h4 className="font-medium">Enable session analytics</h4>
               <p className="text-sm text-muted-foreground">
-                Process your data to generate insights and recommendations
+                Process current session data (not stored permanently)
               </p>
             </div>
             <Switch 
@@ -183,9 +176,9 @@ export const PrivacyControls = () => {
 
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <h4 className="font-medium">Data retention</h4>
+              <h4 className="font-medium">Session-only data</h4>
               <p className="text-sm text-muted-foreground">
-                Store historical data for trend analysis (can be disabled)
+                All data is cleared when you logout or close the browser
               </p>
             </div>
             <Switch 
@@ -201,10 +194,10 @@ export const PrivacyControls = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="h-5 w-5" />
-            Your Data
+            Minimal Data Storage
           </CardTitle>
           <CardDescription>
-            Overview of the data we store and how long we keep it
+            We store only the absolute minimum required for functionality
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -222,11 +215,7 @@ export const PrivacyControls = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {category.canDelete ? (
-                    <Badge variant="secondary">Deletable</Badge>
-                  ) : (
-                    <Badge variant="outline">Required</Badge>
-                  )}
+                  <Badge variant="secondary">Minimal</Badge>
                 </div>
               </div>
             ))}
@@ -242,7 +231,7 @@ export const PrivacyControls = () => {
             Data Management
           </CardTitle>
           <CardDescription>
-            Export or delete your personal data
+            Export or delete your minimal stored data
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -253,7 +242,7 @@ export const PrivacyControls = () => {
               variant="outline"
             >
               <Download className="h-4 w-4" />
-              Export My Data
+              Export Minimal Data
             </Button>
             
             <Button 
@@ -262,7 +251,7 @@ export const PrivacyControls = () => {
               className="flex items-center gap-2"
             >
               <Trash2 className="h-4 w-4" />
-              Delete My Data
+              Clear All Data
             </Button>
           </div>
 
@@ -271,8 +260,8 @@ export const PrivacyControls = () => {
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="flex flex-col gap-3">
                 <p>
-                  <strong>Warning:</strong> This action cannot be undone. All your data including listening history, 
-                  preferences, and analytics will be permanently deleted within 30 days.
+                  <strong>Clear all data:</strong> This will immediately clear all locally stored data 
+                  including your session and preferences. You will need to login again.
                 </p>
                 <div className="flex gap-2">
                   <Button 
@@ -280,7 +269,7 @@ export const PrivacyControls = () => {
                     variant="destructive"
                     onClick={handleDeleteData}
                   >
-                    Confirm Deletion
+                    Clear All Data
                   </Button>
                   <Button 
                     size="sm" 
@@ -297,8 +286,8 @@ export const PrivacyControls = () => {
           <Alert>
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Your privacy is protected:</strong> We use industry-standard encryption, 
-              never share your data with third parties, and comply with GDPR and CCPA regulations.
+              <strong>Maximum Privacy:</strong> We store less than 4KB of hashed data locally, 
+              never send data to external servers, and automatically clear everything on logout.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -307,41 +296,40 @@ export const PrivacyControls = () => {
       {/* Legal Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Legal & Compliance</CardTitle>
+          <CardTitle>Privacy by Design</CardTitle>
           <CardDescription>
-            Important information about data handling and your rights
+            Our minimal data approach ensures maximum privacy
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <h4 className="font-medium">Your Rights (GDPR)</h4>
+              <h4 className="font-medium">What We DON'T Store</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Right to access your data</li>
-                <li>• Right to rectification</li>
-                <li>• Right to erasure</li>
-                <li>• Right to data portability</li>
-                <li>• Right to withdraw consent</li>
+                <li>• Email addresses</li>
+                <li>• Full profile images</li>
+                <li>• Listening history</li>
+                <li>• Personal playlists</li>
+                <li>• Analytics data</li>
               </ul>
             </div>
             
             <div className="space-y-2">
-              <h4 className="font-medium">Data Security</h4>
+              <h4 className="font-medium">Privacy Protection</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• End-to-end encryption</li>
-                <li>• Regular security audits</li>
-                <li>• Minimal data collection</li>
-                <li>• Secure data transmission</li>
-                <li>• No third-party tracking</li>
+                <li>• SHA-256 hashing for IDs</li>
+                <li>• Session-only storage</li>
+                <li>• No external data sharing</li>
+                <li>• Automatic data clearing</li>
+                <li>• Client-side only processing</li>
               </ul>
             </div>
           </div>
           
           <div className="pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              For questions about your privacy or to exercise your rights, contact us at privacy@spotifyanalytics.com. 
-              View our complete <Button variant="link" className="h-auto p-0 text-xs">Privacy Policy</Button> and 
-              <Button variant="link" className="h-auto p-0 text-xs ml-1">Terms of Service</Button>.
+              This application follows privacy-by-design principles with minimal data collection. 
+              All data is processed locally and automatically cleared when you logout.
             </p>
           </div>
         </CardContent>

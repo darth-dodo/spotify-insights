@@ -1,7 +1,7 @@
 
-# Spotify Analytics Dashboard
+# Spotify Insights Dashboard
 
-A production-ready, privacy-focused Spotify analytics dashboard built with modern web technologies and engineering best practices.
+A production-ready, privacy-focused Spotify insights dashboard built with modern web technologies and engineering best practices.
 
 ## 🚀 Features
 
@@ -45,7 +45,7 @@ Built with modern, production-ready technologies:
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd spotify-analytics-dashboard
+   cd spotify-insights-dashboard
    ```
 
 2. **Install dependencies**
@@ -204,7 +204,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email support@spotifyanalytics.com or create an issue on GitHub.
+For support, email support@spotifyinsights.com or create an issue on GitHub.
 
 ## 🙏 Acknowledgments
 

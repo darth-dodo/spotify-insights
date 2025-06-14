@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,7 +32,7 @@ export const Header = ({ user, onMenuToggle }: HeaderProps) => {
             <span className="text-accent-foreground font-bold text-lg">♪</span>
           </div>
           <h1 className="text-xl font-bold text-foreground">
-            Spotify Analytics
+            Spotify Insights
           </h1>
         </div>
       </div>

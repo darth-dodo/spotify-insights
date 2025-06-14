@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,7 +62,7 @@ export const LoginPage = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-foreground">
-                  Spotify Analytics
+                  Spotify Insights
                 </h1>
                 <p className="text-muted-foreground">
                   Discover your musical journey

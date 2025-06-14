@@ -1,4 +1,3 @@
-
 import { 
   dummySpotifyUser, 
   dummyTopTracks, 
@@ -20,17 +19,23 @@ export class SpotifyAPI {
         case '/me':
           return dummySpotifyUser;
         case '/me/top/tracks':
-        case endpoint.startsWith('/me/top/tracks'):
           return dummyTopTracks;
         case '/me/top/artists':
-        case endpoint.startsWith('/me/top/artists'):
           return dummyTopArtists;
         case '/me/player/recently-played':
-        case endpoint.startsWith('/me/player/recently-played'):
           return dummyRecentlyPlayed;
         case '/me/player':
           return dummyCurrentPlayback;
         default:
+          if (endpoint.startsWith('/me/top/tracks')) {
+            return dummyTopTracks;
+          }
+          if (endpoint.startsWith('/me/top/artists')) {
+            return dummyTopArtists;
+          }
+          if (endpoint.startsWith('/me/player/recently-played')) {
+            return dummyRecentlyPlayed;
+          }
           throw new Error(`Dummy data not available for endpoint: ${endpoint}`);
       }
     }

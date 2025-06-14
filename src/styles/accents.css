@@ -1,0 +1,47 @@
+
+:root {
+  /* Spotify Green */
+  --accent-spotify: 29 185 84;
+  --accent-spotify-foreground: 255 255 255;
+  
+  /* Ocean Blue */
+  --accent-blue: 59 130 246;
+  --accent-blue-foreground: 255 255 255;
+  
+  /* Royal Purple */
+  --accent-purple: 139 92 246;
+  --accent-purple-foreground: 255 255 255;
+  
+  /* Vibrant Pink */
+  --accent-pink: 236 72 153;
+  --accent-pink-foreground: 255 255 255;
+  
+  /* Sunset Orange */
+  --accent-orange: 245 158 11;
+  --accent-orange-foreground: 255 255 255;
+}
+
+[data-accent="spotify"] {
+  --accent: var(--accent-spotify);
+  --accent-foreground: var(--accent-spotify-foreground);
+}
+
+[data-accent="blue"] {
+  --accent: var(--accent-blue);
+  --accent-foreground: var(--accent-blue-foreground);
+}
+
+[data-accent="purple"] {
+  --accent: var(--accent-purple);
+  --accent-foreground: var(--accent-purple-foreground);
+}
+
+[data-accent="pink"] {
+  --accent: var(--accent-pink);
+  --accent-foreground: var(--accent-pink-foreground);
+}
+
+[data-accent="orange"] {
+  --accent: var(--accent-orange);
+  --accent-foreground: var(--accent-orange-foreground);
+}

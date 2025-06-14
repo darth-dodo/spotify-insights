@@ -4,9 +4,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { DashboardOverview } from '@/components/dashboard/DashboardOverview';
-import { ListeningTrends } from '@/components/dashboard/ListeningTrends';
-import { GenreAnalysis } from '@/components/dashboard/GenreAnalysis';
+import { InteractiveOverview } from '@/components/dashboard/InteractiveOverview';
+import { ListeningActivity } from '@/components/dashboard/ListeningActivity';
+import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnalysis';
 import { PrivacyControls } from '@/components/dashboard/PrivacyControls';
 import { cn } from '@/lib/utils';
 
@@ -31,7 +31,6 @@ export const Dashboard = () => {
   return (
     <div className={cn(
       "min-h-screen bg-background text-foreground transition-colors duration-300",
-      `accent-${accentColor}`,
       theme
     )}>
       <div className="flex h-screen overflow-hidden">
@@ -50,9 +49,9 @@ export const Dashboard = () => {
           
           <main className="flex-1 overflow-y-auto p-6">
             <div className="max-w-7xl mx-auto">
-              {activeView === 'overview' && <DashboardOverview />}
-              {activeView === 'trends' && <ListeningTrends />}
-              {activeView === 'genres' && <GenreAnalysis />}
+              {activeView === 'overview' && <InteractiveOverview />}
+              {activeView === 'trends' && <ListeningActivity />}
+              {activeView === 'genres' && <EnhancedGenreAnalysis />}
               {activeView === 'privacy' && <PrivacyControls />}
             </div>
           </main>

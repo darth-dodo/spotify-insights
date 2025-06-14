@@ -3,7 +3,7 @@ import { spotifyAPI } from './spotify-api';
 
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || `${window.location.origin}/callback`;
-const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
+const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true' || !CLIENT_ID; // Auto-enable dummy data if no Client ID
 const SCOPES = [
   'user-read-private',
   'user-read-email',
@@ -34,9 +34,9 @@ class SpotifyAuth {
   }
 
   async login(): Promise<void> {
+    // Always use dummy data if no Client ID is configured
     if (USE_DUMMY_DATA) {
-      // Fake login - just set dummy tokens and redirect
-      console.log('Using fake login with dummy data');
+      console.log('Using dummy data for authentication');
       
       localStorage.setItem('spotify_access_token', 'dummy_access_token');
       localStorage.setItem('spotify_refresh_token', 'dummy_refresh_token');
@@ -48,7 +48,7 @@ class SpotifyAuth {
     }
 
     if (!CLIENT_ID) {
-      throw new Error('Spotify Client ID not configured');
+      throw new Error('Spotify Client ID not configured. Please set VITE_SPOTIFY_CLIENT_ID in your environment variables or use dummy data.');
     }
 
     const codeVerifier = this.generateRandomString(64);
@@ -152,6 +152,11 @@ class SpotifyAuth {
 
   async getCurrentUser(accessToken: string): Promise<any> {
     return spotifyAPI.getCurrentUser(USE_DUMMY_DATA ? undefined : accessToken);
+  }
+
+  // Helper method to check if using dummy data
+  isDummyMode(): boolean {
+    return USE_DUMMY_DATA;
   }
 }
 

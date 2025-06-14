@@ -1,73 +1,214 @@
-# Welcome to your Lovable project
 
-## Project info
+# Spotify Analytics Dashboard
 
-**URL**: https://lovable.dev/projects/3a4e5e20-bc6f-47a9-82a6-43da678f2810
+A production-ready, privacy-focused Spotify analytics dashboard built with modern web technologies and engineering best practices.
 
-## How can I edit this code?
+## 🚀 Features
 
-There are several ways of editing your application.
+- **Rich Analytics**: Deep insights into listening habits and musical preferences
+- **Trend Analysis**: Track how musical taste evolves over time  
+- **Genre Discovery**: Explore and understand favorite genres and artists
+- **Privacy First**: End-to-end encryption, no third-party tracking, GDPR/CCPA compliant
+- **Spotify-Inspired UI**: Clean, modern interface with customizable accent colors
+- **Responsive Design**: Full compatibility across desktop, tablet, and mobile
 
-**Use Lovable**
+## 🛡️ Security & Privacy
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3a4e5e20-bc6f-47a9-82a6-43da678f2810) and start prompting.
+- ✅ OAuth 2.0 authentication with minimal scopes
+- ✅ End-to-end encryption for all sensitive data
+- ✅ No third-party analytics or tracking scripts
+- ✅ GDPR and CCPA compliant
+- ✅ Full user data control (view, export, delete)
+- ✅ Content Security Policy implementation
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🏗️ Architecture
 
-**Use your preferred IDE**
+Built with modern, production-ready technologies:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, Shadcn/UI components
+- **State Management**: React Query, React Context
+- **Authentication**: Spotify OAuth 2.0 with PKCE
+- **Charts**: Recharts for data visualization
+- **Testing**: Vitest, Playwright, React Testing Library
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Quick Start
 
-Follow these steps:
+### Prerequisites
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- Node.js 18+ 
+- npm/yarn/pnpm/bun
+- Spotify Developer Account
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Setup
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd spotify-analytics-dashboard
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Spotify API**
+   - Visit [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+   - Create a new app
+   - Add `http://localhost:5173/callback` to redirect URIs
+   - Copy your Client ID
+
+4. **Environment setup**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your Spotify Client ID
+   ```
+
+5. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm run test
+
+# End-to-end tests
+npm run test:e2e
+
+# Test coverage
+npm run test:coverage
 ```
 
-**Edit a file directly in GitHub**
+## 🏗️ Building for Production
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+# Build the application
+npm run build
 
-**Use GitHub Codespaces**
+# Preview production build
+npm run preview
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🚀 Deployment
 
-## What technologies are used for this project?
+### Netlify (Recommended)
 
-This project is built with:
+1. Connect your GitHub repository to Netlify
+2. Set build command: `npm run build`
+3. Set publish directory: `dist`
+4. Add environment variables in Netlify dashboard
+5. Deploy!
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Manual Deployment
 
-## How can I deploy this project?
+1. Build the application: `npm run build`
+2. Upload the `dist` folder to your hosting provider
+3. Configure environment variables on your hosting platform
 
-Simply open [Lovable](https://lovable.dev/projects/3a4e5e20-bc6f-47a9-82a6-43da678f2810) and click on Share -> Publish.
+## 🔧 Configuration
 
-## Can I connect a custom domain to my Lovable project?
+### Environment Variables
 
-Yes, you can!
+- `VITE_SPOTIFY_CLIENT_ID`: Your Spotify app's Client ID
+- `VITE_SPOTIFY_REDIRECT_URI`: OAuth redirect URI (must match Spotify app settings)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Spotify API Scopes
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The application requests minimal scopes:
+- `user-read-private`: Basic profile information
+- `user-read-email`: Email address
+- `user-top-read`: Top tracks and artists
+- `user-read-recently-played`: Recently played tracks
+- `user-read-playback-state`: Current playback state
+
+## 📊 Data Management
+
+### What Data We Collect
+
+- Basic Spotify profile information
+- Listening history and preferences
+- Top tracks, artists, and genres
+- Playback statistics
+
+### Data Privacy
+
+- All data is encrypted at rest and in transit
+- No data is shared with third parties
+- Users can export or delete their data at any time
+- Compliant with GDPR and CCPA regulations
+
+## 🎨 Customization
+
+### Accent Colors
+
+The dashboard supports multiple accent colors:
+- Spotify Green (default)
+- Ocean Blue
+- Royal Purple
+- Vibrant Pink
+- Sunset Orange
+
+### Themes
+
+- Light mode
+- Dark mode
+- System preference sync
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── auth/           # Authentication components
+│   ├── dashboard/      # Dashboard-specific components
+│   ├── layout/         # Layout components
+│   ├── providers/      # Context providers
+│   └── ui/             # Base UI components
+├── hooks/              # Custom React hooks
+├── lib/                # Utility libraries
+├── pages/              # Route components
+└── types/              # TypeScript type definitions
+```
+
+### Code Quality
+
+- ESLint for code linting
+- Prettier for code formatting
+- TypeScript for type safety
+- Husky for pre-commit hooks
+
+### Git Workflow
+
+1. Create feature branch: `git checkout -b feature/new-feature`
+2. Make changes and commit: `git commit -m "feat: add new feature"`
+3. Push branch: `git push origin feature/new-feature`
+4. Create pull request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+1. Fork the project
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a pull request
+
+## 📞 Support
+
+For support, email support@spotifyanalytics.com or create an issue on GitHub.
+
+## 🙏 Acknowledgments
+
+- [Spotify Web API](https://developer.spotify.com/documentation/web-api/)
+- [Shadcn/UI](https://ui.shadcn.com/) for beautiful components
+- [Recharts](https://recharts.org/) for data visualization
+- [Tailwind CSS](https://tailwindcss.com/) for styling

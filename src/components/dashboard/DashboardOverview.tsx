@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,41 +50,33 @@ export const DashboardOverview = () => {
 
   const stats = calculateStats();
 
-  // Generate top tracks with real data
+  // Generate top tracks with real data only
   const getTopTracks = () => {
     if (!topTracksData?.items?.length) {
-      return [
-        { name: 'Connect Spotify', artist: 'To see your tracks', plays: 0, duration: '0:00' },
-        { name: 'Your music data', artist: 'Will appear here', plays: 0, duration: '0:00' },
-        { name: 'After connecting', artist: 'Your Spotify account', plays: 0, duration: '0:00' }
-      ];
+      return [];
     }
 
-    return topTracksData.items.slice(0, 3).map((track: any, index: number) => ({
+    return topTracksData.items.slice(0, 3).map((track: any) => ({
       name: track.name,
       artist: track.artists?.[0]?.name || 'Unknown Artist',
-      plays: track.popularity || Math.floor(Math.random() * 50) + 10,
+      popularity: track.popularity || 0,
       duration: `${Math.floor(track.duration_ms / 60000)}:${String(Math.floor((track.duration_ms % 60000) / 1000)).padStart(2, '0')}`
     }));
   };
 
-  // Generate top artists with real data
+  // Generate top artists with real data only
   const getTopArtists = () => {
     if (!topArtistsData?.items?.length) {
-      return [
-        { name: 'Connect Spotify', plays: 0, followers: 'To see data' },
-        { name: 'Your top artists', plays: 0, followers: 'Will show here' },
-        { name: 'After setup', plays: 0, followers: 'Is complete' }
-      ];
+      return [];
     }
 
-    return topArtistsData.items.slice(0, 3).map((artist: any, index: number) => ({
+    return topArtistsData.items.slice(0, 3).map((artist: any) => ({
       name: artist.name,
-      plays: artist.popularity || Math.floor(Math.random() * 200) + 50,
+      popularity: artist.popularity || 0,
       followers: artist.followers?.total ? 
         (artist.followers.total > 1000000 ? 
           `${(artist.followers.total / 1000000).toFixed(1)}M` : 
-          `${Math.round(artist.followers.total / 1000)}K`) : 'Unknown'
+          `${Math.round(artist.followers.total / 1000)}K`) : '0'
     }));
   };
 
@@ -200,91 +193,91 @@ export const DashboardOverview = () => {
         </Card>
       )}
 
-      {/* Top Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Tracks */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              {stats.hasSpotifyData ? 'Your Top Tracks' : 'Your Tracks'}
-            </CardTitle>
-            <CardDescription>
-              {stats.hasSpotifyData ? 'Your most played songs' : 'Will show your favorite tracks'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topTracks.map((track, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <p className="font-medium">{track.name}</p>
-                    <p className="text-sm text-muted-foreground">{track.artist}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  {stats.hasSpotifyData ? (
-                    <>
-                      <p className="text-sm font-medium">{track.plays}% popularity</p>
-                      <p className="text-xs text-muted-foreground">{track.duration}</p>
-                    </>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Connect Spotify</p>
-                  )}
-                </div>
-              </div>
-            ))}
-            {stats.hasSpotifyData && (
-              <Button variant="outline" className="w-full">
-                View All Tracks
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+      {/* Top Content Grid - Only show if we have data */}
+      {stats.hasSpotifyData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Tracks */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Your Top Tracks
+              </CardTitle>
+              <CardDescription>
+                Your most played songs
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {topTracks.length > 0 ? (
+                <>
+                  {topTracks.map((track, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{track.name}</p>
+                          <p className="text-sm text-muted-foreground">{track.artist}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{track.popularity}% popularity</p>
+                        <p className="text-xs text-muted-foreground">{track.duration}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <Button variant="outline" className="w-full">
+                    View All Tracks
+                  </Button>
+                </>
+              ) : (
+                <p className="text-center text-muted-foreground py-4">No track data available</p>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Top Artists */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              {stats.hasSpotifyData ? 'Your Top Artists' : 'Your Artists'}
-            </CardTitle>
-            <CardDescription>
-              {stats.hasSpotifyData ? 'Artists you listen to most' : 'Will show your favorite artists'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topArtists.map((artist, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <p className="font-medium">{artist.name}</p>
-                    <p className="text-sm text-muted-foreground">{artist.followers} followers</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  {stats.hasSpotifyData ? (
-                    <p className="text-sm font-medium">{artist.plays}% popularity</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Connect Spotify</p>
-                  )}
-                </div>
-              </div>
-            ))}
-            {stats.hasSpotifyData && (
-              <Button variant="outline" className="w-full">
-                View All Artists
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          {/* Top Artists */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Your Top Artists
+              </CardTitle>
+              <CardDescription>
+                Artists you listen to most
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {topArtists.length > 0 ? (
+                <>
+                  {topArtists.map((artist, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{artist.name}</p>
+                          <p className="text-sm text-muted-foreground">{artist.followers} followers</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{artist.popularity}% popularity</p>
+                      </div>
+                    </div>
+                  ))}
+                  <Button variant="outline" className="w-full">
+                    View All Artists
+                  </Button>
+                </>
+              ) : (
+                <p className="text-center text-muted-foreground py-4">No artist data available</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Additional Insights for Spotify Users */}
       {stats.hasSpotifyData && (
@@ -300,7 +293,7 @@ export const DashboardOverview = () => {
               <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
                 <h4 className="font-medium text-accent mb-2">Top Genre</h4>
                 <p className="text-sm text-muted-foreground">
-                  Your favorite genre is {stats.topGenre}
+                  {stats.topGenre !== 'Unknown' ? `Your favorite genre is ${stats.topGenre}` : 'No genre data available'}
                 </p>
               </div>
               <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">

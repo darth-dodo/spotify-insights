@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +10,10 @@ import {
   Flame, Volume2, Disc, Radio, Shuffle, Repeat
 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { AchievementCategories } from './achievements/AchievementCategories';
+import { DailyChallenges } from './challenges/DailyChallenges';
+import { Leaderboards } from './leaderboards/Leaderboards';
+import { SeasonalEvents } from './seasons/SeasonalEvents';
 
 interface Achievement {
   id: string;
@@ -68,7 +71,7 @@ export const GamificationSystem = () => {
       description: 'Play your first track',
       icon: <Music className="h-5 w-5" />,
       category: 'listening',
-      rarity: 'common',
+      rarity: 'common' as const,
       unlocked: userStats.recentPlays > 0,
       xpReward: 50,
     },
@@ -78,7 +81,7 @@ export const GamificationSystem = () => {
       description: 'Discover 25 different artists',
       icon: <Users className="h-5 w-5" />,
       category: 'discovery',
-      rarity: 'common',
+      rarity: 'common' as const,
       unlocked: userStats.totalArtists >= 25,
       progress: userStats.totalArtists,
       maxProgress: 25,
@@ -90,47 +93,11 @@ export const GamificationSystem = () => {
       description: 'Listen for 100 hours total',
       icon: <Headphones className="h-5 w-5" />,
       category: 'listening',
-      rarity: 'rare',
+      rarity: 'rare' as const,
       unlocked: userStats.listeningTime >= 6000,
       progress: userStats.listeningTime,
       maxProgress: 6000,
       xpReward: 250,
-    },
-    {
-      id: 'streak_master',
-      name: 'Streak Master',
-      description: 'Maintain a 30-day listening streak',
-      icon: <Flame className="h-5 w-5" />,
-      category: 'streak',
-      rarity: 'epic',
-      unlocked: userStats.streak >= 30,
-      progress: userStats.streak,
-      maxProgress: 30,
-      xpReward: 500,
-    },
-    {
-      id: 'genre_connoisseur',
-      name: 'Genre Connoisseur',
-      description: 'Explore 20 different genres',
-      icon: <Disc className="h-5 w-5" />,
-      category: 'discovery',
-      rarity: 'rare',
-      unlocked: userStats.genresExplored >= 20,
-      progress: userStats.genresExplored,
-      maxProgress: 20,
-      xpReward: 300,
-    },
-    {
-      id: 'music_legend',
-      name: 'Music Legend',
-      description: 'Reach level 50',
-      icon: <Crown className="h-5 w-5" />,
-      category: 'special',
-      rarity: 'legendary',
-      unlocked: level >= 50,
-      progress: level,
-      maxProgress: 50,
-      xpReward: 1000,
     },
   ];
 
@@ -163,36 +130,9 @@ export const GamificationSystem = () => {
       requirement: '10+ hours weekend listening',
       unlocked: Math.random() > 0.5,
     },
-    {
-      id: 'diversity_champion',
-      name: 'Diversity Champion',
-      description: 'Listen to artists from 10+ countries',
-      icon: '🌍',
-      color: 'from-teal-400 to-green-500',
-      requirement: 'Global music exploration',
-      unlocked: Math.random() > 0.5,
-    },
-    {
-      id: 'trend_setter',
-      name: 'Trend Setter',
-      description: 'Discover tracks before they go viral',
-      icon: '🚀',
-      color: 'from-pink-500 to-purple-600',
-      requirement: 'Early adoption of trending music',
-      unlocked: Math.random() > 0.5,
-    },
-    {
-      id: 'vault_hunter',
-      name: 'Vault Hunter',
-      description: 'Listen to rare or unreleased tracks',
-      icon: '💎',
-      color: 'from-yellow-400 to-orange-500',
-      requirement: 'Rare music discovery',
-      unlocked: Math.random() > 0.5,
-    },
   ];
 
-  const getRarityColor = (rarity: Achievement['rarity']) => {
+  const getRarityColor = (rarity: 'common' | 'rare' | 'epic' | 'legendary') => {
     switch (rarity) {
       case 'common': return 'text-gray-600 border-gray-300';
       case 'rare': return 'text-blue-600 border-blue-300';
@@ -202,7 +142,7 @@ export const GamificationSystem = () => {
     }
   };
 
-  const getRarityBg = (rarity: Achievement['rarity']) => {
+  const getRarityBg = (rarity: 'common' | 'rare' | 'epic' | 'legendary') => {
     switch (rarity) {
       case 'common': return 'bg-gray-50 dark:bg-gray-900';
       case 'rare': return 'bg-blue-50 dark:bg-blue-900/20';
@@ -213,7 +153,6 @@ export const GamificationSystem = () => {
   };
 
   const unlockedAchievements = achievements.filter(a => a.unlocked);
-  const lockedAchievements = achievements.filter(a => !a.unlocked);
   const unlockedBadges = badges.filter(b => b.unlocked);
 
   return (
@@ -228,7 +167,7 @@ export const GamificationSystem = () => {
           </Badge>
         </h1>
         <p className="text-muted-foreground">
-          Track your progress, unlock achievements, and earn badges through your musical journey
+          Track your progress, unlock achievements, and compete with other music enthusiasts
         </p>
       </div>
 
@@ -255,9 +194,12 @@ export const GamificationSystem = () => {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          <TabsTrigger value="challenges">Challenges</TabsTrigger>
+          <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="badges">Badges</TabsTrigger>
         </TabsList>
 
@@ -305,6 +247,42 @@ export const GamificationSystem = () => {
             </Card>
           </div>
 
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2"
+              onClick={() => setActiveTab('challenges')}
+            >
+              <Target className="h-6 w-6" />
+              <span>Daily Challenges</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2"
+              onClick={() => setActiveTab('leaderboards')}
+            >
+              <TrendingUp className="h-6 w-6" />
+              <span>Leaderboards</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2"
+              onClick={() => setActiveTab('events')}
+            >
+              <Calendar className="h-6 w-6" />
+              <span>Seasonal Events</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2"
+              onClick={() => setActiveTab('achievements')}
+            >
+              <Award className="h-6 w-6" />
+              <span>All Achievements</span>
+            </Button>
+          </div>
+
           {/* Recent Achievements */}
           <Card>
             <CardHeader>
@@ -332,70 +310,20 @@ export const GamificationSystem = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="achievements" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Unlocked Achievements */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-500" />
-                  Unlocked ({unlockedAchievements.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {unlockedAchievements.map((achievement) => (
-                  <div key={achievement.id} className={`p-3 rounded-lg border ${getRarityBg(achievement.rarity)} ${getRarityColor(achievement.rarity)}`}>
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-full bg-background/50">
-                        {achievement.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{achievement.name}</h4>
-                        <p className="text-sm opacity-80">{achievement.description}</p>
-                        <Badge variant="outline" className="mt-2">
-                          {achievement.rarity}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+        <TabsContent value="achievements">
+          <AchievementCategories />
+        </TabsContent>
 
-            {/* Locked Achievements */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-muted-foreground" />
-                  In Progress ({lockedAchievements.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {lockedAchievements.map((achievement) => (
-                  <div key={achievement.id} className="p-3 rounded-lg border bg-muted/20 opacity-60">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-full bg-muted">
-                        {achievement.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{achievement.name}</h4>
-                        <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                        {achievement.progress !== undefined && achievement.maxProgress && (
-                          <div className="mt-2">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span>{achievement.progress} / {achievement.maxProgress}</span>
-                              <span>{Math.round((achievement.progress / achievement.maxProgress) * 100)}%</span>
-                            </div>
-                            <Progress value={(achievement.progress / achievement.maxProgress) * 100} className="h-2" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="challenges">
+          <DailyChallenges />
+        </TabsContent>
+
+        <TabsContent value="leaderboards">
+          <Leaderboards />
+        </TabsContent>
+
+        <TabsContent value="events">
+          <SeasonalEvents />
         </TabsContent>
 
         <TabsContent value="badges" className="space-y-6">

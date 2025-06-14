@@ -2,15 +2,16 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  BarChart3, 
+  Home, 
   TrendingUp, 
   Music, 
+  Users,
   Shield, 
-  Home,
-  X
+  X,
+  Menu
 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,115 +20,122 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
 }
 
-const navigationItems = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    icon: Home,
-    description: 'Dashboard summary'
-  },
-  {
-    id: 'trends',
-    label: 'Listening Trends',
-    icon: TrendingUp,
-    description: 'Time-based analysis'
-  },
-  {
-    id: 'genres',
-    label: 'Genre Analysis',
-    icon: Music,
-    description: 'Music preferences'
-  },
-  {
-    id: 'privacy',
-    label: 'Privacy Controls',
-    icon: Shield,
-    description: 'Data management'
-  }
-];
-
 export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarProps) => {
+  const isMobile = useIsMobile();
+
+  const menuItems = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: Home,
+      description: 'Dashboard home'
+    },
+    {
+      id: 'trends',
+      label: 'Listening Activity',
+      icon: TrendingUp,
+      description: 'Activity patterns'
+    },
+    {
+      id: 'genres',
+      label: 'Genre Analysis',
+      icon: Music,
+      description: 'Musical preferences'
+    },
+    {
+      id: 'artists',
+      label: 'Artist Exploration',
+      icon: Users,
+      description: 'Discover artists'
+    },
+    {
+      id: 'privacy',
+      label: 'Privacy & Data',
+      icon: Shield,
+      description: 'Data controls'
+    }
+  ];
+
+  const handleItemClick = (viewId: string) => {
+    onViewChange(viewId);
+  };
+
   return (
     <>
-      {/* Mobile overlay */}
-      {isOpen && (
+      {/* Mobile Overlay */}
+      {isMobile && isOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onToggle}
         />
       )}
-      
+
       {/* Sidebar */}
-      <aside className={cn(
-        "fixed top-0 left-0 z-50 h-full w-72 bg-card border-r border-border transition-transform duration-300 lg:relative lg:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-50 h-full bg-sidebar border-r border-sidebar-border transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          "w-64 lg:w-72"
+        )}
+      >
         <div className="flex h-full flex-col">
-          {/* Mobile close button */}
-          <div className="flex items-center justify-between p-4 lg:hidden">
-            <span className="text-lg font-semibold">Navigation</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggle}
-            >
-              <X className="h-5 w-5" />
-            </Button>
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+            <h2 className="text-lg font-semibold text-sidebar-foreground">
+              Spotify Analytics
+            </h2>
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggle}
+                className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
-          <ScrollArea className="flex-1 p-4">
-            <nav className="space-y-2">
-              {navigationItems.map((item) => {
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto p-4">
+            <ul className="space-y-2">
+              {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeView === item.id;
                 
                 return (
-                  <Button
-                    key={item.id}
-                    variant={isActive ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start h-auto p-4 rounded-xl",
-                      isActive && "bg-accent text-accent-foreground"
-                    )}
-                    onClick={() => {
-                      onViewChange(item.id);
-                      if (window.innerWidth < 1024) {
-                        onToggle();
-                      }
-                    }}
-                  >
-                    <div className="flex items-center gap-3 w-full">
+                  <li key={item.id}>
+                    <Button
+                      variant={isActive ? "default" : "ghost"}
+                      onClick={() => handleItemClick(item.id)}
+                      className={cn(
+                        "w-full justify-start gap-3 h-auto p-3 text-left",
+                        isActive
+                          ? "bg-accent text-accent-foreground shadow-sm"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        "transition-all duration-200"
+                      )}
+                    >
                       <Icon className="h-5 w-5 flex-shrink-0" />
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">{item.label}</span>
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{item.label}</div>
+                        <div className="text-xs opacity-70 truncate">
                           {item.description}
-                        </span>
+                        </div>
                       </div>
-                    </div>
-                  </Button>
+                    </Button>
+                  </li>
                 );
               })}
-            </nav>
-            
-            <div className="mt-8 p-4 bg-muted/50 rounded-xl">
-              <h3 className="font-medium text-sm mb-2">Quick Stats</h3>
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <div className="flex justify-between">
-                  <span>Songs analyzed</span>
-                  <span className="font-medium">1,234</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Artists discovered</span>
-                  <span className="font-medium">456</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Hours listened</span>
-                  <span className="font-medium">789</span>
-                </div>
-              </div>
+            </ul>
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-sidebar-border">
+            <div className="text-xs text-sidebar-foreground/60 text-center">
+              Privacy-first analytics
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </aside>
     </>

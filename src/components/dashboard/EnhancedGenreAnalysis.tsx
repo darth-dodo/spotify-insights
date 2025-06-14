@@ -1,365 +1,464 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { PieChart, Pie, Cell, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Music, TrendingUp, Star, Shuffle, Calendar, Users, Clock, Award } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts';
+import { Music, TrendingUp, Users, Clock, Disc, Star, Eye, BarChart3 } from 'lucide-react';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 
 export const EnhancedGenreAnalysis = () => {
+  const [timeRange, setTimeRange] = useState('medium_term');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [timeFilter, setTimeFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
 
-  // Enhanced genre data with more details
-  const genreData = [
-    { 
-      name: 'Rock', 
-      value: 35, 
-      color: '#FF6B6B', 
-      tracks: 245, 
-      artists: 45, 
-      hours: 87,
-      avgRating: 4.6,
-      topArtist: 'Led Zeppelin',
-      recentGrowth: '+12%',
-      peakHours: '8-10 PM',
-      avgTrackLength: '4:23'
-    },
-    { 
-      name: 'Pop', 
-      value: 28, 
-      color: '#4ECDC4', 
-      tracks: 196, 
-      artists: 38, 
-      hours: 72,
-      avgRating: 4.2,
-      topArtist: 'Taylor Swift',
-      recentGrowth: '+8%',
-      peakHours: '2-4 PM',
-      avgTrackLength: '3:45'
-    },
-    { 
-      name: 'Electronic', 
-      value: 18, 
-      color: '#45B7D1', 
-      tracks: 126, 
-      artists: 28, 
-      hours: 45,
-      avgRating: 4.4,
-      topArtist: 'Daft Punk',
-      recentGrowth: '+15%',
-      peakHours: '11 PM-1 AM',
-      avgTrackLength: '5:12'
-    },
-    { 
-      name: 'Hip Hop', 
-      value: 12, 
-      color: '#96CEB4', 
-      tracks: 84, 
-      artists: 22, 
-      hours: 31,
-      avgRating: 4.3,
-      topArtist: 'Kendrick Lamar',
-      recentGrowth: '+5%',
-      peakHours: '6-8 PM',
-      avgTrackLength: '3:58'
-    },
-    { 
-      name: 'Jazz', 
-      value: 7, 
-      color: '#FFEAA7', 
-      tracks: 49, 
-      artists: 15, 
-      hours: 18,
-      avgRating: 4.8,
-      topArtist: 'Miles Davis',
-      recentGrowth: '+3%',
-      peakHours: '10 AM-12 PM',
-      avgTrackLength: '6:34'
-    },
-  ];
+  const { useTopTracks, useTopArtists } = useSpotifyData();
+  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
+  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
 
-  const moodData = [
-    { mood: 'Energetic', value: 85, genres: ['Electronic', 'Rock'] },
-    { mood: 'Relaxed', value: 65, genres: ['Jazz', 'Ambient'] },
-    { mood: 'Melancholic', value: 45, genres: ['Indie', 'Alternative'] },
-    { mood: 'Upbeat', value: 78, genres: ['Pop', 'Dance'] },
-    { mood: 'Aggressive', value: 32, genres: ['Metal', 'Punk'] },
-    { mood: 'Romantic', value: 58, genres: ['R&B', 'Soul'] },
-  ];
+  const isLoading = tracksLoading || artistsLoading;
 
-  const genreEvolution = [
-    { month: 'Jan', Rock: 30, Pop: 25, Electronic: 20, 'Hip Hop': 15, Jazz: 10 },
-    { month: 'Feb', Rock: 32, Pop: 26, Electronic: 18, 'Hip Hop': 14, Jazz: 10 },
-    { month: 'Mar', Rock: 34, Pop: 27, Electronic: 19, 'Hip Hop': 13, Jazz: 7 },
-    { month: 'Apr', Rock: 35, Pop: 28, Electronic: 18, 'Hip Hop': 12, Jazz: 7 },
+  // Process genre data from API response
+  const genreAnalysis = useMemo(() => {
+    if (!topArtistsData?.items || !topTracksData?.items) return { genres: [], total: 0 };
+
+    const genreCounts: { [key: string]: { count: number; artists: string[]; tracks: string[] } } = {};
+    
+    // Process artists and their genres
+    topArtistsData.items.forEach((artist: any) => {
+      artist.genres?.forEach((genre: string) => {
+        if (!genreCounts[genre]) {
+          genreCounts[genre] = { count: 0, artists: [], tracks: [] };
+        }
+        genreCounts[genre].count += 1;
+        genreCounts[genre].artists.push(artist.name);
+      });
+    });
+
+    // Add track information to genres
+    topTracksData.items.forEach((track: any) => {
+      track.artists?.forEach((artist: any) => {
+        // Find genres for this artist from our processed data
+        Object.keys(genreCounts).forEach(genre => {
+          if (genreCounts[genre].artists.includes(artist.name)) {
+            if (!genreCounts[genre].tracks.includes(track.name)) {
+              genreCounts[genre].tracks.push(track.name);
+            }
+          }
+        });
+      });
+    });
+
+    const genres = Object.entries(genreCounts)
+      .map(([genre, data]) => ({
+        name: genre,
+        count: data.count,
+        artists: [...new Set(data.artists)], // Remove duplicates
+        tracks: [...new Set(data.tracks)], // Remove duplicates
+        percentage: 0, // Will be calculated below
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+
+    const total = genres.reduce((sum, genre) => sum + genre.count, 0);
+    
+    // Calculate percentages
+    genres.forEach(genre => {
+      genre.percentage = total > 0 ? Math.round((genre.count / total) * 100) : 0;
+    });
+
+    return { genres, total };
+  }, [topArtistsData, topTracksData]);
+
+  // Generate time evolution data (mock data based on current preferences)
+  const genreEvolution = useMemo(() => {
+    if (genreAnalysis.genres.length === 0) return [];
+
+    return [
+      { month: 'Jan', ...Object.fromEntries(genreAnalysis.genres.slice(0, 5).map(g => [g.name, Math.random() * 30 + 10])) },
+      { month: 'Feb', ...Object.fromEntries(genreAnalysis.genres.slice(0, 5).map(g => [g.name, Math.random() * 30 + 10])) },
+      { month: 'Mar', ...Object.fromEntries(genreAnalysis.genres.slice(0, 5).map(g => [g.name, Math.random() * 30 + 10])) },
+      { month: 'Apr', ...Object.fromEntries(genreAnalysis.genres.slice(0, 5).map(g => [g.name, Math.random() * 30 + 10])) },
+      { month: 'May', ...Object.fromEntries(genreAnalysis.genres.slice(0, 5).map(g => [g.name, Math.random() * 30 + 10])) },
+      { month: 'Jun', ...Object.fromEntries(genreAnalysis.genres.slice(0, 5).map(g => [g.name, g.count])) },
+    ];
+  }, [genreAnalysis.genres]);
+
+  const chartColors = [
+    'hsl(var(--accent))',
+    'hsl(217, 91%, 60%)',
+    'hsl(262, 83%, 58%)',
+    'hsl(330, 81%, 60%)',
+    'hsl(25, 95%, 53%)',
+    'hsl(142, 76%, 36%)',
+    'hsl(221, 83%, 53%)',
+    'hsl(263, 70%, 50%)',
+    'hsl(31, 81%, 56%)',
+    'hsl(348, 83%, 47%)',
+    'hsl(200, 98%, 39%)',
+    'hsl(271, 91%, 65%)',
   ];
 
   const chartConfig = {
-    value: { label: "Percentage", color: "hsl(var(--accent))" },
+    count: { label: "Count", color: "hsl(var(--accent))" },
   };
 
+  const getTimeRangeLabel = (range: string) => {
+    switch (range) {
+      case 'short_term': return 'Last 4 Weeks';
+      case 'medium_term': return 'Last 6 Months';
+      case 'long_term': return 'All Time';
+      default: return 'This Period';
+    }
+  };
+
+  const selectedGenreData = useMemo(() => {
+    if (!selectedGenre) return null;
+    return genreAnalysis.genres.find(g => g.name === selectedGenre);
+  }, [selectedGenre, genreAnalysis.genres]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Genre Analysis</h1>
+          <p className="text-muted-foreground">Loading your genre preferences...</p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin h-8 w-8 border-2 border-accent rounded-full border-t-transparent" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Enhanced Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-foreground">Genre Deep Dive</h1>
-        <p className="text-muted-foreground">
-          Comprehensive analysis of your musical taste evolution and patterns
-        </p>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-accent">5</div>
-            <p className="text-xs text-muted-foreground">Active Genres</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-accent">4.5★</div>
-            <p className="text-xs text-muted-foreground">Avg Rating</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-accent">148</div>
-            <p className="text-xs text-muted-foreground">Total Artists</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-accent">78%</div>
-            <p className="text-xs text-muted-foreground">Diversity Score</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="evolution">Evolution</TabsTrigger>
-          <TabsTrigger value="mood">Mood Analysis</TabsTrigger>
-          <TabsTrigger value="details">Detailed Stats</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Genre Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Music className="h-5 w-5" />
-                  Genre Distribution
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chartConfig} className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={genreData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={120}
-                        paddingAngle={5}
-                        dataKey="value"
-                        onMouseEnter={(data) => setSelectedGenre(data.name)}
-                        onMouseLeave={() => setSelectedGenre(null)}
-                      >
-                        {genreData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={entry.color}
-                            stroke={selectedGenre === entry.name ? 'hsl(var(--accent))' : 'transparent'}
-                            strokeWidth={selectedGenre === entry.name ? 3 : 0}
-                          />
-                        ))}
-                      </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-
-            {/* Mood Analysis */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5" />
-                  Mood Profile
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer config={chartConfig} className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={moodData}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="mood" />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                      <Radar
-                        name="Mood"
-                        dataKey="value"
-                        stroke="hsl(var(--accent))"
-                        fill="hsl(var(--accent))"
-                        fillOpacity={0.3}
-                        strokeWidth={2}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+    <div className="space-y-4 md:space-y-6">
+      {/* Header with Controls */}
+      <div className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Genre Analysis</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Explore your musical taste and genre preferences over time
+          </p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="short_term">Last 4 Weeks</SelectItem>
+                <SelectItem value="medium_term">Last 6 Months</SelectItem>
+                <SelectItem value="long_term">All Time</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Genre Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {genreData.map((genre, index) => (
-              <Card 
-                key={index} 
-                className={`cursor-pointer transition-all hover:shadow-lg ${
-                  selectedGenre === genre.name ? 'ring-2 ring-accent' : ''
-                }`}
-                onClick={() => setSelectedGenre(selectedGenre === genre.name ? null : genre.name)}
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center justify-between">
-                    {genre.name}
-                    <div 
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: genre.color }}
-                    />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-2xl font-bold" style={{ color: genre.color }}>
-                    {genre.value}%
-                  </div>
-                  
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Rating</span>
-                      <span className="font-medium">{genre.avgRating}★</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Growth</span>
-                      <span className="font-medium text-green-600">{genre.recentGrowth}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Peak</span>
-                      <span className="font-medium">{genre.peakHours}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'overview' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('overview')}
+              className="flex items-center gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              Overview
+            </Button>
+            <Button
+              variant={viewMode === 'detailed' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('detailed')}
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Detailed
+            </Button>
           </div>
-        </TabsContent>
+        </div>
+      </div>
 
-        <TabsContent value="evolution" className="space-y-4">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <Card>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2">
+              <Music className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+              <span className="text-xs md:text-sm font-medium">Genres</span>
+            </div>
+            <div className="text-lg md:text-2xl font-bold">{genreAnalysis.genres.length}</div>
+            <div className="text-xs text-muted-foreground">discovered</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+              <span className="text-xs md:text-sm font-medium">Top Genre</span>
+            </div>
+            <div className="text-sm md:text-base font-bold truncate">
+              {genreAnalysis.genres[0]?.name || 'N/A'}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {genreAnalysis.genres[0]?.percentage || 0}% of listening
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+              <span className="text-xs md:text-sm font-medium">Diversity</span>
+            </div>
+            <div className="text-lg md:text-2xl font-bold">
+              {genreAnalysis.genres.length > 5 ? 'High' : genreAnalysis.genres.length > 2 ? 'Medium' : 'Low'}
+            </div>
+            <div className="text-xs text-muted-foreground">genre spread</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+              <span className="text-xs md:text-sm font-medium">Period</span>
+            </div>
+            <div className="text-sm md:text-base font-bold">
+              {getTimeRangeLabel(timeRange)}
+            </div>
+            <div className="text-xs text-muted-foreground">time range</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      {viewMode === 'overview' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          {/* Genre Distribution Pie Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Genre Evolution Over Time
+                <Disc className="h-5 w-5" />
+                Genre Distribution
               </CardTitle>
               <CardDescription>
-                How your musical preferences have changed
+                Your musical taste breakdown - {getTimeRangeLabel(timeRange)}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[400px]">
+              <ChartContainer config={chartConfig} className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={genreEvolution}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                  <PieChart>
+                    <Pie
+                      data={genreAnalysis.genres.slice(0, 8)}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percentage }) => `${name} ${percentage}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                    >
+                      {genreAnalysis.genres.slice(0, 8).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload[0]) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-background border border-border rounded-lg p-3 shadow-md">
+                              <p className="font-medium">{data.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {data.count} artists ({data.percentage}%)
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          {/* Top Genres List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5" />
+                Top Genres
+              </CardTitle>
+              <CardDescription>
+                Most listened genres ranked by artist count
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {genreAnalysis.genres.slice(0, 8).map((genre, index) => (
+                  <div 
+                    key={genre.name}
+                    className={`flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer hover:bg-accent/5 ${
+                      selectedGenre === genre.name ? 'bg-accent/10 border border-accent/20' : ''
+                    }`}
+                    onClick={() => setSelectedGenre(selectedGenre === genre.name ? null : genre.name)}
+                  >
+                    <div 
+                      className="w-4 h-4 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: chartColors[index % chartColors.length] }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium truncate">{genre.name}</p>
+                        <Badge variant="secondary" className="text-xs">
+                          {genre.percentage}%
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 mt-1">
+                        <p className="text-xs text-muted-foreground">
+                          {genre.artists.length} artists
+                        </p>
+                        <Progress value={genre.percentage} className="flex-1 h-1" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="space-y-4 md:space-y-6">
+          {/* Detailed Analysis */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Genre Evolution Over Time</CardTitle>
+              <CardDescription>
+                How your genre preferences have changed
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px] md:h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={genreEvolution}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-muted-foreground" />
+                    <YAxis className="text-muted-foreground" />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="Rock" fill="#FF6B6B" />
-                    <Bar dataKey="Pop" fill="#4ECDC4" />
-                    <Bar dataKey="Electronic" fill="#45B7D1" />
-                    <Bar dataKey="Hip Hop" fill="#96CEB4" />
-                    <Bar dataKey="Jazz" fill="#FFEAA7" />
+                    {genreAnalysis.genres.slice(0, 5).map((genre, index) => (
+                      <Line 
+                        key={genre.name}
+                        type="monotone" 
+                        dataKey={genre.name}
+                        stroke={chartColors[index % chartColors.length]}
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          {/* Genre Comparison Bar Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Artist Count by Genre</CardTitle>
+              <CardDescription>
+                Detailed breakdown of genre distribution
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={genreAnalysis.genres.slice(0, 10)} layout="horizontal">
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis type="number" className="text-muted-foreground" />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      className="text-muted-foreground" 
+                      width={100}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar 
+                      dataKey="count" 
+                      fill="hsl(var(--accent))"
+                      radius={[0, 4, 4, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="mood" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {moodData.map((mood, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle className="text-lg">{mood.mood}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="text-2xl font-bold text-accent">{mood.value}%</div>
-                    <Progress value={mood.value} className="flex-1" />
+      {/* Genre Detail Modal */}
+      {selectedGenreData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Music className="h-5 w-5" />
+              Genre Details: {selectedGenreData.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <div className="space-y-2">
+                <h4 className="font-medium">Statistics</h4>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>Share of listening:</span>
+                    <span className="font-medium">{selectedGenreData.percentage}%</span>
                   </div>
-                  <div className="flex gap-1 flex-wrap">
-                    {mood.genres.map((genre, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {genre}
-                      </Badge>
-                    ))}
+                  <div className="flex justify-between text-sm">
+                    <span>Artists:</span>
+                    <span className="font-medium">{selectedGenreData.artists.length}</span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="details" className="space-y-4">
-          {selectedGenre && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{selectedGenre} Deep Dive</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  const genre = genreData.find(g => g.name === selectedGenre);
-                  if (!genre) return null;
-                  
-                  return (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <Clock className="h-6 w-6 mx-auto mb-2 text-accent" />
-                        <div className="text-lg font-bold">{genre.avgTrackLength}</div>
-                        <div className="text-xs text-muted-foreground">Avg Track Length</div>
-                      </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <Users className="h-6 w-6 mx-auto mb-2 text-accent" />
-                        <div className="text-lg font-bold">{genre.topArtist}</div>
-                        <div className="text-xs text-muted-foreground">Top Artist</div>
-                      </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <Calendar className="h-6 w-6 mx-auto mb-2 text-accent" />
-                        <div className="text-lg font-bold">{genre.peakHours}</div>
-                        <div className="text-xs text-muted-foreground">Peak Hours</div>
-                      </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <Award className="h-6 w-6 mx-auto mb-2 text-accent" />
-                        <div className="text-lg font-bold">{genre.avgRating}★</div>
-                        <div className="text-xs text-muted-foreground">Avg Rating</div>
-                      </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Tracks:</span>
+                    <span className="font-medium">{selectedGenreData.tracks.length}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Top Artists</h4>
+                <div className="space-y-1">
+                  {selectedGenreData.artists.slice(0, 5).map((artist, index) => (
+                    <div key={index} className="text-sm text-muted-foreground">
+                      {artist}
                     </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Popular Tracks</h4>
+                <div className="space-y-1">
+                  {selectedGenreData.tracks.slice(0, 5).map((track, index) => (
+                    <div key={index} className="text-sm text-muted-foreground">
+                      {track}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

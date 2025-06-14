@@ -8,13 +8,17 @@ import { InteractiveOverview } from '@/components/dashboard/InteractiveOverview'
 import { ListeningActivity } from '@/components/dashboard/ListeningActivity';
 import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnalysis';
 import { PrivacyControls } from '@/components/dashboard/PrivacyControls';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const Dashboard = () => {
   const { user, isLoading } = useAuth();
   const { theme, accentColor } = useTheme();
   const [activeView, setActiveView] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -49,6 +53,19 @@ export const Dashboard = () => {
           
           <main className="flex-1 overflow-y-auto p-6">
             <div className="max-w-7xl mx-auto">
+              {/* Help Button */}
+              <div className="flex justify-end mb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/help')}
+                  className="flex items-center gap-2"
+                >
+                  <Info className="h-4 w-4" />
+                  Help & Security
+                </Button>
+              </div>
+              
               {activeView === 'overview' && <InteractiveOverview />}
               {activeView === 'trends' && <ListeningActivity />}
               {activeView === 'genres' && <EnhancedGenreAnalysis />}

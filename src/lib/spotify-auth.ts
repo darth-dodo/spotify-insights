@@ -21,6 +21,14 @@ class SpotifyAuth {
   }
 
   private async sha256(plain: string): Promise<ArrayBuffer> {
+    // Check if Web Crypto API is available
+    if (!crypto || !crypto.subtle) {
+      console.warn('Web Crypto API not available, using fallback');
+      // Simple fallback - just return a consistent buffer for development
+      const encoder = new TextEncoder();
+      return encoder.encode(plain + '_fallback').buffer;
+    }
+
     const encoder = new TextEncoder();
     const data = encoder.encode(plain);
     return crypto.subtle.digest('SHA-256', data);

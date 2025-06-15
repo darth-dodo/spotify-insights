@@ -65,7 +65,9 @@ export const fetchTopTracksData = async (timeRange: string, totalLimit: number):
     throw new Error('No access token available. Please authenticate with Spotify to view your top tracks.');
   }
 
-  return spotifyAPI.getExtendedTopTracks(token, timeRange, totalLimit);
+  // Cap at 2000 for performance optimization
+  const performanceLimit = Math.min(totalLimit, 2000);
+  return spotifyAPI.getExtendedTopTracks(token, timeRange, performanceLimit);
 };
 
 export const fetchTopArtistsData = async (timeRange: string, totalLimit: number): Promise<any> => {
@@ -78,5 +80,7 @@ export const fetchTopArtistsData = async (timeRange: string, totalLimit: number)
     throw new Error('No access token available. Please authenticate with Spotify to view your top artists.');
   }
 
-  return spotifyAPI.getExtendedTopArtists(token, timeRange, totalLimit);
+  // Cap at 2000 for performance optimization
+  const performanceLimit = Math.min(totalLimit, 2000);
+  return spotifyAPI.getExtendedTopArtists(token, timeRange, performanceLimit);
 };

@@ -21,15 +21,15 @@ export const useExtendedSpotifyDataStore = () => {
     return isSandboxMode() ? undefined : localStorage.getItem('spotify_access_token');
   };
 
-  // Single query to load all extended data
+  // Single query to load all limited dataset data (capped at 2000 for performance)
   const { data, isLoading, error } = useQuery({
     queryKey: ['extended-spotify-data-store', isSandboxMode()],
     queryFn: async () => {
       if (isSandboxMode()) {
         console.log('Using sandbox data strategy');
         const [tracksData, artistsData, recentData] = await Promise.all([
-          sandboxDataStrategy.getTopTracks(1000),
-          sandboxDataStrategy.getTopArtists(1000),
+          sandboxDataStrategy.getTopTracks(2000),
+          sandboxDataStrategy.getTopArtists(2000),
           sandboxDataStrategy.getRecentlyPlayed(50)
         ]);
 
@@ -42,10 +42,10 @@ export const useExtendedSpotifyDataStore = () => {
 
       const accessToken = getAccessToken();
       
-      // Fetch all data in parallel for production mode
+      // Fetch all data in parallel for production mode (limited to 2000 for performance)
       const [tracksData, artistsData, recentData] = await Promise.all([
-        spotifyAPI.getExtendedTopTracks(accessToken, 'medium_term', 1000),
-        spotifyAPI.getExtendedTopArtists(accessToken, 'medium_term', 1000),
+        spotifyAPI.getExtendedTopTracks(accessToken, 'medium_term', 2000),
+        spotifyAPI.getExtendedTopArtists(accessToken, 'medium_term', 2000),
         spotifyAPI.getRecentlyPlayed(accessToken, 50)
       ]);
 

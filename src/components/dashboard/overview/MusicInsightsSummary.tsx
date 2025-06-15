@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Music, TrendingUp, Users, Clock, Star, Headphones } from 'lucide-react';
 import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { InfoButton } from '@/components/ui/InfoButton';
 
 export const MusicInsightsSummary = () => {
   const { tracks, artists, recentlyPlayed, getGenreAnalysis, getStats, isLoading } = useExtendedSpotifyDataStore();
@@ -32,7 +33,7 @@ export const MusicInsightsSummary = () => {
       };
     }
 
-    // Enhanced genre analysis from the full dataset
+    // Enhanced genre analysis from the limited dataset
     const allGenres = artists.flatMap((artist: any) => artist.genres || []);
     const genreCount = allGenres.reduce((acc: Record<string, number>, genre: string) => {
       acc[genre] = (acc[genre] || 0) + 1;
@@ -43,7 +44,7 @@ export const MusicInsightsSummary = () => {
       .slice(0, 5)
       .map(([genre]) => genre);
 
-    // Enhanced popularity analysis from full dataset
+    // Enhanced popularity analysis from limited dataset
     const avgPopularity = tracks.length > 0 ? 
       tracks.reduce((acc: number, track: any) => acc + (track.popularity || 0), 0) / tracks.length : 0;
 
@@ -51,9 +52,9 @@ export const MusicInsightsSummary = () => {
     const totalDuration = recentlyPlayed.reduce((acc: number, item: any) => 
       acc + (item.track?.duration_ms || 0), 0) / (1000 * 60); // minutes
 
-    // Diversity metrics from extended dataset
+    // Diversity metrics from limited dataset (capped at 2000 for performance)
     const uniqueGenres = new Set(allGenres).size;
-    const diversityScore = Math.min((uniqueGenres / 15) * 100, 100); // Max 100%, scaled for larger dataset
+    const diversityScore = Math.min((uniqueGenres / 15) * 100, 100); // Max 100%, scaled for limited dataset
 
     return {
       topGenres,
@@ -64,8 +65,8 @@ export const MusicInsightsSummary = () => {
       totalTracks: tracks.length,
       totalArtists: artists.length,
       recentActivity: recentlyPlayed.length,
-      libraryDepth: Math.round((tracks.length / 1000) * 100), // Library completeness
-      artistCoverage: Math.round((artists.length / 1000) * 100), // Artist coverage
+      libraryDepth: Math.round((tracks.length / 2000) * 100), // Library completeness based on 2000 limit
+      artistCoverage: Math.round((artists.length / 2000) * 100), // Artist coverage based on 2000 limit
       hasData: true
     };
   };
@@ -136,7 +137,7 @@ export const MusicInsightsSummary = () => {
               </div>
             </div>
             <div className="mt-4 sm:mt-6 text-center">
-              <p className="text-sm text-muted-foreground">Connect your Spotify account to see your detailed music insights</p>
+              <p className="text-sm text-muted-foreground">Connect your Spotify account to see your detailed music insights from up to 2000 tracks (limited for performance)</p>
             </div>
           </CardContent>
         </Card>
@@ -151,7 +152,24 @@ export const MusicInsightsSummary = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Star className="h-4 w-4 sm:h-5 sm:w-5" />
-            Enhanced Music Profile (Extended Dataset)
+            Enhanced Music Profile (Limited Dataset)
+            <InfoButton
+              title="Enhanced Music Profile Overview"
+              description="Comprehensive overview of your music library from the limited dataset (capped at 2000 tracks/artists for optimal performance)."
+              calculation="Analyzes your top tracks, artists, listening time, and genre diversity from a performance-optimized dataset of up to 2000 items."
+              funFacts={[
+                "Your profile is built from actual Spotify listening data",
+                "We limit analysis to 2000 tracks/artists for smooth app performance",
+                "Data includes listening time from recent activity",
+                "Genre count reflects diversity from all analyzed artists"
+              ]}
+              metrics={[
+                { label: "Dataset Limit", value: "2000", description: "Max tracks/artists for performance" },
+                { label: "Your Tracks", value: `${insights.totalTracks}`, description: "Tracks in your library" },
+                { label: "Your Artists", value: `${insights.totalArtists}`, description: "Artists you follow" },
+                { label: "Listening Data", value: `${insights.totalListeningTime}m`, description: "Recent activity time" }
+              ]}
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -173,6 +191,11 @@ export const MusicInsightsSummary = () => {
               <div className="text-xs sm:text-sm text-muted-foreground">Unique Genres</div>
             </div>
           </div>
+          <div className="mt-3 text-center">
+            <p className="text-xs text-muted-foreground">
+              Analysis based on limited dataset (max 2000 tracks/artists for performance)
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -181,7 +204,23 @@ export const MusicInsightsSummary = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Music className="h-4 w-4 sm:h-5 sm:w-5" />
-            Genre Exploration (Full Dataset)
+            Genre Exploration (Limited Dataset)
+            <InfoButton
+              title="Genre Exploration Analysis"
+              description="Measures your musical diversity and genre exploration from the limited dataset."
+              calculation="Calculated from genres of artists in your limited library (up to 2000 for performance). Diversity score considers both genre count and variety. Library depth shows your coverage of the maximum dataset size."
+              funFacts={[
+                "Most users explore 3-8 genres regularly",
+                "High diversity scores indicate adventurous listening habits",
+                "Genre analysis helps improve music recommendations",
+                "Data is optimized to 2000 artists for smooth performance"
+              ]}
+              metrics={[
+                { label: "Genre Count", value: `${insights.uniqueGenres}`, description: "Different genres explored" },
+                { label: "Diversity Score", value: `${insights.diversityScore}%`, description: "Musical exploration level" },
+                { label: "Library Depth", value: `${insights.libraryDepth}%`, description: "Dataset coverage" }
+              ]}
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -193,7 +232,7 @@ export const MusicInsightsSummary = () => {
               </div>
               <Progress value={insights.diversityScore} className="h-2" />
               <p className="text-xs text-muted-foreground mt-1">
-                You explore {insights.uniqueGenres} different genres from {insights.totalArtists} artists
+                You explore {insights.uniqueGenres} different genres from {insights.totalArtists} artists (limited dataset)
               </p>
             </div>
             
@@ -221,7 +260,7 @@ export const MusicInsightsSummary = () => {
               </div>
               <Progress value={insights.libraryDepth} className="h-2" />
               <p className="text-xs text-muted-foreground mt-1">
-                {insights.totalTracks} tracks in extended dataset
+                {insights.totalTracks} tracks in limited dataset (max 2000 for performance)
               </p>
             </div>
           </div>
@@ -234,6 +273,22 @@ export const MusicInsightsSummary = () => {
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             Advanced Taste Analysis
+            <InfoButton
+              title="Advanced Taste Analysis"
+              description="Analyzes your music taste sophistication and listening patterns from the limited dataset."
+              calculation="Based on track popularity scores (0-100) and listening activity. Popularity averages determine if you prefer mainstream (80-100), popular (60-79), alternative (40-59), or underground (0-39) music. Analysis uses up to 2000 tracks for performance optimization."
+              funFacts={[
+                "Underground taste often predicts early artist discovery",
+                "Mainstream preference indicates alignment with popular culture",
+                "Your taste profile can reveal personality traits",
+                "Recent activity shows current listening engagement"
+              ]}
+              metrics={[
+                { label: "Avg Popularity", value: `${insights.avgPopularity}/100`, description: "Mainstream level" },
+                { label: "Taste Profile", value: popularityLevel.label, description: "Musical archetype" },
+                { label: "Recent Activity", value: `${insights.recentActivity}`, description: "Recent tracks played" }
+              ]}
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -247,7 +302,7 @@ export const MusicInsightsSummary = () => {
               </div>
               <Progress value={insights.avgPopularity} className="h-2" />
               <p className="text-xs text-muted-foreground mt-1">
-                Average track popularity: {insights.avgPopularity > 0 ? `${insights.avgPopularity}%` : 'No data'} (from {insights.totalTracks} tracks)
+                Average track popularity: {insights.avgPopularity > 0 ? `${insights.avgPopularity}%` : 'No data'} (from {insights.totalTracks} tracks in limited dataset)
               </p>
             </div>
             
@@ -269,7 +324,7 @@ export const MusicInsightsSummary = () => {
               </div>
               <Progress value={insights.artistCoverage} className="h-2" />
               <p className="text-xs text-muted-foreground mt-1">
-                {insights.totalArtists} artists in your extended library
+                {insights.totalArtists} artists in your limited library (max 2000 for performance)
               </p>
             </div>
           </div>

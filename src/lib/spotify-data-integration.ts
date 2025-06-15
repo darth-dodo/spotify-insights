@@ -20,7 +20,7 @@ class SpotifyDataIntegration {
   private cache = new SpotifyDataCache();
   private currentSession: ListeningSession | null = null;
 
-  async getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]> {
+  async getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]> => {
     try {
       const apiTracks = await fetchRecentlyPlayedData(limit);
       const apiIntegratedTracks = processRecentlyPlayedData(apiTracks);
@@ -60,15 +60,17 @@ class SpotifyDataIntegration {
     }
   }
 
-  async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedTrackData[]> {
-    const cacheKey = `${timeRange}_${totalLimit}`;
+  async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 2000): Promise<IntegratedTrackData[]> => {
+    // Cap at 2000 for performance optimization
+    const performanceLimit = Math.min(totalLimit, 2000);
+    const cacheKey = `${timeRange}_${performanceLimit}`;
     const cached = this.cache.getCachedTopTracks(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await fetchTopTracksData(timeRange, totalLimit);
+      const response = await fetchTopTracksData(timeRange, performanceLimit);
       
       if (response?.items && response.items.length > 0) {
         const integratedTracks = processTopTracksData(response.items);
@@ -93,15 +95,17 @@ class SpotifyDataIntegration {
     }
   }
 
-  async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedArtistData[]> {
-    const cacheKey = `${timeRange}_${totalLimit}`;
+  async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 2000): Promise<IntegratedArtistData[]> => {
+    // Cap at 2000 for performance optimization
+    const performanceLimit = Math.min(totalLimit, 2000);
+    const cacheKey = `${timeRange}_${performanceLimit}`;
     const cached = this.cache.getCachedTopArtists(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await fetchTopArtistsData(timeRange, totalLimit);
+      const response = await fetchTopArtistsData(timeRange, performanceLimit);
       
       if (response?.items && response.items.length > 0) {
         const integratedArtists = processTopArtistsData(response.items);

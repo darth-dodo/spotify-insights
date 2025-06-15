@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { OverviewHeader } from './overview/OverviewHeader';
 import { StatsOverview } from './overview/StatsOverview';
 import { MusicInsightsSummary } from './overview/MusicInsightsSummary';
@@ -16,8 +16,17 @@ interface InteractiveOverviewProps {
 }
 
 export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) => {
-  const { tracks, artists, recentlyPlayed, isLoading } = useExtendedSpotifyDataStore();
+  const { useTopTracks, useTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+
+  // Use smaller datasets for faster loading in demo mode
+  const { data: tracks, isLoading: tracksLoading } = useTopTracks('medium_term', 50);
+  const { data: artists, isLoading: artistsLoading } = useTopArtists('medium_term', 50);
+  const { data: recentlyPlayed, isLoading: recentLoading } = useEnhancedRecentlyPlayed(100);
+
+  // Consider loading complete if any data is available or after timeout
+  const isLoading = tracksLoading && artistsLoading && recentLoading;
+  const hasData = tracks?.items?.length > 0 || artists?.items?.length > 0 || recentlyPlayed?.length > 0;
 
   const handleNavigation = (view: string) => {
     if (onNavigate) {
@@ -25,16 +34,17 @@ export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) =>
     }
   };
 
-  if (isLoading) {
+  // Only show loader if we're actually loading and have no data yet
+  if (isLoading && !hasData) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Loading your music universe... 🎵</h1>
-          <p className="text-muted-foreground">Analyzing your extended dataset (up to 1000 tracks & artists) for comprehensive insights</p>
+          <p className="text-muted-foreground">Analyzing your music data for comprehensive insights</p>
         </div>
         <CalmingLoader 
-          title="Processing your extended music library..."
-          description="Loading up to 1000 tracks and artists to provide the most comprehensive insights possible"
+          title="Processing your music library..."
+          description="Loading your tracks and artists to provide personalized insights"
         />
       </div>
     );
@@ -45,13 +55,13 @@ export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) =>
       {/* Header */}
       <OverviewHeader />
 
-      {/* Enhanced Stats using Extended Dataset */}
+      {/* Enhanced Stats */}
       <StatsOverview 
         selectedCard={selectedCard} 
         onCardSelect={setSelectedCard} 
       />
 
-      {/* Enhanced Music Insights using Extended Dataset */}
+      {/* Enhanced Music Insights */}
       <MusicInsightsSummary />
 
       {/* Activity Heatmap */}

@@ -23,11 +23,34 @@ export const useAuthInitialization = (
         setError(null);
         hasInitialized.current = true;
 
-        // Check if we have a valid token
+        // Check if we're on root path without authentication - this is demo mode
+        if (window.location.pathname === '/') {
+          const token = localStorage.getItem('spotify_access_token');
+          console.log('Root path auth check - token exists:', !!token);
+
+          if (!token) {
+            console.log('No token found on root path, entering demo mode');
+            setIsLoading(false);
+            return;
+          }
+
+          // Check if token is expired
+          const tokenExpiry = localStorage.getItem('spotify_token_expiry');
+          if (tokenExpiry) {
+            const isExpired = Date.now() > parseInt(tokenExpiry);
+            if (isExpired && !USE_DUMMY_DATA) {
+              console.log('Token expired on root path, entering demo mode');
+              clearAllUserData();
+              setUser(null);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+
+        // Regular auth flow for other paths or when token exists
         const token = localStorage.getItem('spotify_access_token');
-        const tokenExpiry = localStorage.getItem('spotify_token_expiry');
-        
-        console.log('Initializing auth - token exists:', !!token);
+        console.log('Regular auth initialization - token exists:', !!token);
 
         if (!token) {
           console.log('No token found, user not authenticated');
@@ -36,6 +59,7 @@ export const useAuthInitialization = (
         }
 
         // Check if token is expired
+        const tokenExpiry = localStorage.getItem('spotify_token_expiry');
         if (tokenExpiry) {
           const isExpired = Date.now() > parseInt(tokenExpiry);
           if (isExpired && !USE_DUMMY_DATA) {
@@ -67,8 +91,16 @@ export const useAuthInitialization = (
         
       } catch (error: any) {
         console.error('Auth initialization error:', error);
-        setError('Failed to initialize authentication. Please refresh the page and try again.');
-        setUser(null);
+        
+        // On root path, gracefully fall back to demo mode instead of showing error
+        if (window.location.pathname === '/') {
+          console.log('Auth error on root path, falling back to demo mode');
+          setError(null);
+          setUser(null);
+        } else {
+          setError('Failed to initialize authentication. Please refresh the page and try again.');
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }

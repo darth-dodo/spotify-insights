@@ -1,10 +1,12 @@
 import { 
   dummySpotifyUser, 
-  dummyTopTracks, 
-  dummyTopArtists, 
-  dummyRecentlyPlayed, 
   dummyCurrentPlayback 
 } from './dummy-data';
+import { 
+  extensiveTopTracks, 
+  extensiveTopArtists, 
+  extensiveRecentlyPlayed 
+} from './extensive-dummy-data';
 
 const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true' || window.location.pathname === '/sandbox';
 const BASE_URL = 'https://api.spotify.com/v1';
@@ -12,29 +14,29 @@ const BASE_URL = 'https://api.spotify.com/v1';
 export class SpotifyAPI {
   private async makeRequest(endpoint: string, accessToken?: string) {
     if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
-      // Return dummy data based on endpoint
+      // Return extensive dummy data based on endpoint
       await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API delay
       
       switch (endpoint) {
         case '/me':
           return dummySpotifyUser;
         case '/me/top/tracks':
-          return dummyTopTracks;
+          return extensiveTopTracks;
         case '/me/top/artists':
-          return dummyTopArtists;
+          return extensiveTopArtists;
         case '/me/player/recently-played':
-          return dummyRecentlyPlayed;
+          return extensiveRecentlyPlayed;
         case '/me/player':
           return dummyCurrentPlayback;
         default:
           if (endpoint.startsWith('/me/top/tracks')) {
-            return dummyTopTracks;
+            return extensiveTopTracks;
           }
           if (endpoint.startsWith('/me/top/artists')) {
-            return dummyTopArtists;
+            return extensiveTopArtists;
           }
           if (endpoint.startsWith('/me/player/recently-played')) {
-            return dummyRecentlyPlayed;
+            return extensiveRecentlyPlayed;
           }
           throw new Error(`Dummy data not available for endpoint: ${endpoint}`);
       }

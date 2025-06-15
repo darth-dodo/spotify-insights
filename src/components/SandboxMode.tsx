@@ -5,22 +5,34 @@ import { Dashboard } from '@/components/Dashboard';
 import { AuthContext } from '@/hooks/useAuth';
 import { dummySpotifyUser } from '@/lib/dummy-data';
 import { sanitizeUserData } from '@/lib/data-utils';
+import { SandboxBanner } from '@/components/ui/SandboxBanner';
+import { ProjectDisclaimer } from '@/components/ui/ProjectDisclaimer';
+import { Footer } from '@/components/layout/Footer';
 
 // Create a sandbox auth context that always returns the demo user
 const sandboxAuthContext = {
   user: sanitizeUserData(dummySpotifyUser),
   isLoading: false,
+  error: null,
   login: async () => {},
   logout: () => {},
-  refreshToken: async () => {}
+  refreshToken: async () => {},
+  clearError: () => {}
 };
 
 export const SandboxMode = () => {
   return (
     <ThemeProvider>
-      <AuthContext.Provider value={sandboxAuthContext}>
-        <Dashboard />
-      </AuthContext.Provider>
+      <div className="min-h-screen bg-background">
+        <SandboxBanner />
+        <AuthContext.Provider value={sandboxAuthContext}>
+          <div className="container mx-auto px-4 py-6">
+            <ProjectDisclaimer />
+            <Dashboard />
+          </div>
+          <Footer />
+        </AuthContext.Provider>
+      </div>
     </ThemeProvider>
   );
 };

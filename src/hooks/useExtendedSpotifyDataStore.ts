@@ -1,8 +1,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { spotifyAPI } from '@/lib/spotify-api';
+import { SandboxDataStrategy } from '@/strategies/SandboxDataStrategy';
 
-const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
+// Determine if we're in sandbox mode
+const isSandboxMode = () => window.location.pathname === '/sandbox';
 
 interface ExtendedDataStore {
   tracks: any[];
@@ -13,17 +15,34 @@ interface ExtendedDataStore {
 }
 
 export const useExtendedSpotifyDataStore = () => {
+  const sandboxDataStrategy = new SandboxDataStrategy();
+  
   const getAccessToken = () => {
-    return USE_DUMMY_DATA ? undefined : localStorage.getItem('spotify_access_token');
+    return isSandboxMode() ? undefined : localStorage.getItem('spotify_access_token');
   };
 
   // Single query to load all extended data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['extended-spotify-data-store'],
+    queryKey: ['extended-spotify-data-store', isSandboxMode()],
     queryFn: async () => {
+      if (isSandboxMode()) {
+        console.log('Using sandbox data strategy');
+        const [tracksData, artistsData, recentData] = await Promise.all([
+          sandboxDataStrategy.getTopTracks(1000),
+          sandboxDataStrategy.getTopArtists(1000),
+          sandboxDataStrategy.getRecentlyPlayed(50)
+        ]);
+
+        return {
+          tracks: tracksData || [],
+          artists: artistsData || [],
+          recentlyPlayed: recentData || []
+        };
+      }
+
       const accessToken = getAccessToken();
       
-      // Fetch all data in parallel
+      // Fetch all data in parallel for production mode
       const [tracksData, artistsData, recentData] = await Promise.all([
         spotifyAPI.getExtendedTopTracks(accessToken, 'medium_term', 1000),
         spotifyAPI.getExtendedTopArtists(accessToken, 'medium_term', 1000),
@@ -71,6 +90,10 @@ export const useExtendedSpotifyDataStore = () => {
   };
 
   const getGenreAnalysis = () => {
+    if (isSandboxMode()) {
+      return sandboxDataStrategy.getGenreAnalysis();
+    }
+
     if (!data?.artists) return [];
     
     const genreCounts: Record<string, { count: number; tracks: number; artists: Set<string>; hours: number; color: string }> = {};
@@ -113,6 +136,10 @@ export const useExtendedSpotifyDataStore = () => {
   };
 
   const getStats = () => {
+    if (isSandboxMode()) {
+      return sandboxDataStrategy.getStats();
+    }
+
     if (!data) return null;
     
     const tracks = data.tracks || [];

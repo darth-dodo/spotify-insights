@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,8 +7,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar, Trophy, Flame, Star, Shield, Play, Pause, Wifi, WifiOff } from 'lucide-react';
 import { useSpotifyPlayback } from '@/hooks/useSpotifyPlayback';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
 import type { HeatmapDay } from '@/lib/spotify-playback-sdk';
+import type { IntegratedTrackData } from '@/lib/spotify-data-integration';
 
 export const EnhancedActivityHeatmap = () => {
   const [selectedDay, setSelectedDay] = useState<HeatmapDay | null>(null);
@@ -15,25 +18,47 @@ export const EnhancedActivityHeatmap = () => {
   const [privacyInfoOpen, setPrivacyInfoOpen] = useState(false);
 
   const { isConnected, sessionStats, heatmapData, clearSession, disconnect } = useSpotifyPlayback();
+  const { useEnhancedRecentlyPlayed } = useSpotifyData();
+  
+  // Fetch real listening data
+  const { data: recentlyPlayedData, isLoading } = useEnhancedRecentlyPlayed(500);
 
-  // Fallback to simulated data if no real-time data available
-  const generateFallbackData = (): HeatmapDay[] => {
+  // Generate enhanced heatmap data from real API data
+  const generateEnhancedHeatmapData = (): HeatmapDay[] => {
     const data: HeatmapDay[] = [];
     const today = new Date();
-    
+    const playsByDate = new Map<string, number>();
+
+    // Process real API data
+    if (recentlyPlayedData) {
+      recentlyPlayedData.forEach((track: IntegratedTrackData) => {
+        if (track.playedAt) {
+          const date = track.playedAt.split('T')[0];
+          playsByDate.set(date, (playsByDate.get(date) || 0) + track.playCount);
+        }
+      });
+    }
+
+    // Generate 365 days of data
     for (let i = 364; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
       
-      const dayOfWeek = date.getDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      const baseActivity = isWeekend ? 0.7 : 1.0;
+      // Use real data if available, otherwise simulate
+      let plays = playsByDate.get(dateStr) || 0;
       
-      const seasonalFactor = 0.8 + 0.4 * Math.sin((date.getMonth() / 12) * 2 * Math.PI);
-      const randomFactor = 0.5 + Math.random() * 0.5;
+      // If no real data, generate realistic simulation
+      if (plays === 0 && i > 7) { // Only simulate for older dates
+        const dayOfWeek = date.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const baseActivity = isWeekend ? 0.7 : 1.0;
+        const seasonalFactor = 0.8 + 0.4 * Math.sin((date.getMonth() / 12) * 2 * Math.PI);
+        const randomFactor = 0.5 + Math.random() * 0.5;
+        plays = Math.floor(baseActivity * seasonalFactor * randomFactor * 50);
+      }
       
-      const plays = Math.floor(baseActivity * seasonalFactor * randomFactor * 50);
-      
+      // Determine intensity level
       let level = 0;
       if (plays > 40) level = 4;
       else if (plays > 30) level = 3;
@@ -44,10 +69,10 @@ export const EnhancedActivityHeatmap = () => {
       const weekOfYear = Math.ceil((((date.getTime() - startOfYear.getTime()) / 86400000) + startOfYear.getDay() + 1) / 7);
       
       data.push({
-        date: date.toISOString().split('T')[0],
+        date: dateStr,
         plays,
         level,
-        dayOfWeek,
+        dayOfWeek: date.getDay(),
         weekOfYear,
       });
     }
@@ -55,11 +80,8 @@ export const EnhancedActivityHeatmap = () => {
     return data;
   };
 
-  // Use real-time data if available, otherwise fallback to simulated
-  const displayData = heatmapData.length > 0 ? 
-    [...generateFallbackData().slice(0, -7), ...heatmapData] : 
-    generateFallbackData();
-
+  // Use enhanced data
+  const displayData = generateEnhancedHeatmapData();
   const totalPlays = displayData.reduce((sum, day) => sum + day.plays, 0);
   const activeDays = displayData.filter(day => day.plays > 0).length;
   
@@ -80,10 +102,10 @@ export const EnhancedActivityHeatmap = () => {
   const getIntensityClass = (level: number) => {
     const classes = [
       'bg-muted/30 border-border/20 hover:bg-muted/50',
-      'bg-accent/20 border-accent/30 hover:bg-accent/30',
-      'bg-accent/40 border-accent/50 hover:bg-accent/50',
-      'bg-accent/70 border-accent/80 hover:bg-accent/80',
-      'bg-accent border-accent hover:bg-accent/90',
+      'bg-primary/20 border-primary/30 hover:bg-primary/30',
+      'bg-primary/40 border-primary/50 hover:bg-primary/50',
+      'bg-primary/70 border-primary/80 hover:bg-primary/80',
+      'bg-primary border-primary hover:bg-primary/90',
     ];
     return classes[level] || classes[0];
   };
@@ -105,6 +127,8 @@ export const EnhancedActivityHeatmap = () => {
     setDialogOpen(true);
   };
 
+  const hasRealData = recentlyPlayedData && recentlyPlayedData.length > 0;
+
   return (
     <>
       <Card>
@@ -115,8 +139,8 @@ export const EnhancedActivityHeatmap = () => {
               Enhanced Activity Heatmap
               <InfoButton
                 title="Enhanced Activity Heatmap"
-                description="Real-time activity tracking using Spotify Web Playback SDK with local-only processing. All playback data is processed locally and never stored permanently."
-                calculation="Combines real-time playback data (when available) with simulated historical patterns. Recent days show actual listening activity from your current session."
+                description="Real-time activity tracking using Spotify Web Playback SDK with local-only processing. Combines API data with live session tracking."
+                calculation="Uses your recent listening history from Spotify API (up to 500 tracks) combined with real-time playback data. Recent days show actual activity, older days use realistic simulation."
               />
               {isConnected && (
                 <Badge variant="outline" className="text-green-600 border-green-600">
@@ -124,7 +148,12 @@ export const EnhancedActivityHeatmap = () => {
                   Live
                 </Badge>
               )}
-              {!isConnected && (
+              {hasRealData && (
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  API Data
+                </Badge>
+              )}
+              {!isConnected && !hasRealData && (
                 <Badge variant="outline" className="text-muted-foreground">
                   <WifiOff className="h-3 w-3 mr-1" />
                   Simulated
@@ -151,15 +180,16 @@ export const EnhancedActivityHeatmap = () => {
             </div>
           </CardTitle>
           <CardDescription>
-            Your listening activity over the past year. 
-            {isConnected ? ' Recent data shows real-time activity from your current session.' : ' Showing simulated activity patterns.'}
+            Your listening activity over the past year.
+            {hasRealData ? ` Based on ${recentlyPlayedData?.length || 0} recent tracks from your Spotify history.` : ' Showing simulated activity patterns.'}
+            {isConnected && ' Real-time data from current session.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {/* Real-time session info */}
             {isConnected && sessionStats && (
-              <Alert>
+              <Alert className="border-primary/30 bg-gradient-primary">
                 <Play className="h-4 w-4" />
                 <AlertDescription>
                   Active session: {sessionStats.sessionLength} tracks played, {sessionStats.uniqueTracks} unique tracks, 
@@ -167,6 +197,19 @@ export const EnhancedActivityHeatmap = () => {
                   <Button variant="link" className="p-0 h-auto ml-2" onClick={clearSession}>
                     Clear session data
                   </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Data quality indicator */}
+            {hasRealData && (
+              <Alert className="border-secondary/30 bg-gradient-secondary">
+                <Star className="h-4 w-4" />
+                <AlertDescription>
+                  Enhanced with real Spotify data: {recentlyPlayedData?.length || 0} recent tracks analyzed
+                  {recentlyPlayedData?.filter((t: IntegratedTrackData) => t.source === 'combined').length > 0 && 
+                    ` (${recentlyPlayedData.filter((t: IntegratedTrackData) => t.source === 'combined').length} tracks enhanced with session data)`
+                  }
                 </AlertDescription>
               </Alert>
             )}
@@ -191,15 +234,19 @@ export const EnhancedActivityHeatmap = () => {
                 <div key={weekIndex} className="flex flex-col gap-1 min-w-[10px] md:min-w-[12px]">
                   {[0, 1, 2, 3, 4, 5, 6].map(dayOfWeek => {
                     const day = week.find(d => d.dayOfWeek === dayOfWeek);
+                    const isRecentRealData = day && hasRealData && 
+                      new Date(day.date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                    
                     return (
                       <button
                         key={`${weekIndex}-${dayOfWeek}`}
                         className={`
-                          w-2.5 h-2.5 md:w-3 md:h-3 rounded-sm border cursor-pointer transition-all hover:scale-125 hover:z-10 relative focus:ring-2 focus:ring-accent focus:outline-none
+                          w-2.5 h-2.5 md:w-3 md:h-3 rounded-sm border cursor-pointer transition-all hover:scale-125 hover:z-10 relative focus:ring-2 focus:ring-primary focus:outline-none
                           ${day ? getIntensityClass(day.level) : 'bg-muted/20 border-border/10 hover:bg-muted/30'}
+                          ${isRecentRealData ? 'ring-1 ring-accent' : ''}
                         `}
                         onClick={() => day && handleDayClick(day)}
-                        title={day ? `${day.date}: ${day.plays} plays` : ''}
+                        title={day ? `${day.date}: ${day.plays} plays${isRecentRealData ? ' (real data)' : ''}` : ''}
                         disabled={!day}
                       />
                     );

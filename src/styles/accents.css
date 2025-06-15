@@ -1,24 +1,24 @@
 
 :root {
-  /* Spotify Green */
+  /* Spotify Green - Primary accent */
   --accent-spotify: 142 69% 58%;
   --accent-spotify-foreground: 210 40% 98%;
   
-  /* Ocean Blue */
-  --accent-blue: 221 83% 53%;
+  /* Deep Ocean Blue - Primary alternative */
+  --accent-blue: 217 91% 60%;
   --accent-blue-foreground: 210 40% 98%;
   
-  /* Royal Purple */
-  --accent-purple: 262 83% 58%;
+  /* Royal Purple - Secondary accent */
+  --accent-purple: 262 83% 65%;
   --accent-purple-foreground: 210 40% 98%;
   
-  /* Vibrant Pink */
-  --accent-pink: 330 81% 60%;
-  --accent-pink-foreground: 210 40% 98%;
+  /* Vibrant Coral - Complementary accent */
+  --accent-coral: 14 90% 65%;
+  --accent-coral-foreground: 210 40% 98%;
   
-  /* Sunset Orange */
-  --accent-orange: 25 95% 53%;
-  --accent-orange-foreground: 210 40% 98%;
+  /* Warm Amber - Tertiary accent */
+  --accent-amber: 43 96% 56%;
+  --accent-amber-foreground: 222 84% 4.9%;
 }
 
 [data-accent="spotify"] {
@@ -36,12 +36,12 @@
   --accent-foreground: var(--accent-purple-foreground);
 }
 
-[data-accent="pink"] {
-  --accent: var(--accent-pink);
-  --accent-foreground: var(--accent-pink-foreground);
+[data-accent="coral"] {
+  --accent: var(--accent-coral);
+  --accent-foreground: var(--accent-coral-foreground);
 }
 
-[data-accent="orange"] {
-  --accent: var(--accent-orange);
-  --accent-foreground: var(--accent-orange-foreground);
+[data-accent="amber"] {
+  --accent: var(--accent-amber);
+  --accent-foreground: var(--accent-amber-foreground);
 }

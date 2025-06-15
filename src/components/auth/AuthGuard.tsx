@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
@@ -11,6 +11,7 @@ interface AuthGuardProps {
 
 export const AuthGuard = ({ children, loginComponent, dashboardComponent }: AuthGuardProps) => {
   const { user, isLoading, error } = useAuth();
+  const sdkCleanupDone = useRef(false);
 
   console.log('AuthGuard state:', { 
     user: !!user, 
@@ -19,15 +20,16 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     path: window.location.pathname 
   });
 
-  // Prevent Spotify SDK from loading when in demo mode
+  // Prevent Spotify SDK from loading when in demo mode - run only once
   useEffect(() => {
-    if (window.location.pathname === '/' && !user && !isLoading) {
+    if (window.location.pathname === '/' && !user && !isLoading && !sdkCleanupDone.current) {
       // Clear any existing SDK initialization attempts
       const existingScript = document.querySelector('script[src*="sdk.scdn.co"]');
       if (existingScript) {
         existingScript.remove();
         console.log('Removed Spotify SDK script for demo mode');
       }
+      sdkCleanupDone.current = true;
     }
   }, [user, isLoading]);
 

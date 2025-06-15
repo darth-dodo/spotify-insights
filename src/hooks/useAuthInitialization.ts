@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+
+import { useEffect, useRef } from 'react';
 import type { User } from './useAuthState';
 
 const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
@@ -10,11 +11,17 @@ export const useAuthInitialization = (
   fetchAndSetUser: () => Promise<any>,
   clearAllUserData: () => void
 ) => {
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
+    // Prevent multiple initializations
+    if (hasInitialized.current) return;
+
     const initAuth = async () => {
       try {
         setIsLoading(true);
         setError(null);
+        hasInitialized.current = true;
 
         // Check if we have a valid token
         const token = localStorage.getItem('spotify_access_token');
@@ -47,22 +54,6 @@ export const useAuthInitialization = (
             const parsedUser = JSON.parse(cachedUser);
             console.log('Using cached user data');
             setUser(parsedUser);
-            
-            // For dummy data, we can trust the cached data completely
-            if (USE_DUMMY_DATA) {
-              setIsLoading(false);
-              return;
-            }
-            
-            // For real auth, validate the token by making a quick API call
-            try {
-              await fetchAndSetUser();
-            } catch (validationError) {
-              console.warn('Token validation failed, but keeping cached user for now');
-              // Keep the cached user but set an error for background issues
-              setError('Connection issues detected. Some features may be limited.');
-            }
-            
             setIsLoading(false);
             return;
           } catch (parseError) {
@@ -84,5 +75,12 @@ export const useAuthInitialization = (
     };
 
     initAuth();
-  }, [setIsLoading, setError, setUser, fetchAndSetUser, clearAllUserData]);
+  }, []); // Empty dependency array to run only once
+
+  // Reset initialization flag when component unmounts
+  useEffect(() => {
+    return () => {
+      hasInitialized.current = false;
+    };
+  }, []);
 };

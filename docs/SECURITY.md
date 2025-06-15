@@ -1,4 +1,3 @@
-
 # Security Documentation
 
 ## Table of Contents
@@ -6,26 +5,29 @@
 2. [Authentication Security](#authentication-security)
 3. [Data Protection](#data-protection)
 4. [Privacy Implementation](#privacy-implementation)
-5. [Security Headers](#security-headers)
-6. [Vulnerability Assessment](#vulnerability-assessment)
-7. [Compliance](#compliance)
+5. [Web Playback SDK Security](#web-playback-sdk-security)
+6. [Security Headers](#security-headers)
+7. [Vulnerability Assessment](#vulnerability-assessment)
+8. [Compliance](#compliance)
 
 ## Security Overview
 
 ### Security Principles
 1. **Privacy by Design** - Minimal data collection from the start
-2. **Zero Trust** - Never trust, always verify
-3. **Defense in Depth** - Multiple layers of security
-4. **Least Privilege** - Minimum necessary permissions
-5. **Data Minimization** - Collect only what's needed
+2. **Local-First Processing** - Real-time data processed locally without permanent storage
+3. **Zero Trust** - Never trust, always verify
+4. **Defense in Depth** - Multiple layers of security
+5. **Least Privilege** - Minimum necessary permissions
+6. **Data Minimization** - Collect only what's needed
 
-### Threat Model
+### Enhanced Threat Model
 | Threat | Impact | Likelihood | Mitigation |
 |---|---|---|---|
 | **XSS Attacks** | High | Medium | CSP headers, input sanitization |
 | **Token Theft** | High | Low | Secure storage, HTTPS only |
 | **CSRF Attacks** | Medium | Low | State parameter, SameSite cookies |
-| **Data Breaches** | Medium | Low | Minimal data storage, hashing |
+| **Playback Data Interception** | Medium | Low | Local-only processing, no transmission |
+| **Memory-based Data Leaks** | Low | Low | Automatic cleanup, session limits |
 | **Man-in-the-Middle** | High | Low | HTTPS enforcement, HSTS |
 
 ## Authentication Security
@@ -118,40 +120,9 @@ export const hashData = async (data: string): Promise<string> => {
 | `user@example.com` | Not collected | `null` | Maximum |
 | `United States` | ISO code conversion | `US` | Low |
 
-### Encryption at Rest
+### Enhanced Data Lifecycle Management
 ```typescript
-// Client-side encryption for sensitive data
-class SecureStorage {
-  private static async generateKey(): Promise<CryptoKey> {
-    return crypto.subtle.generateKey(
-      { name: 'AES-GCM', length: 256 },
-      true,
-      ['encrypt', 'decrypt']
-    );
-  }
-
-  static async encryptData(data: string): Promise<string> {
-    const key = await this.generateKey();
-    const encoded = new TextEncoder().encode(data);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    
-    const encrypted = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      encoded
-    );
-    
-    return btoa(JSON.stringify({
-      data: Array.from(new Uint8Array(encrypted)),
-      iv: Array.from(iv)
-    }));
-  }
-}
-```
-
-### Data Lifecycle Management
-```typescript
-// Automatic data cleanup on user logout
+// Comprehensive data cleanup including playback session data
 const secureLogout = () => {
   // Clear all authentication data
   localStorage.removeItem('spotify_access_token');
@@ -169,7 +140,12 @@ const secureLogout = () => {
   // Clear session storage
   sessionStorage.clear();
   
-  console.log('All user data securely cleared');
+  // Disconnect and clear Web Playback SDK data
+  if (window.spotifyPlaybackSDK) {
+    window.spotifyPlaybackSDK.disconnect();
+  }
+  
+  console.log('All user data including playback session data securely cleared');
 };
 ```
 
@@ -203,9 +179,9 @@ const sanitizeUserData = (userData: any) => {
 - **Tokens:** API access only
 - **Preferences:** UI customization only
 
-### Privacy Controls Implementation
+### Enhanced Privacy Controls Implementation
 ```typescript
-// User data export functionality
+// Enhanced user data export including playback session info
 const exportUserData = () => {
   const userData = {
     profile: JSON.parse(localStorage.getItem('user_profile') || '{}'),
@@ -213,10 +189,16 @@ const exportUserData = () => {
       theme: localStorage.getItem('theme'),
       accentColor: localStorage.getItem('accentColor')
     },
+    sessionInfo: {
+      playbackSDKConnected: window.spotifyPlaybackSDK?.isConnected() || false,
+      sessionStats: window.spotifyPlaybackSDK?.getSessionStats() || null,
+      note: "Playback session data is temporary and not included in export"
+    },
     metadata: {
       exportDate: new Date().toISOString(),
-      dataVersion: '1.0',
-      format: 'JSON'
+      dataVersion: '2.0',
+      format: 'JSON',
+      privacyLevel: 'Enhanced with local-only processing'
     }
   };
   
@@ -234,18 +216,124 @@ const exportUserData = () => {
 };
 ```
 
+## Web Playback SDK Security
+
+### Local-Only Processing Security
+```typescript
+// Security-focused playback session management
+class SecurePlaybackSession {
+  private static readonly MAX_SESSION_SIZE = 100;
+  private static readonly SESSION_TIMEOUT = 3600000; // 1 hour
+  
+  private sessionData: LocalPlaybackSession[] = [];
+  private lastActivity: number = Date.now();
+  
+  // Security: Automatic session cleanup
+  private cleanupExpiredSessions() {
+    const now = Date.now();
+    
+    // Remove old sessions beyond timeout
+    this.sessionData = this.sessionData.filter(
+      session => (now - session.timestamp) < SecurePlaybackSession.SESSION_TIMEOUT
+    );
+    
+    // Limit memory usage
+    if (this.sessionData.length > SecurePlaybackSession.MAX_SESSION_SIZE) {
+      this.sessionData = this.sessionData.slice(-SecurePlaybackSession.MAX_SESSION_SIZE);
+    }
+  }
+  
+  // Security: Sanitized data processing
+  processPlaybackEvent(state: PlaybackState) {
+    this.cleanupExpiredSessions();
+    
+    // Only store essential, non-sensitive data
+    const sanitizedSession: LocalPlaybackSession = {
+      timestamp: Date.now(),
+      trackId: this.sanitizeTrackId(state.track_window.current_track.id),
+      duration: Math.max(0, state.duration), // Prevent negative values
+      progress: Math.max(0, Math.min(state.position, state.duration)), // Clamp progress
+      deviceType: this.detectSecureDeviceType()
+    };
+    
+    this.sessionData.push(sanitizedSession);
+    this.lastActivity = Date.now();
+  }
+  
+  private sanitizeTrackId(trackId: string): string {
+    // Ensure track ID is a valid Spotify ID format
+    return trackId.replace(/[^a-zA-Z0-9]/g, '').substring(0, 22);
+  }
+  
+  private detectSecureDeviceType(): 'web' | 'mobile' | 'desktop' {
+    // Minimal user agent detection without exposing detailed browser info
+    const userAgent = navigator.userAgent.toLowerCase();
+    return /mobile|android|iphone|ipad/.test(userAgent) ? 'mobile' : 'web';
+  }
+  
+  // Security: Complete data clearing
+  clearAllData() {
+    this.sessionData = [];
+    this.lastActivity = 0;
+    console.log('All playback session data securely cleared');
+  }
+}
+```
+
+### SDK Integration Security
+```typescript
+// Secure SDK initialization with error handling
+const initializePlaybackSDKSecurely = async (token: string) => {
+  try {
+    // Validate token format before use
+    if (!token || !token.match(/^[A-Za-z0-9_-]+$/)) {
+      throw new Error('Invalid token format');
+    }
+    
+    // Initialize with minimal permissions
+    const player = new window.Spotify.Player({
+      name: 'Spotify Analytics Dashboard',
+      getOAuthToken: (cb: (token: string) => void) => {
+        // Verify token is still valid before providing
+        if (isTokenValid(token)) {
+          cb(token);
+        } else {
+          logSecurityEvent('Token validation failed', { action: 'playback_auth' });
+          throw new Error('Token expired or invalid');
+        }
+      },
+      volume: 0.5
+    });
+    
+    // Security: Monitor for suspicious activity
+    player.addListener('initialization_error', ({ message }: { message: string }) => {
+      logSecurityEvent('Playback SDK initialization error', { message });
+    });
+    
+    player.addListener('authentication_error', ({ message }: { message: string }) => {
+      logSecurityEvent('Playback SDK authentication error', { message });
+    });
+    
+    return player;
+  } catch (error) {
+    logSecurityEvent('Playback SDK security error', { error: error.message });
+    throw error;
+  }
+};
+```
+
 ## Security Headers
 
-### Content Security Policy (CSP)
+### Enhanced CSP for Playback SDK
 ```html
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' 'unsafe-inline';
+  script-src 'self' 'unsafe-inline' https://sdk.scdn.co;
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data: https:;
-  connect-src 'self' https://api.spotify.com https://accounts.spotify.com;
+  img-src 'self' data: https: *.spotifycdn.com *.scdn.co;
+  connect-src 'self' https://api.spotify.com https://accounts.spotify.com wss://dealer.spotify.com;
   font-src 'self';
-  media-src 'self';
+  media-src 'self' https: *.spotifycdn.com;
   frame-src 'none';
   object-src 'none';
   base-uri 'self';
@@ -268,7 +356,23 @@ const securityHeaders = {
 
 ## Vulnerability Assessment
 
-### Common Vulnerabilities & Mitigations
+### Enhanced Vulnerabilities & Mitigations
+
+#### Playback Data Exposure
+- **Risk:** Medium
+- **Mitigation:**
+  - Local-only processing (no network transmission)
+  - Memory-only storage (no persistence)
+  - Automatic cleanup on session end
+  - User-controlled data clearing
+
+#### Memory-based Attacks
+- **Risk:** Low
+- **Mitigation:**
+  - Session size limits (max 100 entries)
+  - Automatic timeout cleanup (1 hour)
+  - Sanitized data storage
+  - No sensitive data in memory
 
 #### XSS (Cross-Site Scripting)
 - **Risk:** High
@@ -301,38 +405,46 @@ const securityHeaders = {
   - Secure data disposal
   - No analytics tracking
 
-### Security Testing Checklist
+### Enhanced Security Testing Checklist
 - [ ] OAuth flow security validation
 - [ ] Token storage encryption
 - [ ] XSS vulnerability scanning
 - [ ] CSRF protection testing
 - [ ] Data sanitization verification
 - [ ] Security header validation
-- [ ] Third-party dependency audit
+- [ ] Playback SDK isolation testing
+- [ ] Memory leak detection
+- [ ] Session cleanup verification
 - [ ] Privacy control functionality
+- [ ] Third-party dependency audit
 
 ## Compliance
 
-### GDPR Compliance
+### Enhanced GDPR Compliance
 
 #### Article 25 - Data Protection by Design
-- **Implementation:** Minimal data collection from system design
-- **Evidence:** Data minimization in code architecture
+- **Implementation:** Local-only playback processing, minimal data collection
+- **Evidence:** Web Playback SDK with memory-only storage architecture
 
 #### Article 32 - Security of Processing
-- **Implementation:** SHA-256 hashing, secure storage
-- **Evidence:** Cryptographic protection measures
+- **Implementation:** Enhanced security with local processing, no persistent storage of playback data
+- **Evidence:** Memory-only session management, automatic cleanup mechanisms
 
 #### Article 17 - Right to Erasure
 - **Implementation:** Data deletion functionality
 - **Evidence:** Complete data removal on user request
 
 ```typescript
-// GDPR Article 17 compliance implementation
-const rightToErasure = async () => {
+// Enhanced GDPR Article 17 compliance with playback data
+const enhancedRightToErasure = async () => {
   // Clear all personal data
   localStorage.clear();
   sessionStorage.clear();
+  
+  // Clear playback session data
+  if (window.spotifyPlaybackSDK) {
+    window.spotifyPlaybackSDK.disconnect();
+  }
   
   // Clear any cached data
   if ('caches' in window) {
@@ -347,7 +459,7 @@ const rightToErasure = async () => {
     // Implementation for clearing IndexedDB
   }
   
-  console.log('All personal data erased per GDPR Article 17');
+  console.log('All personal data including playback session data erased per GDPR Article 17');
 };
 ```
 
@@ -375,15 +487,19 @@ const rightToErasure = async () => {
 
 ## Security Monitoring
 
-### Error Tracking
+### Enhanced Error Tracking
 ```typescript
-// Security event logging
+// Enhanced security event logging including playback events
 const logSecurityEvent = (event: string, details: any) => {
   const securityLog = {
     timestamp: new Date().toISOString(),
     event,
-    details,
-    userAgent: navigator.userAgent,
+    details: {
+      ...details,
+      playbackSDKActive: window.spotifyPlaybackSDK?.isConnected() || false,
+      sessionDataSize: window.spotifyPlaybackSDK?.getSessionStats()?.sessionLength || 0
+    },
+    userAgent: navigator.userAgent.substring(0, 100), // Truncate for privacy
     url: window.location.href
   };
   
@@ -396,15 +512,20 @@ const logSecurityEvent = (event: string, details: any) => {
   // });
 };
 
-// Monitor for potential security issues
-window.addEventListener('error', (event) => {
-  if (event.error?.name === 'SecurityError') {
-    logSecurityEvent('SecurityError', {
-      message: event.error.message,
-      stack: event.error.stack
-    });
-  }
-});
+// Monitor playback SDK security events
+if (window.spotifyPlaybackSDK) {
+  // Monitor for excessive session data
+  setInterval(() => {
+    const stats = window.spotifyPlaybackSDK.getSessionStats();
+    if (stats?.sessionLength > 200) {
+      logSecurityEvent('Excessive session data detected', {
+        sessionLength: stats.sessionLength,
+        action: 'automatic_cleanup_triggered'
+      });
+      window.spotifyPlaybackSDK.clearSessionData();
+    }
+  }, 300000); // Check every 5 minutes
+}
 ```
 
 ### Performance Monitoring
@@ -453,3 +574,5 @@ npx audit-ci --moderate
 - Implement automatic security updates where possible
 - Maintain security changelog
 - Regular security training for development team
+
+This enhanced security documentation reflects the implementation of Web Playback SDK with local-only processing, maintaining the application's privacy-first approach while providing real-time capabilities.

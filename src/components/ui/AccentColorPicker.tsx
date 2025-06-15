@@ -6,15 +6,15 @@ import { useTheme } from '@/hooks/useTheme';
 import { Palette, Check } from 'lucide-react';
 
 const accentColors = [
-  { id: 'spotify', name: 'Spotify Green', lightColor: '#77C98E', darkColor: '#1DB954' },
-  { id: 'blue', name: 'Ocean Blue', lightColor: '#93C5FD', darkColor: '#3B82F6' },
-  { id: 'purple', name: 'Royal Purple', lightColor: '#C4B5FD', darkColor: '#8B5CF6' },
-  { id: 'pink', name: 'Vibrant Pink', lightColor: '#FBB6CE', darkColor: '#EC4899' },
-  { id: 'orange', name: 'Sunset Orange', lightColor: '#FED7AA', darkColor: '#F59E0B' },
+  { id: 'spotify', name: 'Spotify Green', color: 'hsl(142, 69%, 58%)' },
+  { id: 'blue', name: 'Ocean Blue', color: 'hsl(221, 83%, 53%)' },
+  { id: 'purple', name: 'Royal Purple', color: 'hsl(262, 83%, 58%)' },
+  { id: 'pink', name: 'Vibrant Pink', color: 'hsl(330, 81%, 60%)' },
+  { id: 'orange', name: 'Sunset Orange', color: 'hsl(25, 95%, 53%)' },
 ] as const;
 
 export const AccentColorPicker = () => {
-  const { accentColor, setAccentColor, theme } = useTheme();
+  const { accentColor, setAccentColor } = useTheme();
 
   return (
     <DropdownMenu>
@@ -34,9 +34,7 @@ export const AccentColorPicker = () => {
           >
             <div 
               className="w-4 h-4 rounded-full border-2 border-border"
-              style={{ 
-                backgroundColor: theme === 'dark' ? color.darkColor : color.lightColor 
-              }}
+              style={{ backgroundColor: color.color }}
             />
             <span className="flex-1">{color.name}</span>
             {accentColor === color.id && (

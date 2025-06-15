@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { CalmingLoader } from '@/components/ui/CalmingLoader';
 import { spotifyPlaybackSDK } from '@/lib/spotify-playback-sdk';
+import { LandingPage } from '@/components/LandingPage';
 
 interface AuthGuardProps {
   children?: React.ReactNode;
@@ -21,14 +22,12 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     path: window.location.pathname 
   });
 
-  // Prevent Spotify SDK from loading when in demo mode - run only once
+  // Clean up Spotify SDK in demo mode
   useEffect(() => {
     if (window.location.pathname === '/' && !user && !isLoading && !sdkCleanupDone.current) {
-      // Clear any existing SDK initialization attempts and scripts
       try {
         spotifyPlaybackSDK.disconnect();
         
-        // Also remove the global callback if it exists
         if ((window as any).onSpotifyWebPlaybackSDKReady) {
           delete (window as any).onSpotifyWebPlaybackSDKReady;
         }
@@ -41,15 +40,6 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
       sdkCleanupDone.current = true;
     }
   }, [user, isLoading]);
-
-  // If we're on the root path and not authenticated, show the dashboard with demo data
-  // Force demo mode after a reasonable loading timeout to prevent infinite loading
-  const shouldShowDemo = window.location.pathname === '/' && !user && (!isLoading || error);
-  
-  if (shouldShowDemo) {
-    console.log('No authentication on root path, showing dashboard with demo data');
-    return dashboardComponent || children;
-  }
 
   if (isLoading) {
     return (
@@ -66,11 +56,19 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     console.error('Auth error in AuthGuard:', error);
   }
 
-  if (!user) {
-    console.log('User not authenticated, showing login');
-    return loginComponent || children;
+  // Show dashboard if user is authenticated
+  if (user) {
+    console.log('User authenticated, showing dashboard');
+    return dashboardComponent || children;
   }
 
-  console.log('User authenticated, showing dashboard');
-  return dashboardComponent || children;
+  // For root path without authentication, show demo dashboard
+  if (window.location.pathname === '/' && !user) {
+    console.log('No authentication on root path, showing dashboard with demo data');
+    return dashboardComponent || children;
+  }
+
+  // For other paths or explicit login, show landing page
+  console.log('User not authenticated, showing landing page');
+  return <LandingPage />;
 };

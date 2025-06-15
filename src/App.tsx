@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ApiErrorBoundary } from "@/components/error-states/ApiErrorBoundary";
 import { Dashboard } from "@/components/Dashboard";
-import { LoginPage } from "@/components/auth/LoginPage";
 import { CallbackPage } from "@/components/auth/CallbackPage";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { SandboxMode } from "@/components/SandboxMode";
@@ -22,7 +21,6 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5,
       retry: (failureCount, error) => {
-        // Don't retry on rate limits or auth errors
         if (error?.message?.includes('429') || error?.message?.includes('401')) {
           return false;
         }
@@ -51,7 +49,6 @@ const App = () => (
                   path="/" 
                   element={
                     <AuthGuard 
-                      loginComponent={<Index />}
                       dashboardComponent={<Dashboard />}
                     />
                   } 

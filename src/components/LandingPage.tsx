@@ -7,7 +7,7 @@ import { Music, BarChart3, Users, TrendingUp, Play, Eye, LogIn, Zap, Shield, Loc
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
-const Index = () => {
+export const LandingPage = () => {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
 
@@ -67,7 +67,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       <div className="container mx-auto px-4 py-16">
-        {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-accent/10 rounded-full">
@@ -83,7 +82,6 @@ const Index = () => {
             Beautiful visualizations and analytics that respect your data.
           </p>
           
-          {/* Privacy First Badge */}
           <div className="flex justify-center mb-8">
             <Badge variant="outline" className="text-accent border-accent px-6 py-2 text-base">
               <Shield className="h-4 w-4 mr-2" />
@@ -91,7 +89,6 @@ const Index = () => {
             </Badge>
           </div>
           
-          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Button 
               size="lg" 
@@ -113,7 +110,6 @@ const Index = () => {
             </Button>
           </div>
 
-          {/* Privacy Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-12">
             {privacyFeatures.map((feature, index) => (
               <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -129,7 +125,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {features.map((feature, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow border-accent/10">
@@ -150,7 +145,6 @@ const Index = () => {
           ))}
         </div>
 
-        {/* How it Works Section */}
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-foreground mb-8">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -184,7 +178,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Sandbox Mode Info */}
         <Card className="border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -220,5 +213,3 @@ const Index = () => {
     </div>
   );
 };
-
-export default Index;

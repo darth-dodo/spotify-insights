@@ -10,6 +10,8 @@ interface AuthGuardProps {
 export const AuthGuard = ({ loginComponent, dashboardComponent }: AuthGuardProps) => {
   const { user, isLoading, error } = useAuth();
 
+  console.log('AuthGuard state:', { user: !!user, isLoading, error });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -50,5 +52,12 @@ export const AuthGuard = ({ loginComponent, dashboardComponent }: AuthGuardProps
     );
   }
 
-  return user ? <>{dashboardComponent}</> : <>{loginComponent}</>;
+  // Show dashboard if user is authenticated, otherwise show login
+  if (user) {
+    console.log('User authenticated, showing dashboard');
+    return <>{dashboardComponent}</>;
+  } else {
+    console.log('User not authenticated, showing login');
+    return <>{loginComponent}</>;
+  }
 };

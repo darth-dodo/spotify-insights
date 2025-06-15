@@ -24,15 +24,28 @@ export const CallbackPage = () => {
           throw new Error('Missing authentication parameters');
         }
 
+        console.log('Processing callback with code and state...');
         await spotifyAuth.handleCallback(code, state);
+        
+        // Verify token was stored
+        const token = localStorage.getItem('spotify_access_token');
+        if (!token) {
+          throw new Error('Token not stored after callback');
+        }
+
+        console.log('Callback processed successfully, token stored');
         
         toast({
           title: "Successfully connected!",
           description: "Your Spotify account has been linked.",
         });
 
-        // Redirect to dashboard
-        navigate('/', { replace: true });
+        // Add a small delay to ensure token is properly stored before redirect
+        setTimeout(() => {
+          console.log('Redirecting to dashboard...');
+          navigate('/', { replace: true });
+        }, 100);
+        
       } catch (error) {
         console.error('Callback error:', error);
         

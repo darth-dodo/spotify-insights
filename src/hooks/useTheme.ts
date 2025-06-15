@@ -2,11 +2,14 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
+type AccentColor = 'spotify' | 'blue' | 'purple' | 'pink' | 'orange';
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  accentColor: AccentColor;
+  setAccentColor: (color: AccentColor) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -29,6 +32,14 @@ export const useThemeState = () => {
     return 'light';
   });
 
+  const [accentColor, setAccentColor] = useState<AccentColor>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('accentColor') as AccentColor;
+      if (stored) return stored;
+    }
+    return 'spotify';
+  });
+
   useEffect(() => {
     localStorage.setItem('theme', theme);
     
@@ -44,6 +55,11 @@ export const useThemeState = () => {
     return () => clearTimeout(timer);
   }, [theme]);
 
+  useEffect(() => {
+    localStorage.setItem('accentColor', accentColor);
+    document.documentElement.setAttribute('data-accent', accentColor);
+  }, [accentColor]);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
@@ -52,6 +68,8 @@ export const useThemeState = () => {
     theme,
     setTheme,
     toggleTheme,
+    accentColor,
+    setAccentColor,
   };
 };
 

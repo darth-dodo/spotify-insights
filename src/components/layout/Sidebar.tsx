@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetOverlay } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { 
   Home, 
@@ -18,7 +18,8 @@ import {
   Sparkles,
   Headphones,
   Calendar,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -147,7 +148,6 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
                         )}
                         onClick={() => {
                           onViewChange(item.id);
-                          onToggle();
                         }}
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -208,9 +208,26 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
         <SidebarContent />
       </div>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar - Fixed overlay issue */}
       <Sheet open={isOpen} onOpenChange={onToggle}>
-        <SheetContent side="left" className="p-0 w-80">
+        <SheetContent 
+          side="left" 
+          className="p-0 w-80 bg-background border-r border-border"
+          overlayProps={{
+            className: "bg-background/80 backdrop-blur-sm"
+          }}
+        >
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold">Navigation</h2>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={onToggle}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           <SidebarContent />
         </SheetContent>
       </Sheet>

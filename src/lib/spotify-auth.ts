@@ -9,7 +9,8 @@ const USE_DUMMY_DATA = window.location.pathname === '/sandbox';
 const SCOPES = [
   'user-read-private',
   'user-top-read',
-  'user-read-recently-played'
+  'user-read-recently-played',
+  'streaming'  // Added streaming scope for Web Playback SDK
 ].join(' ');
 
 class SpotifyAuth {

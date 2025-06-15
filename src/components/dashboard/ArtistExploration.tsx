@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineCh
 import { Users, Music, TrendingUp, ExternalLink, Play, Heart, Calendar, Clock, Info, Album, Sparkles, Target, Zap } from 'lucide-react';
 import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { ArtistDetailModal } from './artist/ArtistDetailModal';
+import { InfoButton } from '@/components/ui/InfoButton';
 
 export const ArtistExploration = () => {
   const [timeRange, setTimeRange] = useState('6months');
@@ -192,11 +192,10 @@ export const ArtistExploration = () => {
     const labels = {
       '1week': 'Last Week',
       '1month': 'Last Month', 
-      '3months': 'Last 3 Months',
-      '6months': 'Last 6 Months',
+      '3months': 'Last Three Months',
+      '6months': 'Last Six Months',
       '1year': 'Last Year',
-      '2years': 'Last 2 Years',
-      '3years': 'Last 3 Years',
+      '2years': 'Last Two Years',
       'alltime': 'All Time'
     };
     return labels[range] || 'This Period';
@@ -240,11 +239,10 @@ export const ArtistExploration = () => {
             <SelectContent>
               <SelectItem value="1week">Last Week</SelectItem>
               <SelectItem value="1month">Last Month</SelectItem>
-              <SelectItem value="3months">Last 3 Months</SelectItem>
-              <SelectItem value="6months">Last 6 Months</SelectItem>
+              <SelectItem value="3months">Last Three Months</SelectItem>
+              <SelectItem value="6months">Last Six Months</SelectItem>
               <SelectItem value="1year">Last Year</SelectItem>
-              <SelectItem value="2years">Last 2 Years</SelectItem>
-              <SelectItem value="3years">Last 3 Years</SelectItem>
+              <SelectItem value="2years">Last Two Years</SelectItem>
               <SelectItem value="alltime">All Time</SelectItem>
             </SelectContent>
           </Select>
@@ -258,6 +256,15 @@ export const ArtistExploration = () => {
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 md:h-5 md:w-5 text-accent" />
               <span className="text-xs md:text-sm font-medium">Artists</span>
+              <InfoButton
+                title="Total Artists"
+                description="Number of unique artists in your extended dataset for the selected time period."
+                funFacts={[
+                  "Your artist collection shows musical diversity",
+                  "More artists indicate broad musical exploration",
+                  "Each artist represents a unique musical journey"
+                ]}
+              />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.totalArtists}</div>
             <div className="text-xs text-muted-foreground">{getTimeRangeLabel(timeRange)}</div>
@@ -269,6 +276,16 @@ export const ArtistExploration = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               <span className="text-xs md:text-sm font-medium">Hours</span>
+              <InfoButton
+                title="Total Listening Hours"
+                description="Estimated total hours spent listening to these artists."
+                calculation="Calculated from track durations and estimated play counts based on ranking."
+                funFacts={[
+                  "Shows dedication to musical artists",
+                  "Listening hours indicate deep musical engagement",
+                  "More hours suggest consistent music consumption"
+                ]}
+              />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.totalHours}</div>
             <div className="text-xs text-muted-foreground">Total listening</div>
@@ -280,6 +297,16 @@ export const ArtistExploration = () => {
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               <span className="text-xs md:text-sm font-medium">Avg Pop.</span>
+              <InfoButton
+                title="Average Popularity"
+                description="Average popularity score across all your artists (0-100 scale)."
+                calculation="Based on Spotify's popularity metrics, averaged across your artist collection."
+                funFacts={[
+                  "Higher scores indicate mainstream taste",
+                  "Lower scores suggest underground/indie preferences",
+                  "Balance shows diverse musical palette"
+                ]}
+              />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.avgPopularity}</div>
             <div className="text-xs text-muted-foreground">Out of 100</div>
@@ -291,6 +318,16 @@ export const ArtistExploration = () => {
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               <span className="text-xs md:text-sm font-medium">Freshness</span>
+              <InfoButton
+                title="Discovery Freshness"
+                description="How recently you've discovered new artists (0-100 scale)."
+                calculation="Based on estimated discovery timeline and current musical trends."
+                funFacts={[
+                  "Higher scores indicate recent musical discoveries",
+                  "Shows openness to new music",
+                  "Freshness keeps your taste evolving"
+                ]}
+              />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.avgFreshness}</div>
             <div className="text-xs text-muted-foreground">Discovery score</div>
@@ -302,6 +339,15 @@ export const ArtistExploration = () => {
             <div className="flex items-center gap-2">
               <Music className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               <span className="text-xs md:text-sm font-medium">Tracks</span>
+              <InfoButton
+                title="Total Tracks"
+                description="Total number of tracks from all artists in your collection."
+                funFacts={[
+                  "Each track represents a musical moment",
+                  "Track diversity shows artist exploration depth",
+                  "More tracks indicate comprehensive listening"
+                ]}
+              />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.totalTracks}</div>
             <div className="text-xs text-muted-foreground">In collection</div>
@@ -349,169 +395,12 @@ export const ArtistExploration = () => {
           </CardContent>
         </Card>
       ) : (
-        <Tabs defaultValue="charts" className="w-full">
+        <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="charts">Analytics</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="detailed">Detailed</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="charts" className="space-y-4 md:space-y-6">
-            {/* Analytics Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              {/* Song Share Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Song Share Distribution
-                  </CardTitle>
-                  <CardDescription>
-                    Percentage of your total listening time per artist
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={songShareData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                        <YAxis />
-                        <ChartTooltip 
-                          content={({ active, payload }) => {
-                            if (active && payload && payload[0]) {
-                              const data = payload[0].payload;
-                              return (
-                                <div className="bg-background border border-border rounded-lg p-3 shadow-md">
-                                  <p className="font-medium text-sm">{data.fullName}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Share: {data.share}% ({data.hours}h)
-                                  </p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Bar dataKey="share" fill="hsl(var(--accent))" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-
-              {/* Replay Value Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="h-5 w-5" />
-                    Replay Value Analysis
-                  </CardTitle>
-                  <CardDescription>
-                    How much you tend to replay each artist's music
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={replayValueData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                        <YAxis />
-                        <ChartTooltip 
-                          content={({ active, payload }) => {
-                            if (active && payload && payload[0]) {
-                              const data = payload[0].payload;
-                              return (
-                                <div className="bg-background border border-border rounded-lg p-3 shadow-md">
-                                  <p className="font-medium text-sm">{data.fullName}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Replay: {data.replay}% ({data.tracks} tracks)
-                                  </p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="replay" 
-                          stroke="hsl(var(--primary))" 
-                          strokeWidth={2}
-                          dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-
-              {/* Freshness Radar Chart */}
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5" />
-                    Artist Discovery Freshness
-                  </CardTitle>
-                  <CardDescription>
-                    Multi-dimensional analysis of your top artists
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={freshnessData}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="artist" />
-                        <PolarRadiusAxis angle={60} domain={[0, 100]} tickCount={5} />
-                        <Radar
-                          name="Freshness"
-                          dataKey="freshness"
-                          stroke="hsl(217, 91%, 60%)"
-                          fill="hsl(217, 91%, 60%)"
-                          fillOpacity={0.3}
-                        />
-                        <Radar
-                          name="Popularity" 
-                          dataKey="popularity"
-                          stroke="hsl(var(--accent))"
-                          fill="hsl(var(--accent))"
-                          fillOpacity={0.2}
-                        />
-                        <Radar
-                          name="Replay Value"
-                          dataKey="replay"
-                          stroke="hsl(var(--primary))"
-                          fill="hsl(var(--primary))"
-                          fillOpacity={0.2}
-                        />
-                        <ChartTooltip 
-                          content={({ active, payload }) => {
-                            if (active && payload && payload[0]) {
-                              const data = payload[0].payload;
-                              return (
-                                <div className="bg-background border border-border rounded-lg p-3 shadow-md">
-                                  <p className="font-medium text-sm">{data.fullName}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Freshness: {data.freshness}% | Popularity: {data.popularity}%
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Replay: {data.replay}% | Hours: {data.hours}
-                                  </p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           <TabsContent value="overview" className="space-y-4 md:space-y-6">
             {/* Top Artists List with enhanced metrics */}
@@ -673,6 +562,163 @@ export const ArtistExploration = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4 md:space-y-6">
+            {/* Analytics Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              {/* Song Share Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Song Share Distribution
+                  </CardTitle>
+                  <CardDescription>
+                    Percentage of your total listening time per artist
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={songShareData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                        <YAxis />
+                        <ChartTooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload[0]) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-background border border-border rounded-lg p-3 shadow-md">
+                                  <p className="font-medium text-sm">{data.fullName}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Share: {data.share}% ({data.hours}h)
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="share" fill="hsl(var(--accent))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Replay Value Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Heart className="h-5 w-5" />
+                    Replay Value Analysis
+                  </CardTitle>
+                  <CardDescription>
+                    How much you tend to replay each artist's music
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={replayValueData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                        <YAxis />
+                        <ChartTooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload[0]) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-background border border-border rounded-lg p-3 shadow-md">
+                                  <p className="font-medium text-sm">{data.fullName}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Replay: {data.replay}% ({data.tracks} tracks)
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="replay" 
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={2}
+                          dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Freshness Radar Chart */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    Artist Discovery Freshness
+                  </CardTitle>
+                  <CardDescription>
+                    Multi-dimensional analysis of your top artists
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={freshnessData}>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="artist" />
+                        <PolarRadiusAxis angle={60} domain={[0, 100]} tickCount={5} />
+                        <Radar
+                          name="Freshness"
+                          dataKey="freshness"
+                          stroke="hsl(217, 91%, 60%)"
+                          fill="hsl(217, 91%, 60%)"
+                          fillOpacity={0.3}
+                        />
+                        <Radar
+                          name="Popularity" 
+                          dataKey="popularity"
+                          stroke="hsl(var(--accent))"
+                          fill="hsl(var(--accent))"
+                          fillOpacity={0.2}
+                        />
+                        <Radar
+                          name="Replay Value"
+                          dataKey="replay"
+                          stroke="hsl(var(--primary))"
+                          fill="hsl(var(--primary))"
+                          fillOpacity={0.2}
+                        />
+                        <ChartTooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload[0]) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-background border border-border rounded-lg p-3 shadow-md">
+                                  <p className="font-medium text-sm">{data.fullName}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Freshness: {data.freshness}% | Popularity: {data.popularity}%
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Replay: {data.replay}% | Hours: {data.hours}
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       )}

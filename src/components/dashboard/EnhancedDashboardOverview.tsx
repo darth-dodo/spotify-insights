@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore
 import { useAuth } from '@/hooks/useAuth';
 import { InfoButton } from '@/components/ui/InfoButton';
 import { BlurLoader } from '@/components/ui/BlurLoader';
+import { CalmingLoader } from '@/components/ui/CalmingLoader';
 import { ErrorDialog } from '@/components/auth/ErrorDialog';
 import { OverviewHeader } from './overview/OverviewHeader';
 import { ActivityHeatmap } from './overview/ActivityHeatmap';
@@ -25,7 +27,7 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
   // Handle errors
   React.useEffect(() => {
     if (error) {
-      setCurrentError(error);
+      setCurrentError(typeof error === 'string' ? error : error.message || 'An unknown error occurred');
       setErrorDialogOpen(true);
     }
   }, [error]);

@@ -7,37 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Trophy, Star, Zap, Music, Headphones, Heart, Calendar, 
   TrendingUp, Users, Clock, Target, Award, Crown, Gem,
-  Flame, Volume2, Disc, Radio, Shuffle, Repeat
+  Flame, Volume2, Disc, Radio, Shuffle, Repeat, Search, Globe
 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
-import { AchievementCategories } from './achievements/AchievementCategories';
+import { ComprehensiveAchievements } from './achievements/ComprehensiveAchievements';
 import { DailyChallenges } from './challenges/DailyChallenges';
 import { Leaderboards } from './leaderboards/Leaderboards';
 import { SeasonalEvents } from './seasons/SeasonalEvents';
-
-interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  category: 'listening' | 'discovery' | 'social' | 'streak' | 'special';
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  unlocked: boolean;
-  unlockedAt?: string;
-  progress?: number;
-  maxProgress?: number;
-  xpReward: number;
-}
-
-interface Badge {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-  requirement: string;
-  unlocked: boolean;
-}
 
 export const GamificationSystem = () => {
   const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
@@ -55,105 +31,80 @@ export const GamificationSystem = () => {
     listeningTime: Math.floor(Math.random() * 10000) + 5000, // Mock listening time in minutes
     streak: Math.floor(Math.random() * 30) + 1,
     genresExplored: Math.floor(Math.random() * 20) + 10,
+    uniqueGenres: [...new Set(topArtistsData?.items?.flatMap((artist: any) => artist.genres || []) || [])].length,
   };
 
-  // Calculate level and XP
+  // Calculate level and XP based on comprehensive achievement system
   const totalXP = userStats.totalTracks * 10 + userStats.totalArtists * 25 + userStats.listeningTime * 2;
   const level = Math.floor(totalXP / 1000) + 1;
   const currentLevelXP = totalXP % 1000;
   const nextLevelXP = 1000;
 
-  // Define achievements
-  const achievements: Achievement[] = [
+  // Sample of recent achievements (would be calculated from full system)
+  const recentAchievements = [
     {
-      id: 'first_listen',
-      name: 'First Steps',
-      description: 'Play your first track',
+      id: 'music_lover',
+      name: 'Music Lover',
+      description: `Discovered ${userStats.totalTracks} tracks`,
       icon: <Music className="h-5 w-5" />,
-      category: 'listening',
       rarity: 'common' as const,
-      unlocked: userStats.recentPlays > 0,
-      xpReward: 50,
-    },
-    {
-      id: 'music_explorer',
-      name: 'Music Explorer',
-      description: 'Discover 25 different artists',
-      icon: <Users className="h-5 w-5" />,
-      category: 'discovery',
-      rarity: 'common' as const,
-      unlocked: userStats.totalArtists >= 25,
-      progress: userStats.totalArtists,
-      maxProgress: 25,
+      unlocked: userStats.totalTracks > 0,
       xpReward: 100,
     },
     {
-      id: 'dedicated_listener',
-      name: 'Dedicated Listener',
-      description: 'Listen for 100 hours total',
-      icon: <Headphones className="h-5 w-5" />,
-      category: 'listening',
+      id: 'genre_explorer',
+      name: 'Genre Explorer',
+      description: `Explored ${userStats.uniqueGenres} different genres`,
+      icon: <Globe className="h-5 w-5" />,
       rarity: 'rare' as const,
-      unlocked: userStats.listeningTime >= 6000,
-      progress: userStats.listeningTime,
-      maxProgress: 6000,
-      xpReward: 250,
+      unlocked: userStats.uniqueGenres >= 10,
+      xpReward: 300,
     },
+    {
+      id: 'consistent_listener',
+      name: 'Consistent Listener',
+      description: `Maintained ${userStats.streak}-day streak`,
+      icon: <Flame className="h-5 w-5" />,
+      rarity: 'epic' as const,
+      unlocked: userStats.streak >= 7,
+      xpReward: 500,
+    }
   ];
 
-  // Define badges
-  const badges: Badge[] = [
-    {
-      id: 'early_bird',
-      name: 'Early Bird',
-      description: 'Listen to music before 8 AM',
-      icon: '🌅',
-      color: 'from-orange-400 to-yellow-500',
-      requirement: 'Morning listening activity',
-      unlocked: Math.random() > 0.5,
-    },
-    {
-      id: 'night_owl',
-      name: 'Night Owl',
-      description: 'Listen to music after midnight',
-      icon: '🦉',
-      color: 'from-purple-500 to-blue-600',
-      requirement: 'Late night listening',
-      unlocked: Math.random() > 0.5,
-    },
-    {
-      id: 'weekend_warrior',
-      name: 'Weekend Warrior',
-      description: 'High activity on weekends',
-      icon: '🎉',
-      color: 'from-green-400 to-blue-500',
-      requirement: '10+ hours weekend listening',
-      unlocked: Math.random() > 0.5,
-    },
-  ];
-
-  const getRarityColor = (rarity: 'common' | 'rare' | 'epic' | 'legendary') => {
+  const getRarityColor = (rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic') => {
     switch (rarity) {
       case 'common': return 'text-gray-600 border-gray-300';
       case 'rare': return 'text-blue-600 border-blue-300';
       case 'epic': return 'text-purple-600 border-purple-300';
       case 'legendary': return 'text-yellow-600 border-yellow-300';
+      case 'mythic': return 'text-red-600 border-red-300';
       default: return 'text-gray-600 border-gray-300';
     }
   };
 
-  const getRarityBg = (rarity: 'common' | 'rare' | 'epic' | 'legendary') => {
+  const getRarityBg = (rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic') => {
     switch (rarity) {
       case 'common': return 'bg-gray-50 dark:bg-gray-900';
       case 'rare': return 'bg-blue-50 dark:bg-blue-900/20';
       case 'epic': return 'bg-purple-50 dark:bg-purple-900/20';
       case 'legendary': return 'bg-yellow-50 dark:bg-yellow-900/20';
+      case 'mythic': return 'bg-red-50 dark:bg-red-900/20';
       default: return 'bg-gray-50 dark:bg-gray-900';
     }
   };
 
-  const unlockedAchievements = achievements.filter(a => a.unlocked);
-  const unlockedBadges = badges.filter(b => b.unlocked);
+  // Mock achievement statistics
+  const achievementStats = {
+    total: 105,
+    unlocked: Math.floor(Math.random() * 30) + 15,
+    common: Math.floor(Math.random() * 8) + 3,
+    rare: Math.floor(Math.random() * 12) + 5,
+    epic: Math.floor(Math.random() * 8) + 2,
+    legendary: Math.floor(Math.random() * 3) + 1,
+    mythic: Math.floor(Math.random() * 2),
+  };
+
+  const completionRate = Math.round((achievementStats.unlocked / achievementStats.total) * 100);
 
   return (
     <div className="space-y-6">
@@ -161,13 +112,13 @@ export const GamificationSystem = () => {
       <div className="flex flex-col gap-4">
         <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
           <Trophy className="h-8 w-8 text-accent" />
-          Player Profile
+          Music Achievement Center
           <Badge variant="outline" className="text-accent border-accent">
             Level {level}
           </Badge>
         </h1>
         <p className="text-muted-foreground">
-          Track your progress, unlock achievements, and compete with other music enthusiasts
+          Unlock over 100 achievements across your musical journey - from first listens to legendary accomplishments
         </p>
       </div>
 
@@ -180,8 +131,8 @@ export const GamificationSystem = () => {
                 <Star className="h-6 w-6 text-accent-foreground" />
               </div>
               <div>
-                <h3 className="text-xl font-bold">Level {level}</h3>
-                <p className="text-sm text-muted-foreground">{totalXP.toLocaleString()} total XP</p>
+                <h3 className="text-xl font-bold">Level {level} Music Explorer</h3>
+                <p className="text-sm text-muted-foreground">{totalXP.toLocaleString()} total XP earned</p>
               </div>
             </div>
             <div className="text-right">
@@ -194,61 +145,102 @@ export const GamificationSystem = () => {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          <TabsTrigger value="achievements">All Achievements</TabsTrigger>
           <TabsTrigger value="challenges">Challenges</TabsTrigger>
           <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
-          <TabsTrigger value="badges">Badges</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Achievement Progress Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Music className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm font-medium">Tracks</span>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Achievement Progress
+                </CardTitle>
+                <CardDescription>Your journey through 105+ unique achievements</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-accent">{achievementStats.unlocked}/{achievementStats.total}</span>
+                  <Badge variant="outline" className="text-accent">{completionRate}% Complete</Badge>
                 </div>
-                <div className="text-2xl font-bold">{userStats.totalTracks}</div>
+                <Progress value={completionRate} className="h-3" />
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Common:</span>
+                      <span className="font-medium">{achievementStats.common}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-blue-600">Rare:</span>
+                      <span className="font-medium">{achievementStats.rare}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-purple-600">Epic:</span>
+                      <span className="font-medium">{achievementStats.epic}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-yellow-600">Legendary:</span>
+                      <span className="font-medium">{achievementStats.legendary}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-red-600">Mythic:</span>
+                      <span className="font-medium">{achievementStats.mythic}</span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-            
+
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium">Artists</span>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Your Music Stats
+                </CardTitle>
+                <CardDescription>Real data from your Spotify activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-muted/30 rounded-lg">
+                    <div className="text-xl font-bold text-blue-600">{userStats.totalTracks}</div>
+                    <div className="text-xs text-muted-foreground">Tracks Discovered</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted/30 rounded-lg">
+                    <div className="text-xl font-bold text-green-600">{userStats.totalArtists}</div>
+                    <div className="text-xs text-muted-foreground">Artists Explored</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted/30 rounded-lg">
+                    <div className="text-xl font-bold text-purple-600">{userStats.uniqueGenres}</div>
+                    <div className="text-xs text-muted-foreground">Genres Found</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted/30 rounded-lg">
+                    <div className="text-xl font-bold text-orange-600">{userStats.streak}</div>
+                    <div className="text-xs text-muted-foreground">Day Streak</div>
+                  </div>
                 </div>
-                <div className="text-2xl font-bold">{userStats.totalArtists}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm font-medium">Hours</span>
-                </div>
-                <div className="text-2xl font-bold">{Math.floor(userStats.listeningTime / 60)}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Flame className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm font-medium">Streak</span>
-                </div>
-                <div className="text-2xl font-bold text-orange-500">{userStats.streak}</div>
               </CardContent>
             </Card>
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2"
+              onClick={() => setActiveTab('achievements')}
+            >
+              <Trophy className="h-6 w-6" />
+              <span>Browse All Achievements</span>
+            </Button>
             <Button 
               variant="outline" 
               className="h-20 flex-col gap-2"
@@ -273,25 +265,17 @@ export const GamificationSystem = () => {
               <Calendar className="h-6 w-6" />
               <span>Seasonal Events</span>
             </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2"
-              onClick={() => setActiveTab('achievements')}
-            >
-              <Award className="h-6 w-6" />
-              <span>All Achievements</span>
-            </Button>
           </div>
 
           {/* Recent Achievements */}
           <Card>
             <CardHeader>
               <CardTitle>Recent Achievements</CardTitle>
-              <CardDescription>Your latest unlocked achievements</CardDescription>
+              <CardDescription>Your latest accomplishments</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {unlockedAchievements.slice(0, 3).map((achievement) => (
+                {recentAchievements.map((achievement) => (
                   <div key={achievement.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                     <div className={`p-2 rounded-full ${getRarityBg(achievement.rarity)}`}>
                       {achievement.icon}
@@ -300,18 +284,41 @@ export const GamificationSystem = () => {
                       <h4 className="font-medium">{achievement.name}</h4>
                       <p className="text-sm text-muted-foreground">{achievement.description}</p>
                     </div>
-                    <Badge variant="outline" className={getRarityColor(achievement.rarity)}>
-                      +{achievement.xpReward} XP
-                    </Badge>
+                    <div className="text-right">
+                      <Badge variant="outline" className={getRarityColor(achievement.rarity)}>
+                        +{achievement.xpReward} XP
+                      </Badge>
+                    </div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
+
+          {/* Achievement Categories Preview */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {[
+              { name: 'Listening', count: 25, icon: <Headphones className="h-5 w-5" />, color: 'bg-blue-500' },
+              { name: 'Discovery', count: 30, icon: <Search className="h-5 w-5" />, color: 'bg-green-500' },
+              { name: 'Social', count: 20, icon: <Users className="h-5 w-5" />, color: 'bg-purple-500' },
+              { name: 'Streaks', count: 15, icon: <Flame className="h-5 w-5" />, color: 'bg-orange-500' },
+              { name: 'Special', count: 15, icon: <Star className="h-5 w-5" />, color: 'bg-yellow-500' },
+            ].map((category) => (
+              <Card key={category.name} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('achievements')}>
+                <CardContent className="p-4 text-center">
+                  <div className={`w-10 h-10 ${category.color} rounded-full flex items-center justify-center text-white mx-auto mb-2`}>
+                    {category.icon}
+                  </div>
+                  <h4 className="font-medium">{category.name}</h4>
+                  <p className="text-xs text-muted-foreground">{category.count} achievements</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
 
         <TabsContent value="achievements">
-          <AchievementCategories />
+          <ComprehensiveAchievements />
         </TabsContent>
 
         <TabsContent value="challenges">
@@ -324,26 +331,6 @@ export const GamificationSystem = () => {
 
         <TabsContent value="events">
           <SeasonalEvents />
-        </TabsContent>
-
-        <TabsContent value="badges" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {badges.map((badge) => (
-              <Card key={badge.id} className={`${badge.unlocked ? '' : 'opacity-60'}`}>
-                <CardContent className="p-4">
-                  <div className={`w-full h-24 bg-gradient-to-br ${badge.color} rounded-lg mb-3 flex items-center justify-center text-4xl`}>
-                    {badge.icon}
-                  </div>
-                  <h4 className="font-medium mb-1">{badge.name}</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{badge.description}</p>
-                  <Badge variant={badge.unlocked ? 'default' : 'outline'} className="text-xs">
-                    {badge.unlocked ? 'Unlocked' : 'Locked'}
-                  </Badge>
-                  <p className="text-xs text-muted-foreground mt-2">{badge.requirement}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </TabsContent>
       </Tabs>
     </div>

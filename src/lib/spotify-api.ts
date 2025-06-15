@@ -62,7 +62,7 @@ export class SpotifyAPI {
     return this.makeRequest(`/me/top/artists?${params}`, accessToken);
   }
 
-  async getExtendedTopTracks(accessToken?: string, timeRange = 'medium_term', totalLimit = 1000) {
+  async getExtendedTopTracks(accessToken?: string, timeRange = 'medium_term', totalLimit = 2000) {
     // Check for demo mode early
     const isDemoMode = window.location.pathname === '/sandbox' || 
       (window.location.pathname === '/' && (!accessToken || accessToken === 'demo_access_token'));
@@ -76,7 +76,7 @@ export class SpotifyAPI {
     const maxLimit = 50;
     let offset = 0;
     
-    while (allItems.length < totalLimit && offset < 1000) {
+    while (allItems.length < totalLimit && offset < 2000) {
       const currentLimit = Math.min(maxLimit, totalLimit - allItems.length);
       const params = new URLSearchParams({
         time_range: timeRange,
@@ -114,7 +114,7 @@ export class SpotifyAPI {
     };
   }
 
-  async getExtendedTopArtists(accessToken?: string, timeRange = 'medium_term', totalLimit = 1000) {
+  async getExtendedTopArtists(accessToken?: string, timeRange = 'medium_term', totalLimit = 2000) {
     // Check for demo mode early
     const isDemoMode = window.location.pathname === '/sandbox' || 
       (window.location.pathname === '/' && (!accessToken || accessToken === 'demo_access_token'));
@@ -128,7 +128,7 @@ export class SpotifyAPI {
     const maxLimit = 50;
     let offset = 0;
     
-    while (allItems.length < totalLimit && offset < 1000) {
+    while (allItems.length < totalLimit && offset < 2000) {
       const currentLimit = Math.min(maxLimit, totalLimit - allItems.length);
       const params = new URLSearchParams({
         time_range: timeRange,

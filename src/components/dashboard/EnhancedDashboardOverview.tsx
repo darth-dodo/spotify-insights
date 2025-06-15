@@ -1,2 +1,2 @@
 
-export { EnhancedDashboardOverview as DashboardOverview } from './EnhancedDashboardOverview';
+export { EnhancedGenreAnalysisRevamp as DashboardOverview } from './EnhancedGenreAnalysisRevamp';

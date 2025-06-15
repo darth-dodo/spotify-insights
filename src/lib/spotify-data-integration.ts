@@ -1,4 +1,3 @@
-
 import { SpotifyDataCache } from './spotify-data-cache';
 import { spotifyPlaybackSDK } from './spotify-playback-sdk';
 import { 
@@ -61,16 +60,14 @@ class SpotifyDataIntegration {
   }
 
   async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 2000): Promise<IntegratedTrackData[]> {
-    // Cap at 2000 for performance optimization
-    const performanceLimit = Math.min(totalLimit, 2000);
-    const cacheKey = `${timeRange}_${performanceLimit}`;
+    const cacheKey = `${timeRange}_${totalLimit}`;
     const cached = this.cache.getCachedTopTracks(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await fetchTopTracksData(timeRange, performanceLimit);
+      const response = await fetchTopTracksData(timeRange, totalLimit);
       
       if (response?.items && response.items.length > 0) {
         const integratedTracks = processTopTracksData(response.items);
@@ -96,16 +93,14 @@ class SpotifyDataIntegration {
   }
 
   async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 2000): Promise<IntegratedArtistData[]> {
-    // Cap at 2000 for performance optimization
-    const performanceLimit = Math.min(totalLimit, 2000);
-    const cacheKey = `${timeRange}_${performanceLimit}`;
+    const cacheKey = `${timeRange}_${totalLimit}`;
     const cached = this.cache.getCachedTopArtists(cacheKey);
     if (cached) {
       return cached;
     }
 
     try {
-      const response = await fetchTopArtistsData(timeRange, performanceLimit);
+      const response = await fetchTopArtistsData(timeRange, totalLimit);
       
       if (response?.items && response.items.length > 0) {
         const integratedArtists = processTopArtistsData(response.items);

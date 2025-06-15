@@ -2,18 +2,19 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
-import { Menu, LogOut, Settings, User, Home } from 'lucide-react';
+import { Menu, LogOut, Settings, User, Home, Shield, HelpCircle, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface HeaderProps {
   user: any;
   onMenuToggle: () => void;
+  onSettingsClick?: () => void;
 }
 
-export const Header = ({ user, onMenuToggle }: HeaderProps) => {
+export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,7 +22,6 @@ export const Header = ({ user, onMenuToggle }: HeaderProps) => {
   const handleLogout = async () => {
     try {
       await logout();
-      // Force navigation to home after logout
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
@@ -29,28 +29,34 @@ export const Header = ({ user, onMenuToggle }: HeaderProps) => {
   };
 
   const handleHomeNavigation = () => {
-    // If we're in dashboard context (not on index page), stay in dashboard
     if (location.pathname === '/' && user) {
-      // Already in dashboard, just scroll to top or refresh view
       window.scrollTo(0, 0);
     } else {
-      // Navigate to appropriate home
       navigate(user ? '/' : '/index');
     }
   };
 
-  // Get user profile image with fallback handling
+  const handleSettingsClick = () => {
+    if (onSettingsClick) {
+      onSettingsClick();
+    }
+  };
+
   const getUserProfileImage = () => {
     if (!user) return null;
     
-    // Check for cached profile image first
     const cachedImage = localStorage.getItem('user_profile_image');
     if (cachedImage) {
       return cachedImage;
     }
     
-    // Fallback to user.images if available
     return user.images?.[0]?.url || null;
+  };
+
+  // Get user's first name
+  const getUserFirstName = () => {
+    if (!user?.display_name) return 'User';
+    return user.display_name.split(' ')[0];
   };
 
   return (
@@ -103,7 +109,7 @@ export const Header = ({ user, onMenuToggle }: HeaderProps) => {
                   alt={user?.display_name || 'User'}
                 />
                 <AvatarFallback>
-                  {user?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                  {getUserFirstName().charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -120,10 +126,33 @@ export const Header = ({ user, onMenuToggle }: HeaderProps) => {
               </div>
             </DropdownMenuItem>
             
-            <DropdownMenuItem className="flex items-center gap-2" disabled>
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem 
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={handleSettingsClick}
+            >
               <Settings className="h-4 w-4" />
-              Settings
+              Privacy & Settings
             </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => navigate('/help')}
+            >
+              <HelpCircle className="h-4 w-4" />
+              Help & Security
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => navigate('/legal')}
+            >
+              <FileText className="h-4 w-4" />
+              Legal Info
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator />
             
             <DropdownMenuItem 
               className="flex items-center gap-2 text-destructive cursor-pointer"

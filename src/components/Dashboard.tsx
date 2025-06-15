@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
@@ -8,16 +7,16 @@ import { InteractiveOverview } from '@/components/dashboard/InteractiveOverview'
 import { ListeningActivity } from '@/components/dashboard/ListeningActivity';
 import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnalysis';
 import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
-import { PrivacySettings } from '@/components/dashboard/PrivacySettings';
+import { EnhancedPrivacySettings } from '@/components/dashboard/EnhancedPrivacySettings';
 import { EnhancedListeningTrends } from '@/components/dashboard/EnhancedListeningTrends';
 import { SimpleGamification } from '@/components/dashboard/gamification/SimpleGamification';
 import { LibraryHealth } from '@/components/dashboard/LibraryHealth';
 import { ListeningPatterns } from '@/components/dashboard/ListeningPatterns';
+import { GamificationSettings } from '@/components/dashboard/GamificationSettings';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
-import { Info, Settings, FileText, AlertCircle, RefreshCw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { ImprovedGenreAnalysis } from './dashboard/ImprovedGenreAnalysis';
 import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
 
@@ -26,7 +25,6 @@ export const Dashboard = () => {
   const { theme } = useTheme();
   const [activeView, setActiveView] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const navigate = useNavigate();
 
   const handleSettingsClick = () => {
     setActiveView('privacy');
@@ -79,6 +77,7 @@ export const Dashboard = () => {
           <Header 
             user={user}
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+            onSettingsClick={handleSettingsClick}
           />
           
           <main className="flex-1 overflow-y-auto p-3 md:p-6">
@@ -101,37 +100,6 @@ export const Dashboard = () => {
                   </AlertDescription>
                 </Alert>
               )}
-
-              {/* Action Buttons - Mobile Responsive */}
-              <div className="flex flex-col sm:flex-row justify-end gap-2 mb-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleSettingsClick}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <Settings className="h-4 w-4" />
-                  Privacy & Settings
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate('/help')}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <Info className="h-4 w-4" />
-                  Help & Security
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate('/legal')}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <FileText className="h-4 w-4" />
-                  Legal Info
-                </Button>
-              </div>
               
               {/* Content Area */}
               <div className="container-responsive">
@@ -142,8 +110,9 @@ export const Dashboard = () => {
                 {activeView === 'artists' && <ArtistExploration />}
                 {activeView === 'library-health' && <LibraryHealth />}
                 {activeView === 'listening-patterns' && <ListeningPatterns />}
-                {activeView === 'privacy' && <PrivacySettings />}
+                {activeView === 'privacy' && <EnhancedPrivacySettings />}
                 {activeView === 'gamification' && <SimpleGamification />}
+                {activeView === 'gamification-settings' && <GamificationSettings />}
               </div>
             </div>
           </main>

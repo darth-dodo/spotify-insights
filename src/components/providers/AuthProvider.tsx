@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { AuthContext, useAuthState } from '@/hooks/useAuth';
+import { AuthContext, useAuthProvider } from '@/hooks/useAuth';
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const authState = useAuthState();
+  const authState = useAuthProvider();
 
   return (
     <AuthContext.Provider value={authState}>

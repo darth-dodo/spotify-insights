@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -153,7 +152,7 @@ export const ActivityHeatmap = () => {
               title="Activity Heatmap"
               description="Visual representation of your daily listening activity based on your Spotify listening history."
               calculation="Shows actual play counts for each day based on your recent Spotify activity. Days without data appear empty."
-              type="modal"
+              variant="modal"
             />
           </CardTitle>
         </CardHeader>
@@ -187,7 +186,7 @@ export const ActivityHeatmap = () => {
                 title="Activity Heatmap"
                 description="Visual representation of your daily listening activity based on your Spotify listening history."
                 calculation="Shows actual play counts for each day based on your recent Spotify activity. Darker squares indicate more listening activity."
-                type="modal"
+                variant="modal"
               />
               {hasRealData && (
                 <Badge variant="outline" className="text-blue-600 border-blue-600">

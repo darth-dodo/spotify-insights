@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { InfoButton } from '@/components/ui/InfoButton';
 import { CalmingLoader } from '@/components/ui/CalmingLoader';
 import { OverviewHeader } from './overview/OverviewHeader';
-import { ImprovedActivityHeatmap } from './overview/ImprovedActivityHeatmap';
+import { ActivityHeatmap } from './overview/ActivityHeatmap';
 
 interface EnhancedDashboardOverviewProps {
   onNavigate?: (view: string) => void;
@@ -244,7 +243,7 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
       </div>
 
       {/* Enhanced Activity Heatmap */}
-      <ImprovedActivityHeatmap />
+      <ActivityHeatmap />
 
       {/* Enhanced Genre Distribution from Extended Dataset */}
       {stats?.hasSpotifyData && genreAnalysis.length > 0 && (

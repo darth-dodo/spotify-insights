@@ -7,11 +7,30 @@ import { Music, TrendingUp, Users, Clock, Star, Headphones } from 'lucide-react'
 import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 
 export const MusicInsightsSummary = () => {
-  const { tracks, artists, recentlyPlayed, getGenreAnalysis, getStats } = useExtendedSpotifyDataStore();
+  const { tracks, artists, recentlyPlayed, getGenreAnalysis, getStats, isLoading } = useExtendedSpotifyDataStore();
 
   const calculateEnhancedInsights = () => {
     const stats = getStats();
     const genreAnalysis = getGenreAnalysis();
+
+    // Check if we have any data
+    const hasData = stats?.hasSpotifyData && (tracks.length > 0 || artists.length > 0);
+
+    if (!hasData) {
+      return {
+        topGenres: [],
+        avgPopularity: 0,
+        totalListeningTime: 0,
+        diversityScore: 0,
+        uniqueGenres: 0,
+        totalTracks: 0,
+        totalArtists: 0,
+        recentActivity: 0,
+        libraryDepth: 0,
+        artistCoverage: 0,
+        hasData: false
+      };
+    }
 
     // Enhanced genre analysis from the full dataset
     const allGenres = artists.flatMap((artist: any) => artist.genres || []);
@@ -34,7 +53,7 @@ export const MusicInsightsSummary = () => {
 
     // Diversity metrics from extended dataset
     const uniqueGenres = new Set(allGenres).size;
-    const diversityScore = Math.min((uniqueGenres / 20) * 100, 100); // Max 100%, scaled for larger dataset
+    const diversityScore = Math.min((uniqueGenres / 15) * 100, 100); // Max 100%, scaled for larger dataset
 
     return {
       topGenres,
@@ -46,7 +65,8 @@ export const MusicInsightsSummary = () => {
       totalArtists: artists.length,
       recentActivity: recentlyPlayed.length,
       libraryDepth: Math.round((tracks.length / 1000) * 100), // Library completeness
-      artistCoverage: Math.round((artists.length / 1000) * 100) // Artist coverage
+      artistCoverage: Math.round((artists.length / 1000) * 100), // Artist coverage
+      hasData: true
     };
   };
 
@@ -60,6 +80,69 @@ export const MusicInsightsSummary = () => {
   };
 
   const popularityLevel = getPopularityLevel(insights.avgPopularity);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="lg:col-span-2 animate-pulse">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Loading Music Profile...
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="text-center p-4 bg-muted/50 rounded-lg border">
+                  <div className="text-2xl font-bold text-muted-foreground mb-1">...</div>
+                  <div className="text-sm text-muted-foreground">Loading</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!insights.hasData) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Music Profile (Connect to View Data)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-muted/50 rounded-lg border">
+                <div className="text-2xl font-bold text-muted-foreground mb-1">No data</div>
+                <div className="text-sm text-muted-foreground">Total Tracks</div>
+              </div>
+              <div className="text-center p-4 bg-muted/50 rounded-lg border">
+                <div className="text-2xl font-bold text-muted-foreground mb-1">No data</div>
+                <div className="text-sm text-muted-foreground">Total Artists</div>
+              </div>
+              <div className="text-center p-4 bg-muted/50 rounded-lg border">
+                <div className="text-2xl font-bold text-muted-foreground mb-1">No data</div>
+                <div className="text-sm text-muted-foreground">Recent Listening</div>
+              </div>
+              <div className="text-center p-4 bg-muted/50 rounded-lg border">
+                <div className="text-2xl font-bold text-muted-foreground mb-1">No data</div>
+                <div className="text-sm text-muted-foreground">Unique Genres</div>
+              </div>
+            </div>
+            <div className="mt-6 text-center">
+              <p className="text-muted-foreground">Connect your Spotify account to see your detailed music insights</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -117,11 +200,17 @@ export const MusicInsightsSummary = () => {
             <div>
               <h4 className="font-medium mb-2">Top Genres (from {insights.totalArtists} artists)</h4>
               <div className="flex flex-wrap gap-2">
-                {insights.topGenres.map((genre, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
-                    {genre}
+                {insights.topGenres.length > 0 ? (
+                  insights.topGenres.map((genre, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {genre}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="secondary" className="text-xs text-muted-foreground">
+                    No genres available
                   </Badge>
-                ))}
+                )}
               </div>
             </div>
 
@@ -152,13 +241,13 @@ export const MusicInsightsSummary = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm">Music Taste Profile</span>
-                <Badge variant="outline" className={popularityLevel.color}>
-                  {popularityLevel.label}
+                <Badge variant="outline" className={insights.avgPopularity > 0 ? popularityLevel.color : 'text-muted-foreground'}>
+                  {insights.avgPopularity > 0 ? popularityLevel.label : 'No data'}
                 </Badge>
               </div>
               <Progress value={insights.avgPopularity} className="h-2" />
               <p className="text-xs text-muted-foreground mt-1">
-                Average track popularity: {insights.avgPopularity}% (from {insights.totalTracks} tracks)
+                Average track popularity: {insights.avgPopularity > 0 ? `${insights.avgPopularity}%` : 'No data'} (from {insights.totalTracks} tracks)
               </p>
             </div>
             

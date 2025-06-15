@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,9 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
   };
 
   const insights = getEnhancedInsights();
+
+  // Check if we have any Spotify data
+  const hasSpotifyData = stats?.hasSpotifyData && (tracks.length > 0 || artists.length > 0);
 
   // Generate fun facts for the overview
   const generateOverviewFunFacts = () => {
@@ -128,11 +132,13 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
             <Music className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{stats?.totalTracks || 0}</div>
+            <div className="text-2xl font-bold text-accent">
+              {hasSpotifyData ? (stats?.totalTracks || 0) : 'No data'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.hasSpotifyData ? 'Unique tracks in your musical DNA' : 'Connect to see data'}
+              {hasSpotifyData ? 'Unique tracks in your musical DNA' : 'Connect to see data'}
             </p>
-            {insights && (
+            {insights && hasSpotifyData && (
               <Progress value={insights.libraryCompleteness} className="h-2 mt-2" />
             )}
           </CardContent>
@@ -160,11 +166,13 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
             <Users className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{stats?.totalArtists || 0}</div>
+            <div className="text-2xl font-bold text-accent">
+              {hasSpotifyData ? (stats?.totalArtists || 0) : 'No data'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.hasSpotifyData ? 'Artists in your musical universe' : 'Will show when connected'}
+              {hasSpotifyData ? 'Artists in your musical universe' : 'Will show when connected'}
             </p>
-            {insights && (
+            {insights && hasSpotifyData && (
               <Progress value={insights.artistCoverage} className="h-2 mt-2" />
             )}
           </CardContent>
@@ -193,16 +201,18 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
             <Volume2 className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{stats?.uniqueGenres || 0}</div>
+            <div className="text-2xl font-bold text-accent">
+              {hasSpotifyData ? (stats?.uniqueGenres || 0) : 'No data'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.hasSpotifyData ? 
+              {hasSpotifyData ? 
                 `${stats?.uniqueGenres >= 10 ? 'Eclectic Explorer' : 
                   stats?.uniqueGenres >= 6 ? 'Genre Adventurer' : 
                   stats?.uniqueGenres >= 3 ? 'Selective Listener' : 'Genre Loyalist'}` : 
                 'Connect to discover'
               }
             </p>
-            {insights && (
+            {insights && hasSpotifyData && (
               <Progress value={insights.diversityScore} className="h-2 mt-2" />
             )}
           </CardContent>
@@ -231,11 +241,13 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
             <Star className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{stats?.avgPopularity || 0}</div>
+            <div className="text-2xl font-bold text-accent">
+              {hasSpotifyData ? (stats?.avgPopularity || 0) : 'No data'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.hasSpotifyData ? `${insights?.tasteLevel || 'Unknown'} taste profile` : 'Connect to analyze'}
+              {hasSpotifyData ? `${insights?.tasteLevel || 'Unknown'} taste profile` : 'Connect to analyze'}
             </p>
-            {stats?.avgPopularity && (
+            {stats?.avgPopularity && hasSpotifyData && (
               <Progress value={stats.avgPopularity} className="h-2 mt-2" />
             )}
           </CardContent>
@@ -246,7 +258,7 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
       <ActivityHeatmap />
 
       {/* Enhanced Genre Distribution from Extended Dataset */}
-      {stats?.hasSpotifyData && genreAnalysis.length > 0 && (
+      {hasSpotifyData && genreAnalysis.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -323,7 +335,7 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
       )}
 
       {/* Spotify Connection Status */}
-      {!stats?.hasSpotifyData && (
+      {!hasSpotifyData && (
         <Card className="border-accent/20 bg-accent/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -369,7 +381,7 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
       )}
 
       {/* Dataset Quality & Performance Insights */}
-      {stats?.hasSpotifyData && insights && (
+      {hasSpotifyData && insights && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

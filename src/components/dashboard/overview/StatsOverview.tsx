@@ -11,7 +11,7 @@ interface StatsOverviewProps {
 }
 
 export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps) => {
-  const { tracks, artists, recentlyPlayed, getStats } = useExtendedSpotifyDataStore();
+  const { tracks, artists, recentlyPlayed, getStats, isLoading } = useExtendedSpotifyDataStore();
 
   const stats = getStats();
 
@@ -43,40 +43,68 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
     songsLiked: enhancedStats.totalTracks
   };
 
+  // Check if we have any data at all
+  const hasData = stats?.hasSpotifyData && (enhancedStats.totalTracks > 0 || enhancedStats.totalArtists > 0);
+
   const statCards = [
     {
       id: 'streak',
       icon: Zap,
       label: 'Library Size',
-      value: achievements.songsLiked,
-      unit: 'tracks total',
+      value: hasData ? achievements.songsLiked : 'No data',
+      unit: hasData ? 'tracks total' : 'available',
       color: 'text-accent'
     },
     {
       id: 'time',
       icon: Clock,
       label: 'Time',
-      value: `${achievements.totalListeningTime}m`,
-      unit: 'recent listening',
+      value: hasData ? `${achievements.totalListeningTime}m` : 'No data',
+      unit: hasData ? 'recent listening' : 'available',
       color: 'text-muted-foreground'
     },
     {
       id: 'discover',
       icon: Users,
       label: 'Artists',
-      value: achievements.artistsDiscovered,
-      unit: 'in library',
+      value: hasData ? achievements.artistsDiscovered : 'No data',
+      unit: hasData ? 'in library' : 'available',
       color: 'text-muted-foreground'
     },
     {
       id: 'likes',
       icon: Heart,
       label: 'Diversity',
-      value: enhancedStats.uniqueGenres,
-      unit: 'genres explored',
+      value: hasData ? enhancedStats.uniqueGenres : 'No data',
+      unit: hasData ? 'genres explored' : 'available',
       color: 'text-muted-foreground'
     }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          
+          return (
+            <Card key={card.id} className="animate-pulse">
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+                  <span className="text-xs md:text-sm font-medium">{card.label}</span>
+                </div>
+                <div className="text-lg md:text-2xl font-bold text-muted-foreground">
+                  Loading...
+                </div>
+                <p className="text-xs text-muted-foreground">Please wait</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -97,7 +125,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
                 <Icon className={`h-4 w-4 md:h-5 md:w-5 ${card.color}`} />
                 <span className="text-xs md:text-sm font-medium">{card.label}</span>
               </div>
-              <div className={`text-lg md:text-2xl font-bold ${card.id === 'streak' ? 'text-accent' : ''}`}>
+              <div className={`text-lg md:text-2xl font-bold ${card.id === 'streak' && hasData ? 'text-accent' : hasData ? '' : 'text-muted-foreground'}`}>
                 {card.value}
               </div>
               <p className="text-xs text-muted-foreground">{card.unit}</p>

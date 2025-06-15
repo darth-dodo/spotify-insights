@@ -22,19 +22,24 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/', { replace: true });
+      navigate('/index', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
   const handleHomeNavigation = () => {
-    if (location.pathname === '/' && user) {
-      window.scrollTo(0, 0);
+    if (user) {
+      // If user is logged in, navigate to dashboard
+      if (location.pathname !== '/') {
+        navigate('/', { replace: true });
+      } else {
+        // Already on dashboard, just scroll to top
+        window.scrollTo(0, 0);
+      }
     } else {
-      // Clear all local data and redirect to index page
-      localStorage.clear();
-      window.location.href = '/index';
+      // If user is not logged in, go to index page
+      navigate('/index', { replace: true });
     }
   };
 
@@ -95,7 +100,7 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
           size="icon"
           onClick={handleHomeNavigation}
           className="hidden sm:flex"
-          title="Exit Dashboard"
+          title={user ? "Go to Dashboard" : "Go to Homepage"}
         >
           <Home className="h-4 w-4" />
         </Button>

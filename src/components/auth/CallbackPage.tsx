@@ -44,7 +44,7 @@ export const CallbackPage = () => {
         setTimeout(() => {
           console.log('Redirecting to dashboard...');
           navigate('/', { replace: true });
-        }, 100);
+        }, 200);
         
       } catch (error) {
         console.error('Callback error:', error);
@@ -55,8 +55,8 @@ export const CallbackPage = () => {
           variant: "destructive",
         });
 
-        // Redirect back to login
-        navigate('/', { replace: true });
+        // Redirect back to index page instead of home
+        navigate('/index', { replace: true });
       }
     };
 

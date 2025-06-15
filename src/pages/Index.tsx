@@ -1,15 +1,24 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Music, BarChart3, Users, TrendingUp, Play, Eye, LogIn, Zap, Shield, Lock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const location = useLocation();
+  const { user, login, isLoading } = useAuth();
+
+  // Only redirect if user is logged in AND we're not already on the dashboard
+  useEffect(() => {
+    if (user && location.pathname === '/index') {
+      console.log('User logged in, redirecting to dashboard');
+      navigate('/', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
 
   const handleSandboxClick = () => {
     navigate('/sandbox');
@@ -18,15 +27,22 @@ const Index = () => {
   const handleLoginClick = async () => {
     try {
       await login();
+      // Add small delay to ensure token is stored
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 100);
     } catch (error) {
       console.error('Login failed:', error);
     }
   };
 
-  // If user is already logged in, redirect to dashboard
-  if (user) {
-    navigate('/');
-    return null;
+  // Don't render anything if we're redirecting
+  if (user && location.pathname === '/index') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-accent rounded-full border-t-transparent" />
+      </div>
+    );
   }
 
   const features = [
@@ -102,10 +118,11 @@ const Index = () => {
             <Button 
               size="lg" 
               onClick={handleLoginClick}
+              disabled={isLoading}
               className="flex items-center gap-2 text-lg px-8 py-3"
             >
               <LogIn className="h-5 w-5" />
-              Connect Spotify Account
+              {isLoading ? 'Connecting...' : 'Connect Spotify Account'}
             </Button>
             <Button 
               variant="outline" 

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 interface AuthGuardProps {
   loginComponent: React.ReactNode;
@@ -9,8 +10,9 @@ interface AuthGuardProps {
 
 export const AuthGuard = ({ loginComponent, dashboardComponent }: AuthGuardProps) => {
   const { user, isLoading, error } = useAuth();
+  const location = useLocation();
 
-  console.log('AuthGuard state:', { user: !!user, isLoading, error });
+  console.log('AuthGuard state:', { user: !!user, isLoading, error, path: location.pathname });
 
   if (isLoading) {
     return (

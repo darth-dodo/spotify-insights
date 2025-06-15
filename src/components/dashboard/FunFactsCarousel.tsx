@@ -63,7 +63,8 @@ export const FunFactsCarousel = () => {
     const hiddenGems = tracks.filter(track => (track.popularity || 0) < 30).length;
 
     // Duration analysis with proper type checking
-    const avgDuration = tracks.length > 0 ? totalDurationMs / tracks.length / 1000 / 60 : 0; // minutes
+    const tracksLength = Number(tracks.length);
+    const avgDuration = tracksLength > 0 ? totalDurationMs / tracksLength / 1000 / 60 : 0; // minutes
     const shortTracks = tracks.filter(track => (track.duration_ms || 0) < 180000).length; // under 3 min
     const longTracks = tracks.filter(track => (track.duration_ms || 0) > 300000).length; // over 5 min
 
@@ -110,22 +111,22 @@ export const FunFactsCarousel = () => {
       {
         icon: Heart,
         title: "Music Dedication",
-        fact: `You could listen to your top ${tracks.length} tracks for ${Math.round(totalHours/24)} days straight`,
+        fact: `You could listen to your top ${tracksLength} tracks for ${Math.round(totalHours/24)} days straight`,
         detail: `Your music library represents serious dedication to discovering great songs!`,
         color: "text-pink-500"
       },
       {
         icon: Zap,
         title: "Discovery Power",
-        fact: `${Math.round((hiddenGems / tracks.length) * 100)}% of your music are hidden gems`,
+        fact: `${Math.round((hiddenGems / tracksLength) * 100)}% of your music are hidden gems`,
         detail: `You're a true music discoverer, finding tracks before they go mainstream!`,
         color: "text-orange-500"
       },
       {
         icon: Disc,
         title: "Collection Size",
-        fact: `Your top ${tracks.length} tracks span ${uniqueGenres.length} genres`,
-        detail: `That's an average of ${Math.round(tracks.length / uniqueGenres.length)} tracks per genre!`,
+        fact: `Your top ${tracksLength} tracks span ${uniqueGenres.length} genres`,
+        detail: `That's an average of ${Math.round(tracksLength / uniqueGenres.length)} tracks per genre!`,
         color: "text-cyan-500"
       }
     ];

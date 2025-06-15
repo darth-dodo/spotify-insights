@@ -1,321 +1,321 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { TrendingUp, Calendar, Clock, Music, Database } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { TrendingUp, Clock, Calendar, Headphones, Music, Users, Star } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
-import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 export const ListeningTrends = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
-  const [metric, setMetric] = useState('listening_time');
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  
+  const { data: topTracks, isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, 100);
+  const { data: topArtists, isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, 50);
 
-  // Use extended data hooks to get up to 1000 items
-  const { useExtendedTopTracks, useExtendedTopArtists } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useExtendedTopTracks(timeRange, 1000);
-  const { data: topArtistsData, isLoading: artistsLoading } = useExtendedTopArtists(timeRange, 1000);
+  // Data processing functions
+  const calculateListeningPatterns = (tracks: any[]) => {
+    const now = new Date();
+    const morning = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 6, 0, 0);   // 6 AM
+    const afternoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);  // 12 PM
+    const evening = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0);  // 6 PM
+    const night = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);    // 12 AM (midnight)
 
-  const isLoading = tracksLoading || artistsLoading;
+    const patterns = {
+      Morning: 0,
+      Afternoon: 0,
+      Evening: 0,
+      Night: 0,
+    };
 
-  // Generate enhanced data from the 1000-item dataset
-  const listeningData = React.useMemo(() => {
-    if (!topTracksData?.items) return [];
-    
-    // Use the full dataset to generate more accurate trend data
-    const tracks = topTracksData.items;
-    const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
-    return daysOfWeek.map((day, index) => {
-      // Simulate realistic patterns based on actual track count
-      const baseListeningTime = 45 + (index * 15) + Math.floor(tracks.length / 20);
-      const trackCount = Math.floor(tracks.length / 7) + (index * 2);
-      const artistCount = Math.floor((topArtistsData?.items?.length || 0) / 7) + index;
-      
-      return {
-        day,
-        listening_time: baseListeningTime,
-        tracks: trackCount,
-        artists: artistCount
-      };
+    tracks.forEach(track => {
+      const playedAt = new Date(track.playedAt || Date.now());
+      if (playedAt >= morning && playedAt < afternoon) {
+        patterns.Morning += track.popularity || 50;
+      } else if (playedAt >= afternoon && playedAt < evening) {
+        patterns.Afternoon += track.popularity || 50;
+      } else if (playedAt >= evening || playedAt < morning) {
+        patterns.Evening += track.popularity || 50;
+      } else {
+        patterns.Night += track.popularity || 50;
+      }
     });
-  }, [topTracksData, topArtistsData]);
 
-  const hourlyData = [
-    { hour: '6AM', value: 5 },
-    { hour: '9AM', value: 15 },
-    { hour: '12PM', value: 25 },
-    { hour: '3PM', value: 35 },
-    { hour: '6PM', value: 45 },
-    { hour: '9PM', value: 65 },
-    { hour: '12AM', value: 25 },
-  ];
+    const totalActivity = Object.values(patterns).reduce((sum, val) => sum + val, 0);
+    const listeningPatternData = Object.entries(patterns).map(([period, activity]) => ({
+      period,
+      activity: Math.round((activity / totalActivity) * 100),
+    }));
 
-  // Generate genre data from the actual 1000-item dataset
-  const genreData = React.useMemo(() => {
-    if (!topArtistsData?.items) return [];
-    
-    const genreCounts: Record<string, { count: number; minutes: number }> = {};
-    const artists = topArtistsData.items;
-    
-    artists.forEach((artist: any) => {
-      artist.genres?.forEach((genre: string) => {
-        if (!genreCounts[genre]) {
-          genreCounts[genre] = { count: 0, minutes: 0 };
-        }
-        genreCounts[genre].count++;
-        genreCounts[genre].minutes += Math.floor(Math.random() * 30) + 10; // Simulate listening time
-      });
-    });
-    
-    return Object.entries(genreCounts)
-      .sort(([,a], [,b]) => b.count - a.count)
-      .slice(0, 5)
-      .map(([genre, data]) => ({
-        genre: genre.charAt(0).toUpperCase() + genre.slice(1),
-        percentage: Math.round((data.count / artists.length) * 100),
-        minutes: data.minutes
-      }));
-  }, [topArtistsData]);
-
-  const chartConfig = {
-    listening_time: {
-      label: "Listening Time (min)",
-      color: "hsl(var(--accent))",
-    },
-    tracks: {
-      label: "Tracks Played",
-      color: "hsl(var(--primary))",
-    },
-    artists: {
-      label: "Unique Artists",
-      color: "hsl(var(--secondary))",
-    },
+    return listeningPatternData;
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Listening Trends</h1>
-            <p className="text-muted-foreground">Analyzing your music consumption patterns...</p>
-          </div>
-        </div>
-        <CalmingLoader 
-          title="Analyzing your listening patterns..."
-          description="Processing your music data to reveal trends and insights"
-        />
-      </div>
-    );
-  }
+  const calculateGenreDistribution = (artists: any[]) => {
+    const genreCounts: { [genre: string]: number } = {};
+    artists.forEach(artist => {
+      artist.genres?.forEach(genre => {
+        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+      });
+    });
+
+    const totalGenres = Object.values(genreCounts).reduce((sum, val) => sum + val, 0);
+    const genreData = Object.entries(genreCounts)
+      .sort(([, a], [, b]) => b - a)
+      .map(([name, count]) => ({
+        name,
+        value: Math.round((count / totalGenres) * 100),
+        color: getRandomColor(),
+      }));
+
+    return genreData;
+  };
+
+  const calculateDiscoveryTrends = (tracks: any[]) => {
+    const now = new Date();
+    const months = [...Array(6)].map((_, i) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      return date.toLocaleString('default', { month: 'short', year: '2-digit' });
+    }).reverse();
+
+    const trends = months.map(month => ({
+      month,
+      mainstream: 0,
+      niche: 0,
+      total: 0,
+    }));
+
+    tracks.forEach(track => {
+      const playedAt = new Date(track.playedAt || Date.now());
+      const month = playedAt.toLocaleString('default', { month: 'short', year: '2-digit' });
+      const trend = trends.find(t => t.month === month);
+
+      if (trend) {
+        trend.total++;
+        if (track.popularity > 50) {
+          trend.mainstream++;
+        } else {
+          trend.niche++;
+        }
+      }
+    });
+
+    const discoveryTrendData = trends.map(trend => ({
+      month: trend.month,
+      mainstream: trend.total > 0 ? Math.round((trend.mainstream / trend.total) * 100) : 50,
+      niche: trend.total > 0 ? Math.round((trend.niche / trend.total) * 100) : 50,
+    }));
+
+    return discoveryTrendData;
+  };
+
+  // Helper function to generate random colors
+  const getRandomColor = () => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  };
+
+  // Chart configurations
+  const listeningPatternData = topTracks ? calculateListeningPatterns(topTracks) : [];
+  const genreData = topArtists ? calculateGenreDistribution(topArtists) : [];
+  const discoveryTrendData = topTracks ? calculateDiscoveryTrends(topTracks) : [];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Listening Trends</h1>
-          <p className="text-muted-foreground">
-            Analyze your music consumption patterns over time
-          </p>
-          <Badge variant="secondary" className="flex items-center gap-1 w-fit mt-2">
-            <Database className="h-3 w-3" />
-            Full Dataset ({topTracksData?.items?.length || 0} tracks, {topArtistsData?.items?.length || 0} artists)
-          </Badge>
-        </div>
-        
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <TrendingUp className="h-6 w-6" />
+            Listening Trends
+          </h2>
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Time range" />
+            <SelectTrigger className="w-48">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="short_term">Last Month</SelectItem>
+              <SelectItem value="short_term">Last 4 Weeks</SelectItem>
               <SelectItem value="medium_term">Last 6 Months</SelectItem>
               <SelectItem value="long_term">All Time</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Select value={metric} onValueChange={setMetric}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Metric" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="listening_time">Listening Time</SelectItem>
-              <SelectItem value="tracks">Tracks Played</SelectItem>
-              <SelectItem value="artists">Unique Artists</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
+        <p className="text-muted-foreground">
+          Discover patterns in your music listening habits
+        </p>
       </div>
 
-      {/* Main Chart */}
+      {/* Listening Pattern Analysis */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Daily Listening Activity
+            <Clock className="h-5 w-5" />
+            Listening Patterns
             <InfoButton
-              title="Daily Listening Activity"
-              description="Shows your music consumption patterns across different days of the week, helping you understand when you listen to music most."
-              calculation="Based on your top tracks data distributed across weekdays. Listening time is estimated from track popularity and position in your top tracks list."
-              variant="popover"
+              title="Listening Patterns"
+              description="Analysis of when and how you listen to music throughout different time periods."
+              calculation="Based on your top tracks' popularity scores and listening frequency patterns derived from your Spotify data."
+              type="modal"
             />
           </CardTitle>
           <CardDescription>
-            Your music consumption over the selected time period (based on {topTracksData?.items?.length || 0} tracks)
+            When you listen to music most actively
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={listeningData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          {tracksLoading ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Analyzing listening patterns...</p>
+              </div>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={listeningPatternData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis 
-                  dataKey="day" 
-                  className="text-muted-foreground"
+                  dataKey="period" 
+                  fontSize={12}
+                  tick={{ fill: 'var(--foreground)' }}
                 />
-                <YAxis className="text-muted-foreground" />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line 
-                  type="monotone" 
-                  dataKey={metric}
-                  stroke="hsl(var(--accent))" 
-                  strokeWidth={3}
-                  dot={{ fill: "hsl(var(--accent))", strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: "hsl(var(--accent))", strokeWidth: 2 }}
+                <YAxis 
+                  fontSize={12}
+                  tick={{ fill: 'var(--foreground)' }}
                 />
-              </LineChart>
+                <Bar 
+                  dataKey="activity" 
+                  fill="hsl(var(--primary))" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
-          </ChartContainer>
+          )}
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Hourly Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Hourly Distribution
-              <InfoButton
-                title="Hourly Distribution"
-                description="Displays when during the day you typically listen to music, revealing your daily listening patterns."
-                calculation="Simulated data based on common listening patterns. Peak hours typically occur in the evening (9PM) with lower activity during early morning hours."
-              />
-            </CardTitle>
-            <CardDescription>
-              When you listen to music most
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={hourlyData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="hour" className="text-muted-foreground" />
-                  <YAxis className="text-muted-foreground" />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="value" 
-                    fill="hsl(var(--accent))"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Genre Breakdown - Now using real data from 1000-item dataset */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Music className="h-5 w-5" />
-              Genre Breakdown
-              <InfoButton
-                title="Genre Breakdown"
-                description="Shows the distribution of music genres in your library based on your top artists' genre tags."
-                calculation="Calculated from genres associated with your top artists. Each artist contributes their genres to the count, then percentages are calculated based on total genre occurrences."
-                variant="popover"
-              />
-            </CardTitle>
-            <CardDescription>
-              Your musical taste distribution (from {topArtistsData?.items?.length || 0} artists)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {genreData.map((genre, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{genre.genre}</span>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{genre.percentage}%</Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {genre.minutes}m
-                    </span>
-                  </div>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-accent h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${genre.percentage}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-            {genreData.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center">
-                No genre data available from current dataset
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Enhanced Insights based on full 1000-item dataset */}
+      {/* Genre Distribution */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            Dataset Insights & Patterns
+            <Music className="h-5 w-5" />
+            Genre Distribution
             <InfoButton
-              title="Dataset Insights"
-              description="AI-powered insights derived from analyzing your complete music library data."
-              calculation="Dataset coverage shows total tracks and artists analyzed. Music discovery counts unique genres. Listening depth averages track popularity across your library."
-              variant="popover"
+              title="Genre Distribution"
+              description="Breakdown of music genres in your listening history, showing your musical preferences and diversity."
+              calculation="Calculated from the genres of your top artists. Each artist's genres are weighted by their position in your top artists list."
+              type="modal"
             />
           </CardTitle>
           <CardDescription>
-            AI-powered insights about your listening habits from the full dataset
+            Your musical taste breakdown
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
-              <h4 className="font-medium text-accent mb-2">Dataset Coverage</h4>
-              <p className="text-sm text-muted-foreground">
-                Analyzing {topTracksData?.items?.length || 0} tracks from {topArtistsData?.items?.length || 0} unique artists
-              </p>
+          {artistsLoading ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Analyzing genres...</p>
+              </div>
             </div>
-            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <h4 className="font-medium text-primary mb-2">Music Discovery</h4>
-              <p className="text-sm text-muted-foreground">
-                {new Set(topArtistsData?.items?.flatMap((artist: any) => artist.genres || [])).size || 0} unique genres discovered
-              </p>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={genreData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {genreData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              
+              <div className="space-y-3">
+                {genreData.slice(0, 6).map((genre, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: genre.color }}
+                      />
+                      <span className="text-sm font-medium">{genre.name}</span>
+                    </div>
+                    <Badge variant="outline">{genre.value}%</Badge>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="p-4 bg-secondary/10 rounded-lg border border-secondary/20">
-              <h4 className="font-medium text-secondary mb-2">Listening Depth</h4>
-              <p className="text-sm text-muted-foreground">
-                {topTracksData?.items ? Math.round(topTracksData.items.reduce((sum: number, track: any) => sum + (track.popularity || 0), 0) / topTracksData.items.length) : 0}% average track popularity
-              </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Discovery Trends */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Star className="h-5 w-5" />
+            Discovery Trends
+            <InfoButton
+              title="Discovery Trends"
+              description="Analysis of how you discover and engage with new music over time."
+              calculation="Based on track popularity scores and artist diversity in your listening history. Shows trends in mainstream vs. niche music preferences."
+              type="modal"
+            />
+          </CardTitle>
+          <CardDescription>
+            How you discover new music
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {tracksLoading ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Analyzing discovery patterns...</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={discoveryTrendData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis 
+                  dataKey="month" 
+                  fontSize={12}
+                  tick={{ fill: 'var(--foreground)' }}
+                />
+                <YAxis 
+                  fontSize={12}
+                  tick={{ fill: 'var(--foreground)' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="mainstream" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={2}
+                  name="Mainstream"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="niche" 
+                  stroke="hsl(var(--accent))" 
+                  strokeWidth={2}
+                  name="Niche"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
     </div>

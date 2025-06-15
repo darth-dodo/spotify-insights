@@ -3,10 +3,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar, Trophy, Flame, Star, Shield, Wifi, WifiOff, AlertCircle } from 'lucide-react';
-import { useSpotifyPlayback } from '@/hooks/useSpotifyPlayback';
+import { Calendar, Flame, AlertCircle, Info } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
 
@@ -21,20 +20,17 @@ interface HeatmapDay {
 export const ActivityHeatmap = () => {
   const [selectedDay, setSelectedDay] = useState<HeatmapDay | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [privacyInfoOpen, setPrivacyInfoOpen] = useState(false);
 
-  const { isConnected, sessionStats, clearSession, disconnect } = useSpotifyPlayback();
   const { useEnhancedRecentlyPlayed } = useSpotifyData();
-  
   const { data: recentlyPlayedData, isLoading, error } = useEnhancedRecentlyPlayed(500);
 
-  // Generate heatmap data ONLY from real Spotify data
-  const generateRealDataHeatmap = (): HeatmapDay[] => {
+  // Generate heatmap data from real Spotify data
+  const generateHeatmapData = (): HeatmapDay[] => {
     const data: HeatmapDay[] = [];
     const today = new Date();
     const playsByDate = new Map<string, number>();
 
-    // Only process real API data - no simulation
+    // Process real API data if available
     if (recentlyPlayedData && recentlyPlayedData.length > 0) {
       recentlyPlayedData.forEach((track: any) => {
         if (track.playedAt) {
@@ -45,15 +41,15 @@ export const ActivityHeatmap = () => {
       });
     }
 
-    // Generate 365 days with ONLY real data
+    // Generate 365 days - real data where available, empty otherwise
     for (let i = 364; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const plays = playsByDate.get(dateStr) || 0; // Only real data, no simulation
+      const plays = playsByDate.get(dateStr) || 0;
       
-      // Determine intensity level based on actual plays
+      // Determine intensity level based on plays
       let level = 0;
       if (plays > 40) level = 4;
       else if (plays > 30) level = 3;
@@ -75,7 +71,7 @@ export const ActivityHeatmap = () => {
     return data;
   };
 
-  const displayData = generateRealDataHeatmap();
+  const displayData = generateHeatmapData();
   const totalPlays = Math.max(0, displayData.reduce((sum, day) => sum + day.plays, 0));
   const activeDays = displayData.filter(day => day.plays > 0).length;
   
@@ -122,7 +118,7 @@ export const ActivityHeatmap = () => {
     setDialogOpen(true);
   };
 
-  // Show loading state
+  // Show loading state with progress
   if (isLoading) {
     return (
       <Card>
@@ -133,10 +129,11 @@ export const ActivityHeatmap = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-12">
+          <div className="space-y-4">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading your listening activity...</p>
+              <p className="text-muted-foreground mb-2">Loading your listening activity...</p>
+              <Progress value={65} className="w-full max-w-xs mx-auto" />
             </div>
           </div>
         </CardContent>
@@ -144,26 +141,35 @@ export const ActivityHeatmap = () => {
     );
   }
 
-  // Show error state
-  if (error || (!hasRealData && !isConnected)) {
+  // Show message when no data is available
+  if (error || !hasRealData) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Activity Heatmap
+            <InfoButton
+              title="Activity Heatmap"
+              description="Visual representation of your daily listening activity based on your Spotify listening history."
+              calculation="Shows actual play counts for each day based on your recent Spotify activity. Days without data appear empty."
+              type="modal"
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {error ? 
-                `Unable to load listening data: ${error.message}` :
-                'No listening data available. Please authenticate with Spotify to view your activity heatmap.'
-              }
-            </AlertDescription>
-          </Alert>
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center max-w-md">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="font-medium mb-2">No Activity Data</h3>
+              <p className="text-sm text-muted-foreground">
+                {error ? 
+                  'Unable to load your listening data. Please make sure you\'re authenticated with Spotify.' :
+                  'Start listening to music on Spotify to see your activity heatmap here.'
+                }
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -179,44 +185,27 @@ export const ActivityHeatmap = () => {
               Activity Heatmap
               <InfoButton
                 title="Activity Heatmap"
-                description="Visual representation of your daily listening activity based on real Spotify data. No simulated data is used."
-                calculation="Uses your recent listening history from Spotify API. Shows actual play counts for each day."
+                description="Visual representation of your daily listening activity based on your Spotify listening history."
+                calculation="Shows actual play counts for each day based on your recent Spotify activity. Darker squares indicate more listening activity."
+                type="modal"
               />
-              {isConnected && (
-                <Badge variant="outline" className="text-green-600 border-green-600">
-                  <Wifi className="h-3 w-3 mr-1" />
-                  Live
-                </Badge>
-              )}
               {hasRealData && (
                 <Badge variant="outline" className="text-blue-600 border-blue-600">
-                  Real Data
+                  {recentlyPlayedData.length} tracks
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPrivacyInfoOpen(true)}
-                className="text-xs"
-              >
-                <Shield className="h-3 w-3 mr-1" />
-                Privacy
-              </Button>
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center gap-1">
-                  <Flame className="h-4 w-4 text-orange-500" />
-                  <span className="text-orange-500">{currentStreak} day streak</span>
-                </div>
-                <Badge variant="outline">{Math.round((activeDays/365)*100)}% active</Badge>
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-1">
+                <Flame className="h-4 w-4 text-orange-500" />
+                <span className="text-orange-500">{currentStreak} day streak</span>
               </div>
+              <Badge variant="outline">{Math.round((activeDays/365)*100)}% active</Badge>
             </div>
           </CardTitle>
           <CardDescription>
-            Your listening activity over the past year based on real Spotify data.
-            {hasRealData ? ` Showing ${recentlyPlayedData?.length || 0} recent tracks.` : ''}
-            {isConnected && ' Real-time tracking active.'}
+            Your listening activity over the past year based on Spotify data.
+            {hasRealData && ` Showing data from ${recentlyPlayedData.length} recent tracks.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -236,19 +225,6 @@ export const ActivityHeatmap = () => {
                 <div className="text-xs text-muted-foreground">Active Days</div>
               </div>
             </div>
-
-            {/* Real-time session info */}
-            {isConnected && sessionStats && (
-              <Alert className="border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-                <Wifi className="h-4 w-4" />
-                <AlertDescription>
-                  Active session: {Math.max(0, sessionStats.sessionLength)} tracks, {Math.max(0, sessionStats.totalMinutes)} minutes total.
-                  <Button variant="link" className="p-0 h-auto ml-2" onClick={clearSession}>
-                    Clear session
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            )}
 
             {/* Month labels - responsive */}
             <div className="hidden md:flex justify-between text-xs text-muted-foreground px-2">
@@ -351,47 +327,6 @@ export const ActivityHeatmap = () => {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Privacy Information Dialog */}
-      <Dialog open={privacyInfoOpen} onOpenChange={setPrivacyInfoOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Privacy Information
-            </DialogTitle>
-            <DialogDescription>
-              How your data is processed and protected
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-950 dark:border-green-800">
-              <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">
-                Real Data Only
-              </h4>
-              <p className="text-sm text-green-800 dark:text-green-200">
-                This heatmap shows only your actual Spotify listening data. No simulated or fake data is used.
-              </p>
-            </div>
-            
-            {isConnected && (
-              <div className="pt-4 border-t">
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  onClick={() => {
-                    disconnect();
-                    setPrivacyInfoOpen(false);
-                  }}
-                  className="w-full"
-                >
-                  Disconnect and Clear Data
-                </Button>
-              </div>
-            )}
-          </div>
         </DialogContent>
       </Dialog>
     </>

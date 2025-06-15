@@ -19,6 +19,18 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     path: window.location.pathname 
   });
 
+  // Prevent Spotify SDK from loading when in demo mode
+  useEffect(() => {
+    if (window.location.pathname === '/' && !user && !isLoading) {
+      // Clear any existing SDK initialization attempts
+      const existingScript = document.querySelector('script[src*="sdk.scdn.co"]');
+      if (existingScript) {
+        existingScript.remove();
+        console.log('Removed Spotify SDK script for demo mode');
+      }
+    }
+  }, [user, isLoading]);
+
   // If we're on the root path and not authenticated, show the dashboard with sandbox-like behavior
   if (window.location.pathname === '/' && !user && !isLoading) {
     console.log('No authentication on root path, showing dashboard with demo data');

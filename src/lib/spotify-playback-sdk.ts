@@ -7,26 +7,40 @@ export class SpotifyPlaybackSDK {
   private deviceId: string = '';
   private isInitialized: boolean = false;
   private sessionManager: PlaybackSessionManager;
+  private initializationAttempted: boolean = false;
   
   constructor() {
     this.sessionManager = new PlaybackSessionManager();
-    this.initializeSDK();
+    // Only initialize if we have a token
+    const token = localStorage.getItem('spotify_access_token');
+    if (token) {
+      this.initializeSDK();
+    } else {
+      console.log('Spotify SDK initialization skipped - no access token available');
+    }
   }
 
   private async initializeSDK() {
-    if (this.isInitialized) return;
-
-    if (!window.Spotify) {
-      await this.loadSDKScript();
-    }
+    if (this.isInitialized || this.initializationAttempted) return;
+    
+    this.initializationAttempted = true;
 
     const token = localStorage.getItem('spotify_access_token');
     if (!token) {
-      console.warn('No access token available for Web Playback SDK');
+      console.warn('Cannot initialize Spotify SDK - no access token available');
       return;
     }
 
-    await this.initializePlayer(token);
+    try {
+      if (!window.Spotify) {
+        await this.loadSDKScript();
+      }
+
+      await this.initializePlayer(token);
+    } catch (error) {
+      console.error('Failed to initialize Spotify SDK:', error);
+      // Don't throw the error to prevent app crashes
+    }
   }
 
   private loadSDKScript(): Promise<void> {
@@ -40,8 +54,19 @@ export class SpotifyPlaybackSDK {
       script.src = 'https://sdk.scdn.co/spotify-player.js';
       script.async = true;
       
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load Spotify Web Playback SDK'));
+      const timeout = setTimeout(() => {
+        reject(new Error('Spotify SDK script load timeout'));
+      }, 10000); // 10 second timeout
+
+      script.onload = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      
+      script.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Failed to load Spotify Web Playback SDK'));
+      };
       
       document.head.appendChild(script);
     });
@@ -52,24 +77,31 @@ export class SpotifyPlaybackSDK {
       throw new Error('Spotify Web Playback SDK not loaded');
     }
 
-    this.player = new window.Spotify.Player({
-      name: 'Spotify Analytics Dashboard',
-      getOAuthToken: (cb: (token: string) => void) => cb(token),
-      volume: 0.5
-    });
+    try {
+      this.player = new window.Spotify.Player({
+        name: 'Spotify Analytics Dashboard',
+        getOAuthToken: (cb: (token: string) => void) => cb(token),
+        volume: 0.5
+      });
 
-    this.setupEventListeners();
+      this.setupEventListeners();
 
-    const success = await this.player.connect();
-    if (success) {
-      console.log('Successfully connected to Spotify Web Playback SDK');
-      this.isInitialized = true;
-    } else {
-      throw new Error('Failed to connect to Spotify Web Playback SDK');
+      const success = await this.player.connect();
+      if (success) {
+        console.log('Successfully connected to Spotify Web Playback SDK');
+        this.isInitialized = true;
+      } else {
+        throw new Error('Failed to connect to Spotify Web Playback SDK');
+      }
+    } catch (error) {
+      console.error('Player initialization failed:', error);
+      // Don't throw to prevent app crashes
     }
   }
 
   private setupEventListeners() {
+    if (!this.player) return;
+
     this.player.addListener('ready', ({ device_id }: { device_id: string }) => {
       console.log('Ready with Device ID', device_id);
       this.deviceId = device_id;
@@ -98,6 +130,13 @@ export class SpotifyPlaybackSDK {
     });
   }
 
+  // Public method to manually initialize when token becomes available
+  public async initializeWithToken() {
+    if (!this.isInitialized && !this.initializationAttempted) {
+      await this.initializeSDK();
+    }
+  }
+
   // Public methods that delegate to session manager
   generateLocalHeatmapData(): HeatmapDay[] {
     return this.sessionManager.generateLocalHeatmapData();
@@ -124,11 +163,16 @@ export class SpotifyPlaybackSDK {
 
   disconnect() {
     if (this.player) {
-      this.player.disconnect();
+      try {
+        this.player.disconnect();
+      } catch (error) {
+        console.error('Error disconnecting player:', error);
+      }
       this.player = null;
     }
     this.sessionManager.clearSessionData();
     this.isInitialized = false;
+    this.initializationAttempted = false;
     console.log('Disconnected from Web Playback SDK and cleared all data');
   }
 
@@ -143,8 +187,13 @@ export class SpotifyPlaybackSDK {
 
 export const spotifyPlaybackSDK = new SpotifyPlaybackSDK();
 
+// Clean up on page unload
 window.addEventListener('beforeunload', () => {
-  spotifyPlaybackSDK.disconnect();
+  try {
+    spotifyPlaybackSDK.disconnect();
+  } catch (error) {
+    console.error('Error during cleanup:', error);
+  }
 });
 
 // Re-export types

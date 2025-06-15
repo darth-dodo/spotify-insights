@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,10 @@ export const FunFactsCarousel = () => {
     const artists = topArtistsData.items;
 
     // Total listening time
-    const totalDurationMs = tracks.reduce((sum, track) => sum + (track.duration_ms || 0), 0);
+    const totalDurationMs = tracks.reduce((sum, track) => {
+      const duration = typeof track.duration_ms === 'number' ? track.duration_ms : 0;
+      return sum + duration;
+    }, 0);
     const totalHours = Math.round(totalDurationMs / (1000 * 60 * 60));
     const totalDays = Math.round(totalHours / 24);
 
@@ -49,7 +51,10 @@ export const FunFactsCarousel = () => {
     const topArtistPlays = Math.max(...Object.values(artistCounts));
 
     // Popularity analysis
-    const avgPopularity = tracks.reduce((sum, track) => sum + (track.popularity || 0), 0) / tracks.length;
+    const validPopularityTracks = tracks.filter(track => typeof track.popularity === 'number');
+    const avgPopularity = validPopularityTracks.length > 0 
+      ? validPopularityTracks.reduce((sum, track) => sum + (track.popularity as number), 0) / validPopularityTracks.length 
+      : 0;
     const popularTracks = tracks.filter(track => (track.popularity || 0) > 80).length;
     const hiddenGems = tracks.filter(track => (track.popularity || 0) < 30).length;
 

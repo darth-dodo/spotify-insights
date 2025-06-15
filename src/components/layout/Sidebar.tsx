@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +18,9 @@ import {
   Headphones,
   Calendar,
   ArrowLeft,
-  X
+  X,
+  Heart,
+  Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -55,6 +56,22 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
       icon: Music,
       description: 'Musical taste breakdown',
       category: 'discovery'
+    },
+    {
+      id: 'library-health',
+      title: 'Library Health',
+      icon: Heart,
+      description: 'Library analytics & metrics',
+      category: 'analytics',
+      badge: 'New'
+    },
+    {
+      id: 'listening-patterns',
+      title: 'Listening Patterns',
+      icon: Activity,
+      description: 'Listening habits analysis',
+      category: 'analytics',
+      badge: 'New'
     },
     {
       id: 'enhanced-trends',

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
@@ -10,6 +11,8 @@ import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
 import { PrivacySettings } from '@/components/dashboard/PrivacySettings';
 import { EnhancedListeningTrends } from '@/components/dashboard/EnhancedListeningTrends';
 import { SimpleGamification } from '@/components/dashboard/gamification/SimpleGamification';
+import { LibraryHealth } from '@/components/dashboard/LibraryHealth';
+import { ListeningPatterns } from '@/components/dashboard/ListeningPatterns';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -138,6 +141,8 @@ export const Dashboard = () => {
                 {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
                 {activeView === 'genres' && <ImprovedGenreAnalysis />}
                 {activeView === 'artists' && <ImprovedArtistExplorer />}
+                {activeView === 'library-health' && <LibraryHealth />}
+                {activeView === 'listening-patterns' && <ListeningPatterns />}
                 {activeView === 'privacy' && <PrivacySettings />}
                 {activeView === 'gamification' && <SimpleGamification />}
               </div>

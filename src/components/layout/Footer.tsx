@@ -49,9 +49,14 @@ export const Footer = () => {
           <p className="text-xs text-muted-foreground">
             © 2024 Spotify Analytics Dashboard. This project is not affiliated with Spotify AB.
           </p>
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            Made with <Heart className="h-3 w-3 text-red-500" /> for music lovers
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              Made with <Heart className="h-3 w-3 text-red-500" /> for music lovers
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Made with Lovable
+            </p>
+          </div>
         </div>
       </div>
     </footer>

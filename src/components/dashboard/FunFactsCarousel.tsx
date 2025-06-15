@@ -51,7 +51,8 @@ export const FunFactsCarousel = () => {
       });
       return acc;
     }, {} as Record<string, number>);
-    const topArtistPlays = Object.values(artistCounts).length > 0 ? Math.max(...Object.values(artistCounts)) : 0;
+    const artistCountValues = Object.values(artistCounts).filter((count): count is number => typeof count === 'number');
+    const topArtistPlays = artistCountValues.length > 0 ? Math.max(...artistCountValues) : 0;
 
     // Popularity analysis with proper type checking
     const validPopularityTracks = tracks.filter(track => typeof track.popularity === 'number');

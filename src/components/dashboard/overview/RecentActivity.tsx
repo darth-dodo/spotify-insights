@@ -8,9 +8,9 @@ import { useSpotifyData } from '@/hooks/useSpotifyData';
 export const RecentActivity = () => {
   const { useExtendedTopTracks, useExtendedTopArtists } = useSpotifyData();
   
-  // Use extended data hooks to get up to 500 items
-  const { data: topTracksData, isLoading: tracksLoading } = useExtendedTopTracks('medium_term', 500);
-  const { data: topArtistsData, isLoading: artistsLoading } = useExtendedTopArtists('medium_term', 500);
+  // Use extended data hooks to get up to 1000 items
+  const { data: topTracksData, isLoading: tracksLoading } = useExtendedTopTracks('medium_term', 1000);
+  const { data: topArtistsData, isLoading: artistsLoading } = useExtendedTopArtists('medium_term', 1000);
 
   const isLoading = tracksLoading || artistsLoading;
 
@@ -47,7 +47,7 @@ export const RecentActivity = () => {
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="flex items-center gap-1">
           <Database className="h-3 w-3" />
-          Extended Dataset ({topTracksData?.items?.length || 0} tracks, {topArtistsData?.items?.length || 0} artists)
+          Full Dataset ({topTracksData?.items?.length || 0} tracks, {topArtistsData?.items?.length || 0} artists)
         </Badge>
       </div>
 
@@ -139,13 +139,13 @@ export const RecentActivity = () => {
         </Card>
       </div>
 
-      {/* Enhanced insights section */}
-      {topTracksData?.items?.length > 50 && topArtistsData?.items?.length > 50 && (
+      {/* Enhanced insights section - now shows stats for full 1000-item dataset */}
+      {topTracksData?.items?.length > 100 && topArtistsData?.items?.length > 100 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Extended Data Insights
+              Full Dataset Insights
             </CardTitle>
           </CardHeader>
           <CardContent>

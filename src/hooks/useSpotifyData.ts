@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { spotifyAPI } from '@/lib/spotify-api';
 
@@ -27,22 +26,22 @@ export const useSpotifyData = () => {
     });
   };
 
-  // New hook for extended top tracks (up to 500)
-  const useExtendedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 500) => {
+  // Updated hook for extended top tracks (default to 1000)
+  const useExtendedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
       queryKey: ['extended-top-tracks', timeRange, totalLimit],
       queryFn: () => spotifyAPI.getExtendedTopTracks(getAccessToken(), timeRange, totalLimit),
-      staleTime: 1000 * 60 * 10, // 10 minutes (longer cache for larger datasets)
+      staleTime: 1000 * 60 * 15, // 15 minutes (longer cache for larger datasets)
       enabled: true,
     });
   };
 
-  // New hook for extended top artists (up to 500)
-  const useExtendedTopArtists = (timeRange: string = 'medium_term', totalLimit: number = 500) => {
+  // Updated hook for extended top artists (default to 1000)
+  const useExtendedTopArtists = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
       queryKey: ['extended-top-artists', timeRange, totalLimit],
       queryFn: () => spotifyAPI.getExtendedTopArtists(getAccessToken(), timeRange, totalLimit),
-      staleTime: 1000 * 60 * 10, // 10 minutes (longer cache for larger datasets)
+      staleTime: 1000 * 60 * 15, // 15 minutes (longer cache for larger datasets)
       enabled: true,
     });
   };

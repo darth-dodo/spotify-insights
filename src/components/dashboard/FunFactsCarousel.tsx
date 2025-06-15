@@ -43,11 +43,12 @@ export const FunFactsCarousel = () => {
     }, {} as Record<string, number>);
     const topGenre = Object.entries(genreCounts).sort(([,a], [,b]) => b - a)[0]?.[0];
 
-    // Artist diversity
+    // Artist diversity with proper type checking
     const uniqueArtists = [...new Set(tracks.flatMap(track => track.artists?.map(a => a.id) || []))];
     const artistCounts = tracks.reduce((acc, track) => {
       track.artists?.forEach(artist => {
-        acc[artist.id] = (acc[artist.id] || 0) + 1;
+        const currentCount = acc[artist.id] || 0;
+        acc[artist.id] = currentCount + 1;
       });
       return acc;
     }, {} as Record<string, number>);

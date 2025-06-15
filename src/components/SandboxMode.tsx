@@ -8,6 +8,7 @@ import { sanitizeUserData } from '@/lib/data-utils';
 import { SandboxBanner } from '@/components/ui/SandboxBanner';
 import { ProjectDisclaimer } from '@/components/ui/ProjectDisclaimer';
 import { Footer } from '@/components/layout/Footer';
+import { CyclingTips } from '@/components/ui/CyclingTips';
 
 // Create a sandbox auth context that always returns the demo user
 const sandboxAuthContext = {
@@ -30,6 +31,12 @@ export const SandboxMode = () => {
             <ProjectDisclaimer />
             <Dashboard />
           </div>
+          
+          {/* Fixed cycling tips at bottom */}
+          <div className="fixed bottom-4 left-4 right-4 z-50">
+            <CyclingTips className="max-w-4xl mx-auto" />
+          </div>
+          
           <Footer />
         </AuthContext.Provider>
       </div>

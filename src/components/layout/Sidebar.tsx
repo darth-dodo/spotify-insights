@@ -17,8 +17,10 @@ import {
   ChevronRight,
   Sparkles,
   Headphones,
-  Calendar
+  Calendar,
+  ArrowLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -28,6 +30,8 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarProps) => {
+  const navigate = useNavigate();
+
   const navigationItems = [
     {
       id: 'overview',
@@ -75,9 +79,9 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
     },
     {
       id: 'privacy',
-      title: 'Settings',
+      title: 'Privacy & Settings',
       icon: Settings,
-      description: 'Privacy & preferences',
+      description: 'Privacy by design controls',
       category: 'settings'
     }
   ];
@@ -98,15 +102,17 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-            <Music className="h-4 w-4 text-accent-foreground" />
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="w-full justify-start p-2 h-auto"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          <div className="text-left">
+            <div className="font-semibold">Back to Home</div>
+            <div className="text-xs text-muted-foreground">Exit dashboard</div>
           </div>
-          <div>
-            <h2 className="font-semibold text-lg">Spotify Insights</h2>
-            <p className="text-xs text-muted-foreground">Music Analytics</p>
-          </div>
-        </div>
+        </Button>
       </div>
 
       <ScrollArea className="flex-1 px-3">
@@ -185,10 +191,10 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
         <div className="bg-muted/50 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium">Tip</span>
+            <span className="text-sm font-medium">Privacy First</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Click on artists in the Explorer to see detailed information and top songs!
+            All processing happens locally - your data never leaves your device!
           </p>
         </div>
       </div>

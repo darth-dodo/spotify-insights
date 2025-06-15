@@ -8,7 +8,7 @@ import { InteractiveOverview } from '@/components/dashboard/InteractiveOverview'
 import { ListeningActivity } from '@/components/dashboard/ListeningActivity';
 import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnalysis';
 import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
-import { PrivacyControls } from '@/components/dashboard/PrivacyControls';
+import { PrivacySettings } from '@/components/dashboard/PrivacySettings';
 import { EnhancedListeningTrends } from '@/components/dashboard/EnhancedListeningTrends';
 import { SimpleGamification } from '@/components/dashboard/gamification/SimpleGamification';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import { useNavigate } from 'react-router-dom';
 
 export const Dashboard = () => {
   const { user, isLoading, error, clearError, refreshToken } = useAuth();
-  const { theme, accentColor } = useTheme();
+  const { theme } = useTheme();
   const [activeView, setActiveView] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ export const Dashboard = () => {
 
   return (
     <div className={cn(
-      "min-h-screen bg-background text-foreground transition-colors duration-300",
+      "min-h-screen bg-background text-foreground",
       theme
     )}>
       <div className="flex h-screen overflow-hidden">
@@ -107,7 +107,7 @@ export const Dashboard = () => {
                   className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <Settings className="h-4 w-4" />
-                  Settings
+                  Privacy & Settings
                 </Button>
                 <Button 
                   variant="outline" 
@@ -125,7 +125,7 @@ export const Dashboard = () => {
                   className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <FileText className="h-4 w-4" />
-                  Privacy & Terms
+                  Legal Info
                 </Button>
               </div>
               
@@ -136,7 +136,7 @@ export const Dashboard = () => {
                 {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
                 {activeView === 'genres' && <EnhancedGenreAnalysis />}
                 {activeView === 'artists' && <ArtistExploration />}
-                {activeView === 'privacy' && <PrivacyControls />}
+                {activeView === 'privacy' && <PrivacySettings />}
                 {activeView === 'gamification' && <SimpleGamification />}
               </div>
             </div>

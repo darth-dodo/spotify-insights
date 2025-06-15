@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { AccentColorPicker } from '@/components/ui/AccentColorPicker';
 import { useAuth } from '@/hooks/useAuth';
-import { Menu, LogOut, Settings, User } from 'lucide-react';
+import { Menu, LogOut, Settings, User, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   user: any;
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export const Header = ({ user, onMenuToggle }: HeaderProps) => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
@@ -27,18 +29,32 @@ export const Header = ({ user, onMenuToggle }: HeaderProps) => {
           <Menu className="h-5 w-5" />
         </Button>
         
-        <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-3 text-left p-2"
+        >
           <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
             <span className="text-accent-foreground font-bold text-lg">♪</span>
           </div>
-          <h1 className="text-xl font-bold text-foreground">
-            Spotify Insights
-          </h1>
-        </div>
+          <div className="hidden sm:block">
+            <h1 className="text-xl font-bold text-foreground">
+              Spotify Insights
+            </h1>
+          </div>
+        </Button>
       </div>
 
       <div className="flex items-center gap-4">
-        <AccentColorPicker />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate('/')}
+          className="hidden sm:flex"
+        >
+          <Home className="h-4 w-4" />
+        </Button>
+        
         <ThemeToggle />
         
         <DropdownMenu>

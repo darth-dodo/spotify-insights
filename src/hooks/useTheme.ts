@@ -2,13 +2,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
-type AccentColor = 'spotify' | 'blue' | 'purple' | 'pink' | 'orange';
 
 interface ThemeContextType {
   theme: Theme;
-  accentColor: AccentColor;
   setTheme: (theme: Theme) => void;
-  setAccentColor: (color: AccentColor) => void;
   toggleTheme: () => void;
 }
 
@@ -32,23 +29,20 @@ export const useThemeState = () => {
     return 'light';
   });
 
-  const [accentColor, setAccentColor] = useState<AccentColor>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('accent-color') as AccentColor;
-      return stored || 'spotify';
-    }
-    return 'spotify';
-  });
-
   useEffect(() => {
     localStorage.setItem('theme', theme);
+    
+    // Add transition class temporarily for smooth theme changes
+    document.documentElement.classList.add('theme-transition');
     document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
+    
+    // Remove transition class after transition completes
+    const timer = setTimeout(() => {
+      document.documentElement.classList.remove('theme-transition');
+    }, 300);
 
-  useEffect(() => {
-    localStorage.setItem('accent-color', accentColor);
-    document.documentElement.setAttribute('data-accent', accentColor);
-  }, [accentColor]);
+    return () => clearTimeout(timer);
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
@@ -56,9 +50,7 @@ export const useThemeState = () => {
 
   return {
     theme,
-    accentColor,
     setTheme,
-    setAccentColor,
     toggleTheme,
   };
 };

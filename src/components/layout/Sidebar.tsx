@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetOverlay } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { 
   Home, 
@@ -148,6 +148,9 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
                         )}
                         onClick={() => {
                           onViewChange(item.id);
+                          if (window.innerWidth < 768) {
+                            onToggle();
+                          }
                         }}
                       >
                         <div className="flex items-center gap-3 w-full">
@@ -208,14 +211,11 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
         <SidebarContent />
       </div>
 
-      {/* Mobile Sidebar - Fixed overlay issue */}
+      {/* Mobile Sidebar */}
       <Sheet open={isOpen} onOpenChange={onToggle}>
         <SheetContent 
           side="left" 
           className="p-0 w-80 bg-background border-r border-border"
-          overlayProps={{
-            className: "bg-background/80 backdrop-blur-sm"
-          }}
         >
           <div className="flex items-center justify-between p-4 border-b">
             <h2 className="text-lg font-semibold">Navigation</h2>

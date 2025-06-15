@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
@@ -16,6 +15,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { Info, Settings, FileText, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ImprovedArtistExplorer } from './dashboard/ImprovedArtistExplorer';
+import { ImprovedGenreAnalysis } from './dashboard/ImprovedGenreAnalysis';
+import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
 
 export const Dashboard = () => {
   const { user, isLoading, error, clearError, refreshToken } = useAuth();
@@ -134,8 +136,8 @@ export const Dashboard = () => {
                 {activeView === 'overview' && <InteractiveOverview onNavigate={handleViewChange} />}
                 {activeView === 'trends' && <ListeningActivity />}
                 {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
-                {activeView === 'genres' && <EnhancedGenreAnalysis />}
-                {activeView === 'artists' && <ArtistExploration />}
+                {activeView === 'genres' && <ImprovedGenreAnalysis />}
+                {activeView === 'artists' && <ImprovedArtistExplorer />}
                 {activeView === 'privacy' && <PrivacySettings />}
                 {activeView === 'gamification' && <SimpleGamification />}
               </div>

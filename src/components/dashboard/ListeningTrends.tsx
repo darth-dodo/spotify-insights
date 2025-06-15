@@ -9,6 +9,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, Calendar, Clock, Music, Database } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { InfoButton } from '@/components/ui/InfoButton';
+import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 export const ListeningTrends = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
@@ -102,21 +104,13 @@ export const ListeningTrends = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Listening Trends</h1>
-            <p className="text-muted-foreground">Loading your music data...</p>
+            <p className="text-muted-foreground">Analyzing your music consumption patterns...</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[...Array(2)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-muted rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 bg-muted rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <CalmingLoader 
+          title="Analyzing your listening patterns..."
+          description="Processing your music data to reveal trends and insights"
+        />
       </div>
     );
   }
@@ -167,6 +161,12 @@ export const ListeningTrends = () => {
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Daily Listening Activity
+            <InfoButton
+              title="Daily Listening Activity"
+              description="Shows your music consumption patterns across different days of the week, helping you understand when you listen to music most."
+              calculation="Based on your top tracks data distributed across weekdays. Listening time is estimated from track popularity and position in your top tracks list."
+              variant="popover"
+            />
           </CardTitle>
           <CardDescription>
             Your music consumption over the selected time period (based on {topTracksData?.items?.length || 0} tracks)
@@ -204,6 +204,11 @@ export const ListeningTrends = () => {
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
               Hourly Distribution
+              <InfoButton
+                title="Hourly Distribution"
+                description="Displays when during the day you typically listen to music, revealing your daily listening patterns."
+                calculation="Simulated data based on common listening patterns. Peak hours typically occur in the evening (9PM) with lower activity during early morning hours."
+              />
             </CardTitle>
             <CardDescription>
               When you listen to music most
@@ -234,6 +239,12 @@ export const ListeningTrends = () => {
             <CardTitle className="flex items-center gap-2">
               <Music className="h-5 w-5" />
               Genre Breakdown
+              <InfoButton
+                title="Genre Breakdown"
+                description="Shows the distribution of music genres in your library based on your top artists' genre tags."
+                calculation="Calculated from genres associated with your top artists. Each artist contributes their genres to the count, then percentages are calculated based on total genre occurrences."
+                variant="popover"
+              />
             </CardTitle>
             <CardDescription>
               Your musical taste distribution (from {topArtistsData?.items?.length || 0} artists)
@@ -271,7 +282,15 @@ export const ListeningTrends = () => {
       {/* Enhanced Insights based on full 1000-item dataset */}
       <Card>
         <CardHeader>
-          <CardTitle>Dataset Insights & Patterns</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Dataset Insights & Patterns
+            <InfoButton
+              title="Dataset Insights"
+              description="AI-powered insights derived from analyzing your complete music library data."
+              calculation="Dataset coverage shows total tracks and artists analyzed. Music discovery counts unique genres. Listening depth averages track popularity across your library."
+              variant="popover"
+            />
+          </CardTitle>
           <CardDescription>
             AI-powered insights about your listening habits from the full dataset
           </CardDescription>

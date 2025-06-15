@@ -4,14 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Music, Clock, Users, TrendingUp, Play, Heart, Loader2 } from 'lucide-react';
+import { Music, Clock, Users, TrendingUp, Play, Heart, Database } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { InfoButton } from '@/components/ui/InfoButton';
+import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 export const DashboardOverview = () => {
-  const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
+  // Use extended data hooks to get up to 1000 items
+  const { useExtendedTopTracks, useExtendedTopArtists, useRecentlyPlayed } = useSpotifyData();
   
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks('medium_term', 20);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists('medium_term', 20);
+  const { data: topTracksData, isLoading: tracksLoading } = useExtendedTopTracks('medium_term', 1000);
+  const { data: topArtistsData, isLoading: artistsLoading } = useExtendedTopArtists('medium_term', 1000);
   const { data: recentlyPlayedData, isLoading: recentLoading } = useRecentlyPlayed(50);
 
   const isLoading = tracksLoading || artistsLoading || recentLoading;
@@ -87,12 +90,13 @@ export const DashboardOverview = () => {
     return (
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-foreground">Loading your music data... 🎵</h1>
-          <p className="text-muted-foreground">Please wait while we fetch your listening insights</p>
+          <h1 className="text-3xl font-bold text-foreground">Welcome back! 🎵</h1>
+          <p className="text-muted-foreground">Preparing your personalized music insights...</p>
         </div>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-accent" />
-        </div>
+        <CalmingLoader 
+          title="Loading your music dashboard..."
+          description="Analyzing your complete listening history and preferences"
+        />
       </div>
     );
   }
@@ -110,29 +114,45 @@ export const DashboardOverview = () => {
             'Connect your Spotify account to see personalized insights'
           }
         </p>
+        {stats.hasSpotifyData && (
+          <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+            <Database className="h-3 w-3" />
+            Extended Dataset ({stats.totalTracks} tracks, {stats.totalArtists} artists)
+          </Badge>
+        )}
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               {stats.hasSpotifyData ? 'Top Tracks' : 'Your Tracks'}
+              <InfoButton
+                title="Top Tracks"
+                description="Your most played songs based on Spotify's algorithm and your listening history."
+                calculation="Tracks ranked by Spotify's proprietary algorithm considering play count, recent activity, and listening patterns over the selected time range."
+              />
             </CardTitle>
             <Music className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent">{stats.totalTracks}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.hasSpotifyData ? 'In your top list' : 'Will show when connected'}
+              {stats.hasSpotifyData ? 'In your extended dataset' : 'Will show when connected'}
             </p>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               {stats.hasSpotifyData ? 'Recent Listening' : 'Listening Time'}
+              <InfoButton
+                title="Recent Listening Time"
+                description="Total listening time calculated from your recently played tracks."
+                calculation="Sum of duration from your last 50 played tracks, converted from milliseconds to minutes."
+              />
             </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -148,15 +168,20 @@ export const DashboardOverview = () => {
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               {stats.hasSpotifyData ? 'Top Artists' : 'Your Artists'}
+              <InfoButton
+                title="Top Artists"
+                description="Artists you listen to most frequently, ranked by Spotify's algorithm."
+                calculation="Artists ranked by listening frequency, popularity, and recent activity over the selected time range using Spotify's top artists API."
+              />
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent">{stats.totalArtists}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.hasSpotifyData ? 'In your favorites' : 'Will appear here'}
+              {stats.hasSpotifyData ? 'In your extended dataset' : 'Will appear here'}
             </p>
           </CardContent>
         </Card>
@@ -202,9 +227,14 @@ export const DashboardOverview = () => {
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 Your Top Tracks
+                <InfoButton
+                  title="Top Tracks Preview"
+                  description="Your 3 most played songs from the extended dataset, showing track details and popularity metrics."
+                  calculation="Selected from your top 1000 tracks, ranked by Spotify's algorithm. Popularity is a 0-100 score based on recent play data."
+                />
               </CardTitle>
               <CardDescription>
-                Your most played songs
+                Your most played songs (from {stats.totalTracks} total tracks)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -243,9 +273,14 @@ export const DashboardOverview = () => {
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 Your Top Artists
+                <InfoButton
+                  title="Top Artists Preview"
+                  description="Your 3 most listened-to artists from the extended dataset, showing follower counts and popularity."
+                  calculation="Selected from your top 1000 artists, ranked by listening frequency. Follower counts are from Spotify's artist data."
+                />
               </CardTitle>
               <CardDescription>
-                Artists you listen to most
+                Artists you listen to most (from {stats.totalArtists} total artists)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -283,9 +318,17 @@ export const DashboardOverview = () => {
       {stats.hasSpotifyData && (
         <Card>
           <CardHeader>
-            <CardTitle>Your Music Profile</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Your Music Profile
+              <InfoButton
+                title="Music Profile Analysis"
+                description="Comprehensive analysis of your musical preferences derived from your extended listening data."
+                calculation="Top genre from most common artist genres. Diversity based on unique genre count. Taste level from average track popularity across your library."
+                variant="popover"
+              />
+            </CardTitle>
             <CardDescription>
-              Insights based on your Spotify listening data
+              Insights based on your extended Spotify dataset ({stats.totalTracks} tracks, {stats.totalArtists} artists)
             </CardDescription>
           </CardHeader>
           <CardContent>

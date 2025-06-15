@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Music, Headphones, TrendingUp, Database } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { InfoButton } from '@/components/ui/InfoButton';
+import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 export const RecentActivity = () => {
   const { useExtendedTopTracks, useExtendedTopArtists } = useSpotifyData();
@@ -16,28 +18,11 @@ export const RecentActivity = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {[...Array(2)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-6 bg-muted rounded w-1/2"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[...Array(10)].map((_, j) => (
-                  <div key={j} className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-muted rounded"></div>
-                    <div className="flex-1 space-y-1">
-                      <div className="h-4 bg-muted rounded w-3/4"></div>
-                      <div className="h-3 bg-muted rounded w-1/2"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <CalmingLoader 
+        title="Loading your recent activity..."
+        description="Analyzing your music listening patterns and preferences"
+        variant="card"
+      />
     );
   }
 
@@ -57,6 +42,11 @@ export const RecentActivity = () => {
             <CardTitle className="text-lg flex items-center gap-2">
               <Music className="h-5 w-5" />
               Top Tracks
+              <InfoButton
+                title="Top Tracks"
+                description="Your most frequently played songs ranked by Spotify's algorithm based on your listening history."
+                calculation="Tracks from your extended dataset (up to 1000) ranked by play frequency, recent activity, and listening patterns over the medium term (6 months)."
+              />
               <Badge variant="outline" className="ml-auto text-xs">
                 Showing 10 of {topTracksData?.items?.length || 0}
               </Badge>
@@ -100,6 +90,11 @@ export const RecentActivity = () => {
             <CardTitle className="text-lg flex items-center gap-2">
               <Headphones className="h-5 w-5" />
               Top Artists
+              <InfoButton
+                title="Top Artists"
+                description="Artists you listen to most frequently, based on your overall listening patterns and preferences."
+                calculation="Artists from your extended dataset ranked by listening frequency, track count in your library, and recent activity. Popularity scores are from Spotify's artist data."
+              />
               <Badge variant="outline" className="ml-auto text-xs">
                 Showing 10 of {topArtistsData?.items?.length || 0}
               </Badge>
@@ -146,6 +141,12 @@ export const RecentActivity = () => {
             <CardTitle className="text-lg flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
               Full Dataset Insights
+              <InfoButton
+                title="Dataset Insights"
+                description="Comprehensive statistics derived from analyzing your complete extended music library dataset."
+                calculation="Total counts from extended dataset. Average popularity calculated across all tracks. Unique genres counted from all artist genre tags in your library."
+                variant="popover"
+              />
             </CardTitle>
           </CardHeader>
           <CardContent>

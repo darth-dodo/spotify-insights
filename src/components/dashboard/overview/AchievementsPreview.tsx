@@ -2,55 +2,66 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 export const AchievementsPreview = () => {
-  const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
-  
-  const { data: topTracksData } = useTopTracks('medium_term', 10);
-  const { data: topArtistsData } = useTopArtists('medium_term', 10);
-  const { data: recentlyPlayedData } = useRecentlyPlayed(10);
+  const { tracks, artists, recentlyPlayed, isLoading, getStats } = useExtendedSpotifyDataStore();
 
-  const calculateStats = () => {
-    const totalTracks = topTracksData?.items?.length || 0;
-    const totalArtists = topArtistsData?.items?.length || 0;
-    const recentTracks = recentlyPlayedData?.items?.length || 0;
-    const listeningTime = recentlyPlayedData?.items?.reduce((acc: number, item: any) => 
-      acc + (item.track?.duration_ms || 0), 0) / (1000 * 60) || 0;
-    
-    return { totalTracks, totalArtists, recentTracks, listeningTime: Math.round(listeningTime) };
-  };
+  if (isLoading) {
+    return (
+      <CalmingLoader 
+        title="Loading achievements..."
+        description="Calculating your music milestones from the extended dataset"
+        variant="card"
+      />
+    );
+  }
 
-  const stats = calculateStats();
+  const stats = getStats();
 
   const badges = [
     { 
       id: 'music_lover', 
       name: 'Music Lover', 
-      description: `Discovered ${stats.totalTracks} tracks`, 
+      description: `Discovered ${stats?.totalTracks || 0} tracks`, 
       icon: '🎵', 
-      unlocked: stats.totalTracks > 0 
+      unlocked: (stats?.totalTracks || 0) > 0 
     },
     { 
       id: 'artist_explorer', 
       name: 'Artist Explorer', 
-      description: `Following ${stats.totalArtists} artists`, 
+      description: `Following ${stats?.totalArtists || 0} artists`, 
       icon: '🎤', 
-      unlocked: stats.totalArtists >= 5 
+      unlocked: (stats?.totalArtists || 0) >= 25 
     },
     { 
       id: 'active_listener', 
       name: 'Active Listener', 
-      description: `${stats.recentTracks} recent plays`, 
+      description: `${stats?.recentTracksCount || 0} recent plays`, 
       icon: '🎧', 
-      unlocked: stats.recentTracks >= 10 
+      unlocked: (stats?.recentTracksCount || 0) >= 10 
     },
     { 
       id: 'music_enthusiast', 
       name: 'Music Enthusiast', 
-      description: `${stats.listeningTime} minutes listened`, 
+      description: `${stats?.listeningTime || 0} minutes listened`, 
       icon: '⭐', 
-      unlocked: stats.listeningTime > 60 
+      unlocked: (stats?.listeningTime || 0) > 60 
+    },
+    { 
+      id: 'genre_explorer', 
+      name: 'Genre Explorer', 
+      description: `${stats?.uniqueGenres || 0} genres discovered`, 
+      icon: '🌟', 
+      unlocked: (stats?.uniqueGenres || 0) >= 10 
+    },
+    { 
+      id: 'taste_maker', 
+      name: 'Taste Maker', 
+      description: `${stats?.avgPopularity || 0}% avg popularity`, 
+      icon: '🏆', 
+      unlocked: (stats?.avgPopularity || 0) >= 70 
     }
   ];
 

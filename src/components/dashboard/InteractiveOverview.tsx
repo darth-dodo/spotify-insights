@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { OverviewHeader } from './overview/OverviewHeader';
 import { StatsOverview } from './overview/StatsOverview';
 import { MusicInsightsSummary } from './overview/MusicInsightsSummary';
@@ -10,20 +9,15 @@ import { ActivityHeatmap } from './overview/ActivityHeatmap';
 import { RecentActivity } from './overview/RecentActivity';
 import { AchievementsPreview } from './overview/AchievementsPreview';
 import { QuickNavigation } from './overview/QuickNavigation';
+import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 interface InteractiveOverviewProps {
   onNavigate?: (view: string) => void;
 }
 
 export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) => {
-  const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
+  const { tracks, artists, recentlyPlayed, isLoading } = useExtendedSpotifyDataStore();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks('medium_term', 10);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists('medium_term', 10);
-  const { data: recentlyPlayedData, isLoading: recentLoading } = useRecentlyPlayed(10);
-
-  const isLoading = tracksLoading || artistsLoading || recentLoading;
 
   const handleNavigation = (view: string) => {
     if (onNavigate) {
@@ -35,12 +29,13 @@ export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) =>
     return (
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Loading your music data... 🎵</h1>
-          <p className="text-muted-foreground">Please wait while we fetch your listening insights</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Loading your music universe... 🎵</h1>
+          <p className="text-muted-foreground">Analyzing your extended dataset (up to 1000 tracks & artists) for comprehensive insights</p>
         </div>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-accent" />
-        </div>
+        <CalmingLoader 
+          title="Processing your extended music library..."
+          description="Loading up to 1000 tracks and artists to provide the most comprehensive insights possible"
+        />
       </div>
     );
   }
@@ -50,13 +45,13 @@ export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) =>
       {/* Header */}
       <OverviewHeader />
 
-      {/* Quick Stats */}
+      {/* Enhanced Stats using Extended Dataset */}
       <StatsOverview 
         selectedCard={selectedCard} 
         onCardSelect={setSelectedCard} 
       />
 
-      {/* Music Insights Summary */}
+      {/* Enhanced Music Insights using Extended Dataset */}
       <MusicInsightsSummary />
 
       {/* Activity Heatmap */}

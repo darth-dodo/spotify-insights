@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Zap, Clock, Users, Heart, Trophy, Star } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 
 interface StatsOverviewProps {
   selectedCard: string | null;
@@ -11,45 +11,45 @@ interface StatsOverviewProps {
 }
 
 export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps) => {
-  const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
-  
-  const { data: topTracksData } = useTopTracks('medium_term', 10);
-  const { data: topArtistsData } = useTopArtists('medium_term', 10);
-  const { data: recentlyPlayedData } = useRecentlyPlayed(10);
+  const { tracks, artists, recentlyPlayed, getStats } = useExtendedSpotifyDataStore();
 
-  // Calculate stats from API data
-  const calculateStats = () => {
-    const totalTracks = topTracksData?.items?.length || 0;
-    const totalArtists = topArtistsData?.items?.length || 0;
-    const recentTracks = recentlyPlayedData?.items?.length || 0;
-    const listeningTime = recentlyPlayedData?.items?.reduce((acc: number, item: any) => 
-      acc + (item.track?.duration_ms || 0), 0) / (1000 * 60) || 0;
+  const stats = getStats();
+
+  // Calculate enhanced stats from the extended dataset
+  const calculateEnhancedStats = () => {
+    const totalTracks = tracks.length;
+    const totalArtists = artists.length;
+    const recentTracks = recentlyPlayed.length;
+    const listeningTime = recentlyPlayed.reduce((acc: number, item: any) => 
+      acc + (item.track?.duration_ms || 0), 0) / (1000 * 60);
     
     return { 
       totalTracks, 
       totalArtists, 
       recentTracks,
-      listeningTime: Math.round(listeningTime)
+      listeningTime: Math.round(listeningTime),
+      uniqueGenres: stats?.uniqueGenres || 0,
+      avgPopularity: stats?.avgPopularity || 0
     };
   };
 
-  const stats = calculateStats();
+  const enhancedStats = calculateEnhancedStats();
 
   const achievements = {
-    level: Math.min(Math.floor(stats.totalTracks / 5) + 1, 50),
-    streak: Math.min(stats.recentTracks, 30),
-    totalListeningTime: Math.round(stats.listeningTime),
-    artistsDiscovered: stats.totalArtists,
-    songsLiked: stats.totalTracks
+    level: Math.min(Math.floor(enhancedStats.totalTracks / 20) + 1, 50),
+    streak: Math.min(enhancedStats.recentTracks, 30),
+    totalListeningTime: enhancedStats.listeningTime,
+    artistsDiscovered: enhancedStats.totalArtists,
+    songsLiked: enhancedStats.totalTracks
   };
 
   const statCards = [
     {
       id: 'streak',
       icon: Zap,
-      label: 'Streak',
-      value: achievements.streak,
-      unit: 'recent plays',
+      label: 'Library Size',
+      value: achievements.songsLiked,
+      unit: 'tracks total',
       color: 'text-accent'
     },
     {
@@ -57,7 +57,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
       icon: Clock,
       label: 'Time',
       value: `${achievements.totalListeningTime}m`,
-      unit: 'listened',
+      unit: 'recent listening',
       color: 'text-muted-foreground'
     },
     {
@@ -65,15 +65,15 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
       icon: Users,
       label: 'Artists',
       value: achievements.artistsDiscovered,
-      unit: 'discovered',
+      unit: 'in library',
       color: 'text-muted-foreground'
     },
     {
       id: 'likes',
       icon: Heart,
-      label: 'Tracks',
-      value: achievements.songsLiked,
-      unit: 'in library',
+      label: 'Diversity',
+      value: enhancedStats.uniqueGenres,
+      unit: 'genres explored',
       color: 'text-muted-foreground'
     }
   ];

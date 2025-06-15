@@ -26,7 +26,18 @@ export const ImprovedGenreAnalysis = () => {
 
   // Improved genre processing with better data representation
   const genreAnalysis = useMemo(() => {
-    if (!topArtistsData?.items || !topTracksData?.items) return { genres: [], total: 0, insights: {} };
+    const defaultInsights = {
+      dominantGenre: null,
+      diversityScore: 0,
+      totalGenres: 0,
+      avgPopularity: 0,
+      totalArtists: 0,
+      totalTracks: 0,
+    };
+
+    if (!topArtistsData?.items || !topTracksData?.items) {
+      return { genres: [], total: 0, insights: defaultInsights };
+    }
 
     const genreCounts: { [key: string]: { 
       count: number; 
@@ -92,9 +103,9 @@ export const ImprovedGenreAnalysis = () => {
       genre.score = genre.count * 10 + genre.tracks.length * 2; // Weighted score
     });
 
-    // Generate insights
+    // Generate insights with proper defaults
     const insights = {
-      dominantGenre: genres[0],
+      dominantGenre: genres[0] || null,
       diversityScore: Math.min(genres.length * 5, 100),
       totalGenres: genres.length,
       avgPopularity: Math.round(genres.reduce((sum, g) => sum + g.avgPopularity, 0) / genres.length) || 0,

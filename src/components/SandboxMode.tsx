@@ -9,6 +9,7 @@ import { SandboxBanner } from '@/components/ui/SandboxBanner';
 import { ProjectDisclaimer } from '@/components/ui/ProjectDisclaimer';
 import { Footer } from '@/components/layout/Footer';
 import { CyclingTips } from '@/components/ui/CyclingTips';
+import { TestMarker } from '@/components/ui/TestMarker';
 
 // Create a sandbox auth context that always returns the demo user
 const sandboxAuthContext = {
@@ -25,6 +26,7 @@ export const SandboxMode = () => {
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-background">
+        <TestMarker />
         <SandboxBanner />
         <AuthContext.Provider value={sandboxAuthContext}>
           <div className="container mx-auto px-4 py-6">

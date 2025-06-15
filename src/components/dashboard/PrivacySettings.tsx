@@ -27,7 +27,6 @@ export const PrivacySettings = () => {
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
   const [dataVisibility, setDataVisibility] = useState(true);
-  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleExportData = async () => {
@@ -159,16 +158,6 @@ export const PrivacySettings = () => {
                   </p>
                 </div>
                 <Switch checked={dataVisibility} onCheckedChange={setDataVisibility} />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h4 className="font-medium">Enable session analytics</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Process current session data for insights (not stored)
-                  </p>
-                </div>
-                <Switch checked={analyticsEnabled} onCheckedChange={setAnalyticsEnabled} />
               </div>
             </CardContent>
           </Card>

@@ -129,7 +129,7 @@ export const ComprehensivePrivacyDoc = () => {
               <Alert className="border-blue-200 bg-blue-50/50 dark:bg-blue-900/10">
                 <Globe className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Data Flow Transparency:</strong> Your Browser ↔ Spotify API → Local Processing → 
+                  <strong>Data Flow Transparency:</strong> Your Browser &harr; Spotify API &rarr; Local Processing &rarr; 
                   Analytics Display. No intermediary servers, no data collection, no external transmission.
                 </AlertDescription>
               </Alert>

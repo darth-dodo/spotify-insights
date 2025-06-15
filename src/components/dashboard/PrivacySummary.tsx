@@ -77,7 +77,7 @@ export const PrivacySummary = () => {
                 <p className="text-xs text-muted-foreground">Encrypted OAuth tokens</p>
               </div>
               <div className="text-right">
-                <Badge variant="outline">< 2KB</Badge>
+                <Badge variant="outline">&lt; 2KB</Badge>
                 <p className="text-xs text-muted-foreground">Until logout</p>
               </div>
             </div>
@@ -88,7 +88,7 @@ export const PrivacySummary = () => {
                 <p className="text-xs text-muted-foreground">Hashed user ID only</p>
               </div>
               <div className="text-right">
-                <Badge variant="outline">< 1KB</Badge>
+                <Badge variant="outline">&lt; 1KB</Badge>
                 <p className="text-xs text-muted-foreground">Session only</p>
               </div>
             </div>
@@ -99,7 +99,7 @@ export const PrivacySummary = () => {
                 <p className="text-xs text-muted-foreground">Theme & settings</p>
               </div>
               <div className="text-right">
-                <Badge variant="outline">< 0.5KB</Badge>
+                <Badge variant="outline">&lt; 0.5KB</Badge>
                 <p className="text-xs text-muted-foreground">Local storage</p>
               </div>
             </div>

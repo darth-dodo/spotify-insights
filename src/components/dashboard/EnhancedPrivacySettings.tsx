@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, Settings, Trophy, Palette, Info, GamepadIcon, Target } from 'lucide-react';
+import { Shield, Settings, Trophy, Palette, Info, GamepadIcon } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +17,6 @@ export const EnhancedPrivacySettings = () => {
   const { logout } = useAuth();
   const { toast } = useToast();
   const [dataRetention, setDataRetention] = useState(false);
-  const [analytics, setAnalytics] = useState(true);
   const [gamificationEnabled, setGamificationEnabled] = useState(true);
   const [achievementsEnabled, setAchievementsEnabled] = useState(true);
   const [streaksEnabled, setStreaksEnabled] = useState(true);
@@ -30,7 +29,6 @@ export const EnhancedPrivacySettings = () => {
           theme,
           accentColor,
           dataRetention,
-          analytics,
           gamificationEnabled,
           achievementsEnabled,
           streaksEnabled,
@@ -147,19 +145,6 @@ export const EnhancedPrivacySettings = () => {
                   <Switch 
                     checked={dataRetention} 
                     onCheckedChange={setDataRetention}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-medium">Usage Analytics</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Help improve the app with anonymous usage statistics
-                    </p>
-                  </div>
-                  <Switch 
-                    checked={analytics} 
-                    onCheckedChange={setAnalytics}
                   />
                 </div>
               </div>

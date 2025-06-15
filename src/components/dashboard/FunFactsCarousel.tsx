@@ -23,10 +23,13 @@ export const FunFactsCarousel = () => {
     const tracks = topTracksData.items;
     const artists = topArtistsData.items;
 
-    // Total listening time
+    // Total listening time with proper type checking
     const totalDurationMs = tracks.reduce((sum, track) => {
-      const duration = typeof track.duration_ms === 'number' ? track.duration_ms : 0;
-      return sum + duration;
+      const duration = track.duration_ms;
+      if (typeof duration === 'number' && duration > 0) {
+        return sum + duration;
+      }
+      return sum;
     }, 0);
     const totalHours = Math.round(totalDurationMs / (1000 * 60 * 60));
     const totalDays = Math.round(totalHours / 24);
@@ -48,18 +51,18 @@ export const FunFactsCarousel = () => {
       });
       return acc;
     }, {} as Record<string, number>);
-    const topArtistPlays = Math.max(...Object.values(artistCounts));
+    const topArtistPlays = Object.values(artistCounts).length > 0 ? Math.max(...Object.values(artistCounts)) : 0;
 
-    // Popularity analysis
+    // Popularity analysis with proper type checking
     const validPopularityTracks = tracks.filter(track => typeof track.popularity === 'number');
     const avgPopularity = validPopularityTracks.length > 0 
-      ? validPopularityTracks.reduce((sum, track) => sum + (track.popularity as number), 0) / validPopularityTracks.length 
+      ? Math.round(validPopularityTracks.reduce((sum, track) => sum + (track.popularity as number), 0) / validPopularityTracks.length)
       : 0;
     const popularTracks = tracks.filter(track => (track.popularity || 0) > 80).length;
     const hiddenGems = tracks.filter(track => (track.popularity || 0) < 30).length;
 
-    // Duration analysis
-    const avgDuration = totalDurationMs / tracks.length / 1000 / 60; // minutes
+    // Duration analysis with proper type checking
+    const avgDuration = tracks.length > 0 ? totalDurationMs / tracks.length / 1000 / 60 : 0; // minutes
     const shortTracks = tracks.filter(track => (track.duration_ms || 0) < 180000).length; // under 3 min
     const longTracks = tracks.filter(track => (track.duration_ms || 0) > 300000).length; // over 5 min
 
@@ -92,7 +95,7 @@ export const FunFactsCarousel = () => {
       {
         icon: Star,
         title: "Music Taste Score",
-        fact: `Your average track popularity is ${Math.round(avgPopularity)}/100`,
+        fact: `Your average track popularity is ${avgPopularity}/100`,
         detail: `You have ${popularTracks} mainstream hits and ${hiddenGems} hidden gems!`,
         color: "text-yellow-500"
       },

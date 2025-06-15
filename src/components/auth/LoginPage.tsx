@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { Badge } from '@/components/ui/badge';
@@ -12,11 +14,13 @@ import {
   Lock,
   Eye,
   TrendingUp,
-  Users
+  Users,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 export const LoginPage = () => {
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, error, clearError } = useAuth();
   const { theme, accentColor } = useTheme();
 
   const features = [
@@ -49,6 +53,18 @@ export const LoginPage = () => {
     'GDPR & CCPA compliant',
     'Full data control'
   ];
+
+  const handleLogin = async () => {
+    if (error) {
+      clearError();
+    }
+    await login();
+  };
+
+  const handleRetry = () => {
+    clearError();
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
@@ -121,60 +137,80 @@ export const LoginPage = () => {
             </CardHeader>
             
             <CardContent className="space-y-6">
+              {/* Error Alert */}
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>{error}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetry}
+                      className="ml-2 h-6 px-2"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Button 
-                onClick={login}
+                onClick={handleLogin}
                 disabled={isLoading}
-                className="w-full h-12 text-base bg-[#1DB954] hover:bg-[#1ed760] text-white"
+                className="w-full h-12 text-base bg-[#1DB954] hover:bg-[#1ed760] text-white disabled:opacity-50"
                 size="lg"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Connecting...
+                    {error ? 'Retrying...' : 'Connecting...'}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Music className="h-5 w-5" />
-                    Continue with Spotify
+                    {error ? 'Try Again' : 'Continue with Spotify'}
                   </div>
                 )}
               </Button>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Secure OAuth 2.0 authentication
-                  </span>
-                </div>
-                
-                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
-                    <Eye className="h-4 w-4" />
-                    What we access:
-                  </h4>
-                  <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• Your basic profile information</li>
-                    <li>• Your top tracks and artists</li>
-                    <li>• Your recently played music</li>
-                    <li>• Your current playback state</li>
-                  </ul>
-                </div>
+              {!error && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Secure OAuth 2.0 authentication
+                    </span>
+                  </div>
+                  
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Eye className="h-4 w-4" />
+                      What we access:
+                    </h4>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>• Your basic profile information</li>
+                      <li>• Your top tracks and artists</li>
+                      <li>• Your recently played music</li>
+                      <li>• Your current playback state</li>
+                    </ul>
+                  </div>
 
-                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                  <h4 className="text-sm font-medium text-green-800 dark:text-green-400 mb-2">
-                    Privacy Guaranteed
-                  </h4>
-                  <div className="space-y-1">
-                    {securityFeatures.map((feature, index) => (
-                      <div key={index} className="flex items-center gap-2 text-xs text-green-700 dark:text-green-500">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                        {feature}
-                      </div>
-                    ))}
+                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                    <h4 className="text-sm font-medium text-green-800 dark:text-green-400 mb-2">
+                      Privacy Guaranteed
+                    </h4>
+                    <div className="space-y-1">
+                      {securityFeatures.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 text-xs text-green-700 dark:text-green-500">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                          {feature}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

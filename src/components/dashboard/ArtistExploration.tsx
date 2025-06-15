@@ -6,12 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, Music, TrendingUp, ExternalLink, Play, Heart, Calendar, Clock } from 'lucide-react';
+import { Users, Music, TrendingUp, ExternalLink, Play, Heart, Calendar, Clock, Info } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { ArtistDetailModal } from './artist/ArtistDetailModal';
 
 export const ArtistExploration = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
+  const [showArtistModal, setShowArtistModal] = useState(false);
 
   const { useTopArtists, useTopTracks } = useSpotifyData();
   const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
@@ -23,7 +25,8 @@ export const ArtistExploration = () => {
   const generateArtistAnalytics = () => {
     if (!topArtistsData?.items?.length) return [];
     
-    return topArtistsData.items.slice(0, 10).map((artist: any, index: number) => ({
+    return topArtistsData.items.slice(0, 20).map((artist: any, index: number) => ({
+      id: artist.id,
       name: artist.name,
       popularity: artist.popularity || 0,
       followers: artist.followers?.total || 0,
@@ -55,7 +58,7 @@ export const ArtistExploration = () => {
   const artistAnalytics = generateArtistAnalytics();
   const genreDistribution = generateGenreDistribution();
 
-  // Calculate real statistics
+  // Calculate real statistics from API data
   const calculateRealStats = () => {
     const artists = topArtistsData?.items || [];
     const tracks = topTracksData?.items || [];
@@ -63,11 +66,15 @@ export const ArtistExploration = () => {
     const avgPopularity = artists.length > 0 ? 
       Math.round(artists.reduce((acc: number, artist: any) => acc + (artist.popularity || 0), 0) / artists.length) : 0;
     
+    const totalFollowers = artists.reduce((acc: number, artist: any) => acc + (artist.followers?.total || 0), 0);
+    const avgFollowers = artists.length > 0 ? Math.round(totalFollowers / artists.length) : 0;
+    
     return {
       totalArtists: artists.length,
       totalGenres: genreDistribution.length,
       avgPopularity,
-      totalTracks: tracks.length
+      totalTracks: tracks.length,
+      avgFollowers
     };
   };
 
@@ -98,6 +105,11 @@ export const ArtistExploration = () => {
     }
   };
 
+  const handleArtistClick = (artist: any) => {
+    setSelectedArtist(artist);
+    setShowArtistModal(true);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -119,7 +131,7 @@ export const ArtistExploration = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Artist Exploration</h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Discover insights about your favorite artists and musical tastes
+            Discover insights about your favorite artists • Click any artist for detailed info
           </p>
         </div>
         
@@ -137,13 +149,13 @@ export const ArtistExploration = () => {
         </div>
       </div>
 
-      {/* Stats Overview - Using Real Data */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 md:h-5 md:w-5 text-accent" />
-              <span className="text-xs md:text-sm font-medium">Total Artists</span>
+              <span className="text-xs md:text-sm font-medium">Artists</span>
             </div>
             <div className="text-lg md:text-2xl font-bold">{realStats.totalArtists}</div>
             <div className="text-xs text-muted-foreground">{getTimeRangeLabel(timeRange)}</div>
@@ -165,7 +177,7 @@ export const ArtistExploration = () => {
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Avg Popularity</span>
+              <span className="text-xs md:text-sm font-medium">Avg Pop.</span>
             </div>
             <div className="text-lg md:text-2xl font-bold">{realStats.avgPopularity}</div>
             <div className="text-xs text-muted-foreground">Out of 100</div>
@@ -176,10 +188,25 @@ export const ArtistExploration = () => {
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <Heart className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Total Tracks</span>
+              <span className="text-xs md:text-sm font-medium">Tracks</span>
             </div>
             <div className="text-lg md:text-2xl font-bold">{realStats.totalTracks}</div>
             <div className="text-xs text-muted-foreground">In rotation</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+              <span className="text-xs md:text-sm font-medium">Followers</span>
+            </div>
+            <div className="text-lg md:text-2xl font-bold">
+              {realStats.avgFollowers > 1000000 ? 
+                `${(realStats.avgFollowers / 1000000).toFixed(1)}M` : 
+                `${Math.round(realStats.avgFollowers / 1000)}K`}
+            </div>
+            <div className="text-xs text-muted-foreground">Average</div>
           </CardContent>
         </Card>
       </div>
@@ -207,22 +234,27 @@ export const ArtistExploration = () => {
                   Top Artists - {getTimeRangeLabel(timeRange)}
                 </CardTitle>
                 <CardDescription>
-                  Your most listened to artists ranked by popularity
+                  Click any artist to see detailed information and top songs
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {artistAnalytics.slice(0, 8).map((artist, index) => (
+                  {artistAnalytics.slice(0, 10).map((artist, index) => (
                     <div 
-                      key={index} 
-                      className={`flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer hover:bg-accent/5 ${
-                        selectedArtist?.name === artist.name ? 'bg-accent/10 border border-accent/20' : ''
-                      }`}
-                      onClick={() => setSelectedArtist(selectedArtist?.name === artist.name ? null : artist)}
+                      key={artist.id} 
+                      className="flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer hover:bg-accent/5 border hover:border-accent/20"
+                      onClick={() => handleArtistClick(artist)}
                     >
                       <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center text-xs font-medium">
                         {artist.rank}
                       </div>
+                      {artist.image && (
+                        <img 
+                          src={artist.image} 
+                          alt={artist.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{artist.name}</p>
                         <div className="flex items-center gap-2">
@@ -236,19 +268,22 @@ export const ArtistExploration = () => {
                           )}
                         </div>
                       </div>
-                      {artist.external_urls?.spotify && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(artist.external_urls.spotify, '_blank');
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                        {artist.external_urls?.spotify && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(artist.external_urls.spotify, '_blank');
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -294,66 +329,18 @@ export const ArtistExploration = () => {
               </CardContent>
             </Card>
           </div>
-
-          {/* Artist Detail Panel */}
-          {selectedArtist && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Music className="h-5 w-5" />
-                  Artist Details: {selectedArtist.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Popularity Score</h4>
-                    <div className="text-2xl font-bold text-accent">{selectedArtist.popularity}/100</div>
-                    <p className="text-xs text-muted-foreground">
-                      Based on recent plays and algorithm data
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Followers</h4>
-                    <div className="text-2xl font-bold">
-                      {selectedArtist.followers > 1000000 ? 
-                        `${(selectedArtist.followers / 1000000).toFixed(1)}M` : 
-                        `${Math.round(selectedArtist.followers / 1000)}K`}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Total Spotify followers
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Genres</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedArtist.genres.slice(0, 3).map((genre: string, index: number) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {genre}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                {selectedArtist.external_urls?.spotify && (
-                  <div className="mt-4 pt-4 border-t">
-                    <Button
-                      onClick={() => window.open(selectedArtist.external_urls.spotify, '_blank')}
-                      className="w-full md:w-auto"
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      Open in Spotify
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </>
       )}
+
+      {/* Artist Detail Modal */}
+      <ArtistDetailModal 
+        artist={selectedArtist}
+        isOpen={showArtistModal}
+        onClose={() => {
+          setShowArtistModal(false);
+          setSelectedArtist(null);
+        }}
+      />
     </div>
   );
 };

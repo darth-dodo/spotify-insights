@@ -10,14 +10,15 @@ import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnaly
 import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
 import { PrivacyControls } from '@/components/dashboard/PrivacyControls';
 import { EnhancedListeningTrends } from '@/components/dashboard/EnhancedListeningTrends';
-import { GamificationSystem } from '@/components/dashboard/GamificationSystem';
+import { SimpleGamification } from '@/components/dashboard/gamification/SimpleGamification';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
-import { Info, Settings, FileText } from 'lucide-react';
+import { Info, Settings, FileText, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const Dashboard = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error, clearError, refreshToken } = useAuth();
   const { theme, accentColor } = useTheme();
   const [activeView, setActiveView] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -33,10 +34,22 @@ export const Dashboard = () => {
     setSidebarOpen(false);
   };
 
+  const handleRetryAuth = async () => {
+    clearError();
+    try {
+      await refreshToken();
+    } catch (refreshError) {
+      console.error('Retry failed:', refreshError);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-accent rounded-full border-t-transparent" />
+        <div className="text-center space-y-4">
+          <div className="animate-spin h-8 w-8 border-2 border-accent rounded-full border-t-transparent mx-auto" />
+          <p className="text-muted-foreground">Loading your music data...</p>
+        </div>
       </div>
     );
   }
@@ -66,6 +79,25 @@ export const Dashboard = () => {
           
           <main className="flex-1 overflow-y-auto p-3 md:p-6">
             <div className="max-w-7xl mx-auto">
+              {/* Error Alert */}
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>{error}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetryAuth}
+                      className="ml-2"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Retry
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Action Buttons - Mobile Responsive */}
               <div className="flex flex-col sm:flex-row justify-end gap-2 mb-4">
                 <Button 
@@ -105,7 +137,7 @@ export const Dashboard = () => {
                 {activeView === 'genres' && <EnhancedGenreAnalysis />}
                 {activeView === 'artists' && <ArtistExploration />}
                 {activeView === 'privacy' && <PrivacyControls />}
-                {activeView === 'gamification' && <GamificationSystem />}
+                {activeView === 'gamification' && <SimpleGamification />}
               </div>
             </div>
           </main>

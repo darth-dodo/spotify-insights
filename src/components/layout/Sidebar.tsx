@@ -1,19 +1,23 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 import { 
   Home, 
   TrendingUp, 
-  BarChart3, 
+  Music, 
   Users, 
-  Settings, 
-  X,
-  Music,
   Trophy,
-  Target
+  BarChart3,
+  Settings,
+  ChevronRight,
+  Sparkles,
+  Headphones,
+  Calendar
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -23,90 +27,187 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  isOpen,
-  onToggle,
-  activeView,
-  onViewChange
-}) => {
-  const menuItems = [
-    { id: 'overview', label: 'Overview', icon: Home },
-    { id: 'trends', label: 'Activity', icon: TrendingUp },
-    { id: 'enhanced-trends', label: 'Trends', icon: BarChart3, badge: 'Enhanced' },
-    { id: 'genres', label: 'Genres', icon: Music },
-    { id: 'artists', label: 'Artists', icon: Users },
-    { id: 'gamification', label: 'Achievements', icon: Trophy, badge: 'New' },
-    { id: 'privacy', label: 'Settings', icon: Settings }
+export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarProps) => {
+  const navigationItems = [
+    {
+      id: 'overview',
+      title: 'Overview',
+      icon: Home,
+      description: 'Dashboard home',
+      category: 'main'
+    },
+    {
+      id: 'artists',
+      title: 'Artist Explorer',
+      icon: Users,
+      description: 'Discover artist insights',
+      category: 'discovery',
+      badge: 'Enhanced'
+    },
+    {
+      id: 'genres',
+      title: 'Genre Analysis',
+      icon: Music,
+      description: 'Musical taste breakdown',
+      category: 'discovery'
+    },
+    {
+      id: 'enhanced-trends',
+      title: 'Listening Trends',
+      icon: TrendingUp,
+      description: 'Timeline insights',
+      category: 'analytics'
+    },
+    {
+      id: 'trends',
+      title: 'Activity Details',
+      icon: BarChart3,
+      description: 'Detailed statistics',
+      category: 'analytics'
+    },
+    {
+      id: 'gamification',
+      title: 'Music Journey',
+      icon: Trophy,
+      description: 'Achievements & progress',
+      category: 'experience',
+      badge: 'New'
+    },
+    {
+      id: 'privacy',
+      title: 'Settings',
+      icon: Settings,
+      description: 'Privacy & preferences',
+      category: 'settings'
+    }
   ];
 
-  return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onToggle}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <div className={cn(
-        "fixed left-0 top-0 z-50 h-full w-64 bg-card border-r transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-lg font-semibold">Music Dashboard</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggle}
-              className="lg:hidden"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+  const categories = [
+    { id: 'main', title: 'Dashboard', icon: Home },
+    { id: 'discovery', title: 'Music Discovery', icon: Sparkles },
+    { id: 'analytics', title: 'Analytics', icon: BarChart3 },
+    { id: 'experience', title: 'Experience', icon: Headphones },
+    { id: 'settings', title: 'Settings', icon: Settings }
+  ];
+
+  const groupedItems = categories.reduce((acc, category) => {
+    acc[category.id] = navigationItems.filter(item => item.category === category.id);
+    return acc;
+  }, {} as Record<string, typeof navigationItems>);
+
+  const SidebarContent = () => (
+    <div className="h-full flex flex-col">
+      <div className="p-6 border-b">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+            <Music className="h-4 w-4 text-accent-foreground" />
           </div>
-
-          {/* Navigation */}
-          <ScrollArea className="flex-1 px-3 py-4">
-            <div className="space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeView === item.id;
-                
-                return (
-                  <Button
-                    key={item.id}
-                    variant={isActive ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start gap-3 h-10",
-                      isActive && "bg-accent text-accent-foreground"
-                    )}
-                    onClick={() => onViewChange(item.id)}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {item.badge && (
-                      <Badge variant="secondary" className="text-xs">
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-          </ScrollArea>
-
-          {/* Footer */}
-          <div className="p-4 border-t">
-            <div className="text-xs text-muted-foreground">
-              <p>Music Dashboard v1.0</p>
-              <p className="mt-1">Connect Spotify for insights</p>
-            </div>
+          <div>
+            <h2 className="font-semibold text-lg">Spotify Insights</h2>
+            <p className="text-xs text-muted-foreground">Music Analytics</p>
           </div>
         </div>
       </div>
+
+      <ScrollArea className="flex-1 px-3">
+        <div className="py-4 space-y-6">
+          {categories.map((category) => {
+            const items = groupedItems[category.id];
+            if (!items?.length) return null;
+
+            const CategoryIcon = category.icon;
+            
+            return (
+              <div key={category.id} className="space-y-2">
+                <div className="flex items-center gap-2 px-3 py-1">
+                  <CategoryIcon className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    {category.title}
+                  </span>
+                </div>
+                
+                <div className="space-y-1">
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeView === item.id;
+                    
+                    return (
+                      <Button
+                        key={item.id}
+                        variant={isActive ? "secondary" : "ghost"}
+                        className={cn(
+                          "w-full justify-start h-auto p-3 text-left",
+                          isActive && "bg-accent/10 border-l-2 border-accent"
+                        )}
+                        onClick={() => {
+                          onViewChange(item.id);
+                          onToggle();
+                        }}
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <Icon className={cn(
+                            "h-4 w-4 flex-shrink-0",
+                            isActive ? "text-accent" : "text-muted-foreground"
+                          )} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "font-medium text-sm",
+                                isActive ? "text-accent" : "text-foreground"
+                              )}>
+                                {item.title}
+                              </span>
+                              {item.badge && (
+                                <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                  {item.badge}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {item.description}
+                            </p>
+                          </div>
+                          {isActive && (
+                            <ChevronRight className="h-3 w-3 text-accent flex-shrink-0" />
+                          )}
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+
+      <div className="p-4 border-t">
+        <div className="bg-muted/50 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="h-4 w-4 text-accent" />
+            <span className="text-sm font-medium">Tip</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Click on artists in the Explorer to see detailed information and top songs!
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex w-80 bg-card border-r border-border">
+        <SidebarContent />
+      </div>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={isOpen} onOpenChange={onToggle}>
+        <SheetContent side="left" className="p-0 w-80">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
     </>
   );
 };

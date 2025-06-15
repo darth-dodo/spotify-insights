@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { sanitizeUserData, hashData } from '@/lib/data-utils';
@@ -73,10 +72,10 @@ export const useAuthState = () => {
   };
 
   // Helper function to fetch and set user data
-  const fetchAndSetUser = async (token: string) => {
+  const fetchAndSetUser = async () => {
     try {
-      console.log('Fetching user data with token...');
-      const userData = await spotifyAuth.getCurrentUser(token);
+      console.log('Fetching user data...');
+      const userData = await spotifyAuth.getCurrentUser();
       const sanitizedUser = sanitizeUserData(userData);
       
       setUser(sanitizedUser);
@@ -150,7 +149,7 @@ export const useAuthState = () => {
             
             // For real auth, validate the token by making a quick API call
             try {
-              await fetchAndSetUser(token);
+              await fetchAndSetUser();
             } catch (validationError) {
               console.warn('Token validation failed, but keeping cached user for now');
               // Keep the cached user but set an error for background issues
@@ -166,7 +165,7 @@ export const useAuthState = () => {
         }
 
         // No cached user data, fetch fresh data
-        await fetchAndSetUser(token);
+        await fetchAndSetUser();
         
       } catch (error: any) {
         console.error('Auth initialization error:', error);
@@ -188,12 +187,12 @@ export const useAuthState = () => {
       console.log('Starting login process...');
       await spotifyAuth.login();
       
-      if (USE_DUMMY_DATA || spotifyAuth.isDummyMode()) {
+      if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
         // For dummy data, manually set the user after fake login
         const token = localStorage.getItem('spotify_access_token');
         if (token) {
           console.log('Dummy data login completed, fetching user data...');
-          await fetchAndSetUser(token);
+          await fetchAndSetUser();
           console.log('User data set successfully after dummy login');
         }
       }

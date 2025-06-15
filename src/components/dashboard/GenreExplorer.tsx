@@ -9,42 +9,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Music, Search, TrendingUp, Users, Star, Filter, Grid, List, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Music, Search, TrendingUp, Users, Star, Filter, Grid, List, Loader2 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { cn } from '@/lib/utils';
-
-// Error handling hook with backoff mechanism
-const useApiWithBackoff = (apiCall: () => Promise<any>, enabled: boolean = true) => {
-  const [retryCount, setRetryCount] = useState(0);
-  const [isRateLimited, setIsRateLimited] = useState(false);
-  const [backoffDelay, setBackoffDelay] = useState(0);
-
-  const handleError = (error: any) => {
-    console.error('API Error:', error);
-    
-    if (error?.message?.includes('429') || error?.message?.includes('rate limit')) {
-      setIsRateLimited(true);
-      const delay = Math.min(60000 * Math.pow(2, retryCount), 300000); // Exponential backoff, max 5 minutes
-      setBackoffDelay(delay);
-      
-      setTimeout(() => {
-        setIsRateLimited(false);
-        setRetryCount(prev => prev + 1);
-      }, delay);
-      
-      return { items: [], isRateLimited: true, retryAfter: delay / 1000 };
-    }
-    
-    if (error?.message?.includes('400')) {
-      console.warn('Bad request, using cached/limited data');
-      return { items: [], isBadRequest: true };
-    }
-    
-    throw error;
-  };
-
-  return { handleError, isRateLimited, backoffDelay, retryCount };
-};
 
 export const GenreExplorer = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
@@ -52,121 +19,86 @@ export const GenreExplorer = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'popularity' | 'artists' | 'tracks'>('popularity');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
 
   const { useTopTracks, useTopArtists } = useSpotifyData();
-  
-  // Use reduced limits to minimize API strain
-  const { data: topTracksData, isLoading: tracksLoading, error: tracksError } = useTopTracks(timeRange, 25);
-  const { data: topArtistsData, isLoading: artistsLoading, error: artistsError } = useTopArtists(timeRange, 25);
-
-  const { handleError, isRateLimited, backoffDelay } = useApiWithBackoff(() => Promise.resolve());
+  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
+  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
 
   const isLoading = tracksLoading || artistsLoading;
-  const hasError = tracksError || artistsError;
 
-  // Handle API errors gracefully
-  React.useEffect(() => {
-    if (tracksError || artistsError) {
-      const error = tracksError || artistsError;
-      try {
-        handleError(error);
-        setApiError(error?.message || 'Failed to load data');
-      } catch (e) {
-        setApiError('Unable to load genre data. Please try again later.');
-      }
-    } else {
-      setApiError(null);
-    }
-  }, [tracksError, artistsError]);
-
-  // Process genre data with error handling
+  // Process genre data
   const genreData = useMemo(() => {
-    // Return empty data if there are errors or rate limits
-    if (hasError || isRateLimited || !topArtistsData?.items || !topTracksData?.items) {
+    if (!topArtistsData?.items || !topTracksData?.items) {
       return { genres: [], total: 0 };
     }
 
-    try {
-      const genreCounts: { [key: string]: { 
-        count: number; 
-        artists: Set<string>; 
-        tracks: Set<string>;
-        popularity: number;
-      } } = {};
-      
-      // Process artists and their genres safely
-      topArtistsData.items.forEach((artist: any) => {
-        if (!artist || !artist.genres) return;
-        
-        const artistPopularity = Math.max(0, artist.popularity || 0);
-        artist.genres.forEach((genre: string) => {
-          if (!genre) return;
-          
-          if (!genreCounts[genre]) {
-            genreCounts[genre] = { 
-              count: 0, 
-              artists: new Set(), 
-              tracks: new Set(),
-              popularity: 0
-            };
-          }
-          genreCounts[genre].count += 1;
-          genreCounts[genre].artists.add(artist.name || 'Unknown Artist');
-          genreCounts[genre].popularity += artistPopularity;
-        });
+    const genreCounts: { [key: string]: { 
+      count: number; 
+      artists: Set<string>; 
+      tracks: Set<string>;
+      popularity: number;
+    } } = {};
+    
+    // Process artists and their genres
+    topArtistsData.items.forEach((artist: any) => {
+      const artistPopularity = artist.popularity || 0;
+      artist.genres?.forEach((genre: string) => {
+        if (!genreCounts[genre]) {
+          genreCounts[genre] = { 
+            count: 0, 
+            artists: new Set(), 
+            tracks: new Set(),
+            popularity: 0
+          };
+        }
+        genreCounts[genre].count += 1;
+        genreCounts[genre].artists.add(artist.name);
+        genreCounts[genre].popularity += artistPopularity;
+      });
+    });
+
+    // Add track information
+    topTracksData.items.forEach((track: any) => {
+      track.artists?.forEach((artist: any) => {
+        const matchingArtist = topArtistsData.items.find((a: any) => a.id === artist.id);
+        if (matchingArtist?.genres) {
+          matchingArtist.genres.forEach((genre: string) => {
+            if (genreCounts[genre]) {
+              genreCounts[genre].tracks.add(track.name);
+            }
+          });
+        }
+      });
+    });
+
+    // Create final genre list
+    const genres = Object.entries(genreCounts)
+      .map(([genre, data]) => ({
+        name: genre,
+        count: data.count,
+        artists: Array.from(data.artists),
+        tracks: Array.from(data.tracks),
+        avgPopularity: data.count > 0 ? Math.round(data.popularity / data.count) : 0,
+        percentage: 0,
+      }))
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'artists': return b.count - a.count;
+          case 'tracks': return b.tracks.length - a.tracks.length;
+          case 'popularity': return b.avgPopularity - a.avgPopularity;
+          default: return b.count - a.count;
+        }
       });
 
-      // Add track information safely
-      topTracksData.items.forEach((track: any) => {
-        if (!track || !track.artists) return;
-        
-        track.artists.forEach((artist: any) => {
-          if (!artist) return;
-          
-          const matchingArtist = topArtistsData.items.find((a: any) => a?.id === artist.id);
-          if (matchingArtist?.genres) {
-            matchingArtist.genres.forEach((genre: string) => {
-              if (genreCounts[genre] && track.name) {
-                genreCounts[genre].tracks.add(track.name);
-              }
-            });
-          }
-        });
-      });
+    const total = genres.reduce((sum, genre) => sum + genre.count, 0);
+    
+    // Calculate percentages
+    genres.forEach(genre => {
+      genre.percentage = total > 0 ? Math.round((genre.count / total) * 100) : 0;
+    });
 
-      // Create final genre list safely
-      const genres = Object.entries(genreCounts)
-        .map(([genre, data]) => ({
-          name: genre,
-          count: Math.max(0, data.count),
-          artists: Array.from(data.artists),
-          tracks: Array.from(data.tracks),
-          avgPopularity: data.count > 0 ? Math.round(Math.max(0, data.popularity) / data.count) : 0,
-          percentage: 0,
-        }))
-        .sort((a, b) => {
-          switch (sortBy) {
-            case 'artists': return b.count - a.count;
-            case 'tracks': return b.tracks.length - a.tracks.length;
-            case 'popularity': return b.avgPopularity - a.avgPopularity;
-            default: return b.count - a.count;
-          }
-        });
-
-      const total = genres.reduce((sum, genre) => sum + genre.count, 0);
-      
-      // Calculate percentages safely
-      genres.forEach(genre => {
-        genre.percentage = total > 0 ? Math.round((genre.count / total) * 100) : 0;
-      });
-
-      return { genres, total };
-    } catch (error) {
-      console.error('Error processing genre data:', error);
-      return { genres: [], total: 0 };
-    }
-  }, [topArtistsData, topTracksData, sortBy, hasError, isRateLimited]);
+    return { genres, total };
+  }, [topArtistsData, topTracksData, sortBy]);
 
   // Filter genres based on search
   const filteredGenres = useMemo(() => {
@@ -191,51 +123,6 @@ export const GenreExplorer = () => {
     return genreData.genres.find(g => g.name === selectedGenre);
   }, [selectedGenre, genreData.genres]);
 
-  // Rate limit display
-  if (isRateLimited) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Genre Explorer</h1>
-          <p className="text-muted-foreground">Temporarily limited due to API rate limits</p>
-        </div>
-        <Card>
-          <CardContent className="p-8 text-center">
-            <AlertTriangle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Rate Limited</h3>
-            <p className="text-muted-foreground mb-4">
-              Too many requests to Spotify. Please wait {Math.round(backoffDelay / 1000)} seconds.
-            </p>
-            <Progress value={((300000 - backoffDelay) / 300000) * 100} className="w-full max-w-md mx-auto" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Error state
-  if (apiError && genreData.genres.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Genre Explorer</h1>
-          <p className="text-muted-foreground">Unable to load genre data</p>
-        </div>
-        <Card>
-          <CardContent className="p-8 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Error Loading Data</h3>
-            <p className="text-muted-foreground mb-4">{apiError}</p>
-            <Button onClick={() => window.location.reload()} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -259,13 +146,6 @@ export const GenreExplorer = () => {
           <p className="text-sm md:text-base text-muted-foreground">
             Discover and explore your musical genres
           </p>
-          {apiError && (
-            <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-md">
-              <p className="text-xs text-orange-700">
-                Limited data due to API constraints: {apiError}
-              </p>
-            </div>
-          )}
         </div>
         
         {/* Controls */}
@@ -385,7 +265,7 @@ export const GenreExplorer = () => {
             <CardHeader>
               <CardTitle>Your Genres ({filteredGenres.length})</CardTitle>
               <CardDescription>
-                Genres from your listening history {apiError && '(limited data)'}
+                Genres from your listening history
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -395,7 +275,7 @@ export const GenreExplorer = () => {
                     <Music className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2">No Genres Found</h3>
                     <p className="text-muted-foreground">
-                      {apiError ? 'Unable to load genre data due to API limitations.' : 'Try adjusting your search or time range.'}
+                      Try adjusting your search or time range.
                     </p>
                   </div>
                 ) : viewMode === 'grid' ? (

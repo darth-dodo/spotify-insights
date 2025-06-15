@@ -1,32 +1,34 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
-import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { InteractiveOverview } from '@/components/dashboard/InteractiveOverview';
-import { ListeningActivity } from '@/components/dashboard/ListeningActivity';
-import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnalysis';
-import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
-import { PrivacySettings } from '@/components/dashboard/PrivacySettings';
-import { EnhancedListeningTrends } from '@/components/dashboard/EnhancedListeningTrends';
-import { SimpleGamification } from '@/components/dashboard/gamification/SimpleGamification';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
-import { Info, Settings, FileText, AlertCircle, RefreshCw } from 'lucide-react';
+import { Sidebar } from './layout/Sidebar';
+import { InteractiveOverview } from './dashboard/InteractiveOverview';
+import { ListeningActivity } from './dashboard/ListeningActivity';
+import { EnhancedListeningTrends } from './dashboard/EnhancedListeningTrends';
+import { EnhancedGenreAnalysis } from './dashboard/EnhancedGenreAnalysis';
+import { ArtistExploration } from './dashboard/ArtistExploration';
+import { SimpleGamification } from './dashboard/gamification/SimpleGamification';
+import { PrivacySettings } from './dashboard/PrivacySettings';
+import { LibraryHealth } from './dashboard/LibraryHealth';
+import { ListeningPatterns } from './dashboard/ListeningPatterns';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { Info, Settings, FileText, AlertCircle, RefreshCw, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 export const Dashboard = () => {
   const { user, isLoading, error, clearError, refreshToken } = useAuth();
   const { theme } = useTheme();
   const [activeView, setActiveView] = useState('overview');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
+  const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
+  const { isLoading: tracksLoading, error: tracksError } = useTopTracks();
+  const { isLoading: artistsLoading, error: artistsError } = useTopArtists();
+  const { isLoading: recentLoading, error: recentError } = useRecentlyPlayed();
 
   const handleSettingsClick = () => {
     setActiveView('privacy');
-    setSidebarOpen(false);
   };
 
   const handleViewChange = (view: string) => {
@@ -34,16 +36,7 @@ export const Dashboard = () => {
     setSidebarOpen(false);
   };
 
-  const handleRetryAuth = async () => {
-    clearError();
-    try {
-      await refreshToken();
-    } catch (refreshError) {
-      console.error('Retry failed:', refreshError);
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading || tracksLoading || artistsLoading || recentLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -54,94 +47,90 @@ export const Dashboard = () => {
     );
   }
 
-  if (!user) {
-    return null;
+  if (error || tracksError || artistsError || recentError) {
+    const errorMessage = error || 
+      (tracksError instanceof Error ? tracksError.message : String(tracksError)) ||
+      (artistsError instanceof Error ? artistsError.message : String(artistsError)) ||
+      (recentError instanceof Error ? recentError.message : String(recentError));
+
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+          <h2 className="text-2xl font-bold text-red-500">Error</h2>
+          <p className="text-muted-foreground">{errorMessage}</p>
+          <button
+            onClick={refreshToken}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-md hover:bg-accent/90"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className={cn(
-      "min-h-screen bg-background text-foreground",
-      theme
-    )}>
-      <div className="flex h-screen overflow-hidden">
-        <Sidebar 
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-          activeView={activeView}
-          onViewChange={handleViewChange}
-        />
-        
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header 
-            user={user}
-            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          />
-          
-          <main className="flex-1 overflow-y-auto p-3 md:p-6">
-            <div className="max-w-7xl mx-auto">
-              {/* Error Alert */}
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="flex items-center justify-between">
-                    <span>{error}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRetryAuth}
-                      className="ml-2"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Retry
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
+  const renderContent = () => {
+    switch (activeView) {
+      case 'overview':
+        return <InteractiveOverview onNavigate={handleViewChange} />;
+      case 'library-health':
+        return <LibraryHealth />;
+      case 'listening-patterns':
+        return <ListeningPatterns />;
+      case 'trends':
+        return <ListeningActivity />;
+      case 'enhanced-trends':
+        return <EnhancedListeningTrends />;
+      case 'genres':
+        return <EnhancedGenreAnalysis />;
+      case 'artists':
+        return <ArtistExploration />;
+      case 'gamification':
+        return <SimpleGamification />;
+      case 'privacy':
+        return <PrivacySettings />;
+      default:
+        return <InteractiveOverview onNavigate={handleViewChange} />;
+    }
+  };
 
-              {/* Action Buttons - Mobile Responsive */}
-              <div className="flex flex-col sm:flex-row justify-end gap-2 mb-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleSettingsClick}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <Settings className="h-4 w-4" />
-                  Privacy & Settings
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate('/help')}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <Info className="h-4 w-4" />
-                  Help & Security
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate('/legal')}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <FileText className="h-4 w-4" />
-                  Legal Info
-                </Button>
-              </div>
-              
-              {/* Content Area */}
-              <div className="container-responsive">
-                {activeView === 'overview' && <InteractiveOverview onNavigate={handleViewChange} />}
-                {activeView === 'trends' && <ListeningActivity />}
-                {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
-                {activeView === 'genres' && <EnhancedGenreAnalysis />}
-                {activeView === 'artists' && <ArtistExploration />}
-                {activeView === 'privacy' && <PrivacySettings />}
-                {activeView === 'gamification' && <SimpleGamification />}
-              </div>
+  return (
+    <div className="flex h-screen bg-background">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        activeView={activeView}
+        onViewChange={handleViewChange}
+      />
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="border-b">
+          <div className="container-responsive flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 hover:bg-accent/10 rounded-md"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <h1 className="text-xl font-semibold">Spotify Insights</h1>
             </div>
-          </main>
-        </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={handleSettingsClick}>
+                <Settings className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">
+          <div className="container-responsive py-6">
+            {renderContent()}
+          </div>
+        </main>
       </div>
     </div>
   );

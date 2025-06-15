@@ -1,7 +1,7 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { spotifyAPI } from '@/lib/spotify-api';
 import { SandboxDataStrategy } from '@/strategies/SandboxDataStrategy';
+import React from 'react';
 
 // Determine if we're in sandbox mode
 const isSandboxMode = () => window.location.pathname === '/sandbox';
@@ -89,19 +89,24 @@ export const useExtendedSpotifyDataStore = () => {
       .slice(0, limit);
   };
 
-  const getGenreAnalysis = () => {
+  const getGenreAnalysis = React.useCallback(() => {
     if (isSandboxMode()) {
       return sandboxDataStrategy.getGenreAnalysis();
     }
 
-    if (!data?.artists) return [];
+    if (!data?.artists || !data?.tracks) {
+      return [];
+    }
     
     const genreCounts: Record<string, { count: number; tracks: number; artists: Set<string>; hours: number; color: string }> = {};
     const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
     let colorIndex = 0;
 
-    data.artists.forEach((artist: any, index: number) => {
-      artist.genres?.forEach((genre: string) => {
+    // Process artists and their genres
+    data.artists.forEach((artist: any) => {
+      if (!artist?.genres) return;
+      
+      artist.genres.forEach((genre: string) => {
         const genreName = genre.charAt(0).toUpperCase() + genre.slice(1);
         if (!genreCounts[genreName]) {
           genreCounts[genreName] = { 
@@ -115,13 +120,20 @@ export const useExtendedSpotifyDataStore = () => {
         }
         genreCounts[genreName].count++;
         genreCounts[genreName].artists.add(artist.id);
-        const trackCount = Math.floor((50 - (index / 20)) * Math.random()) + 5;
-        genreCounts[genreName].tracks += trackCount;
-        genreCounts[genreName].hours += Math.floor(trackCount * 3.5);
+        
+        // Calculate track count based on artist's tracks
+        const artistTracks = data.tracks.filter((track: any) => 
+          track?.artists?.some((a: any) => a?.id === artist.id)
+        );
+        genreCounts[genreName].tracks += artistTracks.length;
+        genreCounts[genreName].hours += artistTracks.reduce((acc: number, track: any) => 
+          acc + (track?.duration_ms || 0), 0) / (1000 * 60 * 60); // Convert to hours
       });
     });
     
     const totalArtists = data.artists.length;
+    if (totalArtists === 0) return [];
+
     return Object.entries(genreCounts)
       .sort(([,a], [,b]) => b.count - a.count)
       .slice(0, 8)
@@ -131,9 +143,9 @@ export const useExtendedSpotifyDataStore = () => {
         color: genreData.color,
         tracks: genreData.tracks,
         artists: genreData.artists.size,
-        hours: Math.round(genreData.hours / 60)
+        hours: Math.round(genreData.hours)
       }));
-  };
+  }, [data?.artists, data?.tracks, isSandboxMode]);
 
   const getStats = () => {
     if (isSandboxMode()) {

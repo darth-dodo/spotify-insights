@@ -3,11 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { spotifyAPI } from '@/lib/spotify-api';
 import { spotifyDataIntegration } from '@/lib/spotify-data-integration';
 
-const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
+// Only use dummy data in sandbox mode
+const USE_DUMMY_DATA = window.location.pathname === '/sandbox';
 
 export const useSpotifyData = () => {
   const getAccessToken = () => {
-    return USE_DUMMY_DATA ? undefined : localStorage.getItem('spotify_access_token');
+    if (USE_DUMMY_DATA) return undefined;
+    
+    const token = localStorage.getItem('spotify_access_token');
+    if (!token) {
+      throw new Error('No access token found. Please authenticate with Spotify.');
+    }
+    return token;
   };
 
   // Enhanced hooks using the integration service
@@ -15,8 +22,15 @@ export const useSpotifyData = () => {
     return useQuery({
       queryKey: ['enhanced-recently-played', limit],
       queryFn: () => spotifyDataIntegration.getEnhancedRecentlyPlayed(limit),
-      staleTime: 1000 * 60 * 2, // 2 minutes
+      staleTime: 1000 * 60 * 2,
       enabled: true,
+      retry: (failureCount, error) => {
+        // Don't retry on rate limits or auth errors
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     });
   };
 
@@ -24,8 +38,14 @@ export const useSpotifyData = () => {
     return useQuery({
       queryKey: ['enhanced-top-tracks', timeRange, totalLimit],
       queryFn: () => spotifyDataIntegration.getEnhancedTopTracks(timeRange, totalLimit),
-      staleTime: 1000 * 60 * 10, // 10 minutes
+      staleTime: 1000 * 60 * 10,
       enabled: true,
+      retry: (failureCount, error) => {
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     });
   };
 
@@ -33,8 +53,14 @@ export const useSpotifyData = () => {
     return useQuery({
       queryKey: ['enhanced-top-artists', timeRange, totalLimit],
       queryFn: () => spotifyDataIntegration.getEnhancedTopArtists(timeRange, totalLimit),
-      staleTime: 1000 * 60 * 10, // 10 minutes
+      staleTime: 1000 * 60 * 10,
       enabled: true,
+      retry: (failureCount, error) => {
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     });
   };
 
@@ -43,8 +69,14 @@ export const useSpotifyData = () => {
     return useQuery({
       queryKey: ['top-tracks', timeRange, limit],
       queryFn: () => spotifyAPI.getTopTracks(getAccessToken(), timeRange, limit),
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       enabled: true,
+      retry: (failureCount, error) => {
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     });
   };
 
@@ -54,6 +86,12 @@ export const useSpotifyData = () => {
       queryFn: () => spotifyAPI.getTopArtists(getAccessToken(), timeRange, limit),
       staleTime: 1000 * 60 * 5,
       enabled: true,
+      retry: (failureCount, error) => {
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     });
   };
 
@@ -63,6 +101,12 @@ export const useSpotifyData = () => {
       queryFn: () => spotifyAPI.getExtendedTopTracks(getAccessToken(), timeRange, totalLimit),
       staleTime: 1000 * 60 * 15,
       enabled: true,
+      retry: (failureCount, error) => {
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     });
   };
 
@@ -72,6 +116,12 @@ export const useSpotifyData = () => {
       queryFn: () => spotifyAPI.getExtendedTopArtists(getAccessToken(), timeRange, totalLimit),
       staleTime: 1000 * 60 * 15,
       enabled: true,
+      retry: (failureCount, error) => {
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     });
   };
 
@@ -81,6 +131,7 @@ export const useSpotifyData = () => {
       queryFn: () => spotifyAPI.getRecentlyPlayed(getAccessToken(), limit),
       staleTime: 1000 * 60 * 1,
       enabled: true,
+      retry: false, // Don't retry frequently updated data
     });
   };
 
@@ -94,7 +145,6 @@ export const useSpotifyData = () => {
     });
   };
 
-  // Listening statistics calculation
   const useListeningStats = (timeRange: string = 'medium_term') => {
     return useQuery({
       queryKey: ['listening-stats', timeRange],
@@ -107,17 +157,20 @@ export const useSpotifyData = () => {
       },
       staleTime: 1000 * 60 * 10,
       enabled: true,
+      retry: (failureCount, error) => {
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     });
   };
 
   return {
-    // Enhanced hooks with integration
     useEnhancedRecentlyPlayed,
     useEnhancedTopTracks,
     useEnhancedTopArtists,
     useListeningStats,
-    
-    // Legacy hooks
     useTopTracks,
     useTopArtists,
     useExtendedTopTracks,

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ApiErrorBoundary } from "@/components/error-states/ApiErrorBoundary";
 import { Dashboard } from "@/components/Dashboard";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { CallbackPage } from "@/components/auth/CallbackPage";
@@ -19,8 +20,14 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 2,
+      staleTime: 1000 * 60 * 5,
+      retry: (failureCount, error) => {
+        // Don't retry on rate limits or auth errors
+        if (error?.message?.includes('429') || error?.message?.includes('401')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     },
   },
 });
@@ -33,23 +40,25 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/index" element={<Index />} />
-              <Route path="/sandbox" element={<SandboxMode />} />
-              <Route path="/callback" element={<CallbackPage />} />
-              <Route path="/help" element={<HelpPage />} />
-              <Route path="/legal" element={<LegalPage />} />
-              <Route 
-                path="/" 
-                element={
-                  <AuthGuard 
-                    loginComponent={<Index />}
-                    dashboardComponent={<Dashboard />}
-                  />
-                } 
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <ApiErrorBoundary>
+              <Routes>
+                <Route path="/index" element={<Index />} />
+                <Route path="/sandbox" element={<SandboxMode />} />
+                <Route path="/callback" element={<CallbackPage />} />
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/legal" element={<LegalPage />} />
+                <Route 
+                  path="/" 
+                  element={
+                    <AuthGuard 
+                      loginComponent={<Index />}
+                      dashboardComponent={<Dashboard />}
+                    />
+                  } 
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ApiErrorBoundary>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

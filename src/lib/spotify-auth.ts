@@ -1,15 +1,15 @@
-
 import { spotifyAPI } from './spotify-api';
 
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || `${window.location.origin}/callback`;
-const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true' || !CLIENT_ID || window.location.pathname === '/sandbox';
 
-// Reduced scope - only essential permissions for analytics
+// Only use sandbox mode when explicitly on /sandbox route
+const USE_DUMMY_DATA = window.location.pathname === '/sandbox';
+
 const SCOPES = [
-  'user-read-private',        // Basic profile info (name, country)
-  'user-top-read',           // Top tracks and artists
-  'user-read-recently-played' // Recent listening history
+  'user-read-private',
+  'user-top-read',
+  'user-read-recently-played'
 ].join(' ');
 
 class SpotifyAuth {
@@ -20,10 +20,8 @@ class SpotifyAuth {
   }
 
   private async sha256(plain: string): Promise<ArrayBuffer> {
-    // Check if Web Crypto API is available
     if (!crypto || !crypto.subtle) {
       console.warn('Web Crypto API not available, using fallback');
-      // Simple fallback - just return a consistent buffer for development
       const encoder = new TextEncoder();
       return encoder.encode(plain + '_fallback').buffer;
     }
@@ -41,21 +39,19 @@ class SpotifyAuth {
   }
 
   async login(): Promise<void> {
-    // Always use dummy data if no Client ID is configured or in sandbox mode
-    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
-      console.log('Using dummy data for authentication');
-      
+    // Only use dummy data in sandbox mode
+    if (USE_DUMMY_DATA) {
+      console.log('Using dummy data for sandbox authentication');
       localStorage.setItem('spotify_access_token', 'sandbox_access_token');
       localStorage.setItem('spotify_refresh_token', 'sandbox_refresh_token');
       localStorage.setItem('spotify_token_expiry', (Date.now() + 3600 * 1000).toString());
-      
-      // Simulate a brief delay for UX
       await new Promise(resolve => setTimeout(resolve, 1000));
       return;
     }
 
+    // Require real authentication for production mode
     if (!CLIENT_ID) {
-      throw new Error('Spotify Client ID not configured. Please set VITE_SPOTIFY_CLIENT_ID in your environment variables or use sandbox mode.');
+      throw new Error('Spotify Client ID not configured. Please set VITE_SPOTIFY_CLIENT_ID in your environment variables.');
     }
 
     const codeVerifier = this.generateRandomString(64);
@@ -82,9 +78,8 @@ class SpotifyAuth {
   }
 
   async handleCallback(code: string, state: string): Promise<void> {
-    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
-      // For dummy data, we shouldn't reach this callback
-      throw new Error('Callback should not be called when using dummy data or sandbox mode');
+    if (USE_DUMMY_DATA) {
+      throw new Error('Callback should not be called in sandbox mode');
     }
 
     const storedState = localStorage.getItem('auth_state');
@@ -113,6 +108,9 @@ class SpotifyAuth {
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('Rate limited during authentication. Please try again later.');
+      }
       throw new Error('Token exchange failed');
     }
 
@@ -122,19 +120,17 @@ class SpotifyAuth {
     localStorage.setItem('spotify_refresh_token', tokens.refresh_token);
     localStorage.setItem('spotify_token_expiry', (Date.now() + tokens.expires_in * 1000).toString());
 
-    // Clean up temporary storage
     localStorage.removeItem('code_verifier');
     localStorage.removeItem('auth_state');
   }
 
   async refreshAccessToken(refreshToken: string): Promise<any> {
-    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
-      // Return dummy token response
+    if (USE_DUMMY_DATA) {
       return {
         access_token: 'sandbox_access_token_refreshed',
         token_type: 'Bearer',
         expires_in: 3600,
-        refresh_token: refreshToken // Keep the same refresh token
+        refresh_token: refreshToken
       };
     }
 
@@ -151,20 +147,49 @@ class SpotifyAuth {
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('Rate limited during token refresh. Please try again later.');
+      }
       throw new Error('Token refresh failed');
     }
 
     return response.json();
   }
 
-  async getCurrentUser(accessToken: string): Promise<any> {
-    // Always pass the access token - the SpotifyAPI will handle dummy data internally
-    return spotifyAPI.getCurrentUser(accessToken);
+  async logout(): Promise<void> {
+    localStorage.removeItem('spotify_access_token');
+    localStorage.removeItem('spotify_refresh_token');
+    localStorage.removeItem('spotify_token_expiry');
   }
 
-  // Helper method to check if using dummy data
-  isDummyMode(): boolean {
-    return USE_DUMMY_DATA || window.location.pathname === '/sandbox';
+  async getCurrentUser(): Promise<any> {
+    const token = localStorage.getItem('spotify_access_token');
+    if (!token) {
+      throw new Error('No access token found');
+    }
+    return spotifyAPI.getCurrentUser(token);
+  }
+
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem('spotify_access_token');
+    const expiry = localStorage.getItem('spotify_token_expiry');
+    
+    if (!token || !expiry) {
+      return false;
+    }
+    
+    return Date.now() < parseInt(expiry);
+  }
+
+  getAccessToken(): string | null {
+    const token = localStorage.getItem('spotify_access_token');
+    const expiry = localStorage.getItem('spotify_token_expiry');
+    
+    if (!token || !expiry || Date.now() >= parseInt(expiry)) {
+      return null;
+    }
+    
+    return token;
   }
 }
 

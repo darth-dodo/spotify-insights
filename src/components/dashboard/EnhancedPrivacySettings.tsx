@@ -8,10 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Settings, Trophy, Palette, Info, GamepadIcon, Target } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { AccentColorPicker } from '@/components/ui/AccentColorPicker';
 
 export const EnhancedPrivacySettings = () => {
   const { theme, toggleTheme, accentColor, setAccentColor } = useTheme();
+  const { logout } = useAuth();
+  const { toast } = useToast();
   const [dataRetention, setDataRetention] = useState(false);
   const [analytics, setAnalytics] = useState(true);
   const [gamificationEnabled, setGamificationEnabled] = useState(true);
@@ -19,12 +23,79 @@ export const EnhancedPrivacySettings = () => {
   const [streaksEnabled, setStreaksEnabled] = useState(true);
   const [challengesEnabled, setChallengesEnabled] = useState(false);
 
+  const handleExportData = async () => {
+    try {
+      const userData = {
+        preferences: {
+          theme,
+          accentColor,
+          dataRetention,
+          analytics,
+          gamificationEnabled,
+          achievementsEnabled,
+          streaksEnabled,
+          challengesEnabled
+        },
+        exportDate: new Date().toISOString(),
+        note: "This export contains only your app preferences. No personal music data is stored."
+      };
+
+      const dataStr = JSON.stringify(userData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `spotify-insights-preferences-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Data exported successfully",
+        description: "Your preferences have been downloaded as a JSON file.",
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting your data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClearData = async () => {
+    try {
+      // Clear all local storage
+      localStorage.clear();
+      
+      toast({
+        title: "Data cleared successfully",
+        description: "All local data has been removed. You will be redirected to the homepage.",
+      });
+
+      // Logout and redirect
+      await logout();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Clear data failed:', error);
+      toast({
+        title: "Clear data failed",
+        description: "There was an error clearing your data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Settings & Privacy</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Data Privacy</h2>
         <p className="text-muted-foreground">
-          Manage your privacy preferences, appearance, and gamification features
+          Manage your privacy preferences, appearance, and features
         </p>
       </div>
 
@@ -40,7 +111,7 @@ export const EnhancedPrivacySettings = () => {
           </TabsTrigger>
           <TabsTrigger value="gamification" className="flex items-center gap-2">
             <Trophy className="h-4 w-4" />
-            Gamification
+            Features
           </TabsTrigger>
         </TabsList>
 
@@ -96,11 +167,11 @@ export const EnhancedPrivacySettings = () => {
               <div className="pt-4 border-t">
                 <h4 className="font-medium mb-3">Data Management</h4>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    Clear Local Data
-                  </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleExportData}>
                     Export Data
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={handleClearData}>
+                    Clear All Data
                   </Button>
                 </div>
               </div>
@@ -205,7 +276,7 @@ export const EnhancedPrivacySettings = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5" />
-                Gamification Features
+                Features & Enhancements
                 <Badge variant="secondary">Optional</Badge>
               </CardTitle>
               <CardDescription>
@@ -216,15 +287,15 @@ export const EnhancedPrivacySettings = () => {
               <Alert>
                 <GamepadIcon className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Level System Explained:</strong> Your level is calculated based on your music library size. 
-                  Level = (Total Tracks + Total Artists) ÷ 40 + 1. Higher levels unlock more insights and features!
+                  <strong>Level System:</strong> Your level is calculated based on your music library size. 
+                  Level = (Total Tracks + Total Artists) ÷ 20 + 1. This accounts for Spotify's API limits while providing meaningful progression.
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <h4 className="font-medium">Enable Gamification</h4>
+                    <h4 className="font-medium">Enable Features</h4>
                     <p className="text-sm text-muted-foreground">
                       Turn on levels, achievements, and progress tracking
                     </p>
@@ -280,10 +351,10 @@ export const EnhancedPrivacySettings = () => {
 
               {gamificationEnabled && (
                 <div className="pt-4 border-t">
-                  <h4 className="font-medium mb-3">Gamification Stats</h4>
+                  <h4 className="font-medium mb-3">Current Stats</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg text-center">
-                      <div className="text-lg font-bold text-accent">15</div>
+                      <div className="text-lg font-bold text-accent">Level 15</div>
                       <div className="text-muted-foreground">Current Level</div>
                     </div>
                     <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">

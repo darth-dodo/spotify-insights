@@ -32,7 +32,9 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
     if (location.pathname === '/' && user) {
       window.scrollTo(0, 0);
     } else {
-      navigate(user ? '/' : '/index');
+      // Clear all local data and redirect to index page
+      localStorage.clear();
+      window.location.href = '/index';
     }
   };
 
@@ -93,7 +95,7 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
           size="icon"
           onClick={handleHomeNavigation}
           className="hidden sm:flex"
-          title="Home"
+          title="Exit Dashboard"
         >
           <Home className="h-4 w-4" />
         </Button>
@@ -132,8 +134,16 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
               className="flex items-center gap-2 cursor-pointer"
               onClick={handleSettingsClick}
             >
+              <Shield className="h-4 w-4" />
+              Data Privacy
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={handleSettingsClick}
+            >
               <Settings className="h-4 w-4" />
-              Privacy & Settings
+              Settings
             </DropdownMenuItem>
             
             <DropdownMenuItem 
@@ -149,7 +159,7 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
               onClick={() => navigate('/legal')}
             >
               <FileText className="h-4 w-4" />
-              Legal Info
+              TOS
             </DropdownMenuItem>
             
             <DropdownMenuSeparator />

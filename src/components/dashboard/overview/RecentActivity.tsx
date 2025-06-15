@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +33,7 @@ export const RecentActivity = () => {
             title="Recent Activity"
             description="Your most recently played tracks from Spotify, showing when and what you've been listening to."
             calculation="Real-time data from Spotify showing your last 20 played tracks with timestamps and play counts."
-            type="modal"
+            variant="modal"
           />
         </CardTitle>
         <CardDescription>

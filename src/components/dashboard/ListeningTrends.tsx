@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -158,7 +159,7 @@ export const ListeningTrends = () => {
               title="Listening Patterns"
               description="Analysis of when and how you listen to music throughout different time periods."
               calculation="Based on your top tracks' popularity scores and listening frequency patterns derived from your Spotify data."
-              type="modal"
+              variant="modal"
             />
           </CardTitle>
           <CardDescription>
@@ -207,7 +208,7 @@ export const ListeningTrends = () => {
               title="Genre Distribution"
               description="Breakdown of music genres in your listening history, showing your musical preferences and diversity."
               calculation="Calculated from the genres of your top artists. Each artist's genres are weighted by their position in your top artists list."
-              type="modal"
+              variant="modal"
             />
           </CardTitle>
           <CardDescription>
@@ -271,7 +272,7 @@ export const ListeningTrends = () => {
               title="Discovery Trends"
               description="Analysis of how you discover and engage with new music over time."
               calculation="Based on track popularity scores and artist diversity in your listening history. Shows trends in mainstream vs. niche music preferences."
-              type="modal"
+              variant="modal"
             />
           </CardTitle>
           <CardDescription>

@@ -12,6 +12,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
 import { Music, TrendingUp, Users, Clock, Disc, Star, Eye, BarChart3, Loader2 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { cn } from '@/lib/utils';
+import { FunFactsCarousel } from './FunFactsCarousel';
 
 export const ImprovedGenreAnalysis = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
@@ -19,12 +20,13 @@ export const ImprovedGenreAnalysis = () => {
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
 
   const { useTopTracks, useTopArtists } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
+  // Use the full 2000 record dataset for all calculations
+  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 2000);
+  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 2000);
 
   const isLoading = tracksLoading || artistsLoading;
 
-  // Improved genre processing with better data representation
+  // Improved genre processing with better data representation using full 2000 dataset
   const genreAnalysis = useMemo(() => {
     const defaultInsights = {
       dominantGenre: null,
@@ -47,7 +49,7 @@ export const ImprovedGenreAnalysis = () => {
       avgPopularity: number;
     } } = {};
     
-    // Process artists and their genres with popularity weighting
+    // Process all artists and their genres with popularity weighting (full 2000 dataset)
     topArtistsData.items.forEach((artist: any) => {
       const artistPopularity = artist.popularity || 0;
       artist.genres?.forEach((genre: string) => {
@@ -66,7 +68,7 @@ export const ImprovedGenreAnalysis = () => {
       });
     });
 
-    // Add track information and calculate averages
+    // Add track information from full dataset and calculate averages
     topTracksData.items.forEach((track: any) => {
       track.artists?.forEach((artist: any) => {
         // Find matching artist in our data
@@ -103,7 +105,7 @@ export const ImprovedGenreAnalysis = () => {
       genre.score = genre.count * 10 + genre.tracks.length * 2; // Weighted score
     });
 
-    // Generate insights with proper defaults
+    // Generate insights with proper defaults using full dataset
     const insights = {
       dominantGenre: genres[0] || null,
       diversityScore: Math.min(genres.length * 5, 100),
@@ -190,7 +192,7 @@ export const ImprovedGenreAnalysis = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Genre Analysis</h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Explore your musical taste and genre preferences with enhanced analytics
+            Explore your musical taste and genre preferences with enhanced analytics from your full dataset
           </p>
         </div>
         
@@ -229,7 +231,7 @@ export const ImprovedGenreAnalysis = () => {
         </div>
       </div>
 
-      {/* Enhanced Stats Overview */}
+      {/* Enhanced Stats Overview - showing dataset size */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <Card>
           <CardContent className="p-3 md:p-4">
@@ -238,7 +240,7 @@ export const ImprovedGenreAnalysis = () => {
               <span className="text-xs md:text-sm font-medium">Genres</span>
             </div>
             <div className="text-lg md:text-2xl font-bold">{genreAnalysis.insights.totalGenres}</div>
-            <div className="text-xs text-muted-foreground">discovered</div>
+            <div className="text-xs text-muted-foreground">from {topArtistsData?.items?.length || 0} artists</div>
           </CardContent>
         </Card>
 
@@ -272,13 +274,16 @@ export const ImprovedGenreAnalysis = () => {
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Coverage</span>
+              <span className="text-xs md:text-sm font-medium">Dataset</span>
             </div>
-            <div className="text-lg md:text-2xl font-bold">{genreAnalysis.insights.totalArtists}</div>
-            <div className="text-xs text-muted-foreground">artists covered</div>
+            <div className="text-lg md:text-2xl font-bold">{topTracksData?.items?.length || 0}</div>
+            <div className="text-xs text-muted-foreground">tracks analyzed</div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Fun Facts Carousel (replaces heatmap) */}
+      <FunFactsCarousel />
 
       {/* Main Content */}
       {viewMode === 'overview' ? (
@@ -291,7 +296,7 @@ export const ImprovedGenreAnalysis = () => {
                 Genre Distribution
               </CardTitle>
               <CardDescription>
-                Your musical taste breakdown - {getTimeRangeLabel(timeRange)}
+                Your musical taste breakdown - {getTimeRangeLabel(timeRange)} (from {topTracksData?.items?.length || 0} tracks)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -349,7 +354,7 @@ export const ImprovedGenreAnalysis = () => {
                 Top Genres Ranked
               </CardTitle>
               <CardDescription>
-                Genres ranked by artist count and track coverage
+                Genres ranked by artist count and track coverage (full dataset)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -401,7 +406,7 @@ export const ImprovedGenreAnalysis = () => {
             <CardHeader>
               <CardTitle>Genre Evolution Over Time</CardTitle>
               <CardDescription>
-                How your top genre preferences have evolved (simulated trends)
+                How your top genre preferences have evolved (simulated trends from {topArtistsData?.items?.length || 0} artists)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -449,12 +454,11 @@ export const ImprovedGenreAnalysis = () => {
             </CardContent>
           </Card>
 
-          {/* Fixed Artist Count by Genre */}
           <Card>
             <CardHeader>
               <CardTitle>Artist Distribution by Genre</CardTitle>
               <CardDescription>
-                Number of artists per genre in your listening data
+                Number of artists per genre in your {topArtistsData?.items?.length || 0} artist dataset
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -518,7 +522,7 @@ export const ImprovedGenreAnalysis = () => {
               Genre Spotlight: {selectedGenreData.name}
             </CardTitle>
             <CardDescription>
-              Detailed analysis of your {selectedGenreData.name} listening
+              Detailed analysis of your {selectedGenreData.name} listening from the full dataset
             </CardDescription>
           </CardHeader>
           <CardContent>

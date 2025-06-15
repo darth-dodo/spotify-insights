@@ -3,14 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { spotifyAPI } from '@/lib/spotify-api';
 import { spotifyDataIntegration } from '@/lib/spotify-data-integration';
 
-// Use dummy data in sandbox mode OR when on root with no authentication
-const USE_DUMMY_DATA = window.location.pathname === '/sandbox' || 
-                      (window.location.pathname === '/' && !localStorage.getItem('spotify_access_token'));
-
 export const useSpotifyData = () => {
   const getAccessToken = () => {
-    if (USE_DUMMY_DATA) return undefined;
-    
     const token = localStorage.getItem('spotify_access_token');
     if (!token) {
       throw new Error('No access token found. Please authenticate with Spotify.');
@@ -21,7 +15,7 @@ export const useSpotifyData = () => {
   // Enhanced hooks using the integration service
   const useEnhancedRecentlyPlayed = (limit: number = 200) => {
     return useQuery({
-      queryKey: ['enhanced-recently-played', limit, USE_DUMMY_DATA],
+      queryKey: ['enhanced-recently-played', limit],
       queryFn: () => spotifyDataIntegration.getEnhancedRecentlyPlayed(limit),
       staleTime: 1000 * 60 * 2,
       enabled: true,
@@ -37,7 +31,7 @@ export const useSpotifyData = () => {
 
   const useEnhancedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
-      queryKey: ['enhanced-top-tracks', timeRange, totalLimit, USE_DUMMY_DATA],
+      queryKey: ['enhanced-top-tracks', timeRange, totalLimit],
       queryFn: () => spotifyDataIntegration.getEnhancedTopTracks(timeRange, totalLimit),
       staleTime: 1000 * 60 * 10,
       enabled: true,
@@ -52,7 +46,7 @@ export const useSpotifyData = () => {
 
   const useEnhancedTopArtists = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
-      queryKey: ['enhanced-top-artists', timeRange, totalLimit, USE_DUMMY_DATA],
+      queryKey: ['enhanced-top-artists', timeRange, totalLimit],
       queryFn: () => spotifyDataIntegration.getEnhancedTopArtists(timeRange, totalLimit),
       staleTime: 1000 * 60 * 10,
       enabled: true,
@@ -68,7 +62,7 @@ export const useSpotifyData = () => {
   // Legacy hooks for backward compatibility
   const useTopTracks = (timeRange: string = 'medium_term', limit: number = 50) => {
     return useQuery({
-      queryKey: ['top-tracks', timeRange, limit, USE_DUMMY_DATA],
+      queryKey: ['top-tracks', timeRange, limit],
       queryFn: () => spotifyAPI.getTopTracks(getAccessToken(), timeRange, limit),
       staleTime: 1000 * 60 * 5,
       enabled: true,
@@ -83,7 +77,7 @@ export const useSpotifyData = () => {
 
   const useTopArtists = (timeRange: string = 'medium_term', limit: number = 50) => {
     return useQuery({
-      queryKey: ['top-artists', timeRange, limit, USE_DUMMY_DATA],
+      queryKey: ['top-artists', timeRange, limit],
       queryFn: () => spotifyAPI.getTopArtists(getAccessToken(), timeRange, limit),
       staleTime: 1000 * 60 * 5,
       enabled: true,
@@ -98,7 +92,7 @@ export const useSpotifyData = () => {
 
   const useExtendedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
-      queryKey: ['extended-top-tracks', timeRange, totalLimit, USE_DUMMY_DATA],
+      queryKey: ['extended-top-tracks', timeRange, totalLimit],
       queryFn: () => spotifyAPI.getExtendedTopTracks(getAccessToken(), timeRange, totalLimit),
       staleTime: 1000 * 60 * 15,
       enabled: true,
@@ -113,7 +107,7 @@ export const useSpotifyData = () => {
 
   const useExtendedTopArtists = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
-      queryKey: ['extended-top-artists', timeRange, totalLimit, USE_DUMMY_DATA],
+      queryKey: ['extended-top-artists', timeRange, totalLimit],
       queryFn: () => spotifyAPI.getExtendedTopArtists(getAccessToken(), timeRange, totalLimit),
       staleTime: 1000 * 60 * 15,
       enabled: true,
@@ -128,7 +122,7 @@ export const useSpotifyData = () => {
 
   const useRecentlyPlayed = (limit: number = 50) => {
     return useQuery({
-      queryKey: ['recently-played', limit, USE_DUMMY_DATA],
+      queryKey: ['recently-played', limit],
       queryFn: () => spotifyAPI.getRecentlyPlayed(getAccessToken(), limit),
       staleTime: 1000 * 60 * 1,
       enabled: true,
@@ -138,7 +132,7 @@ export const useSpotifyData = () => {
 
   const useCurrentPlayback = () => {
     return useQuery({
-      queryKey: ['current-playback', USE_DUMMY_DATA],
+      queryKey: ['current-playback'],
       queryFn: () => spotifyAPI.getCurrentPlayback(getAccessToken()),
       staleTime: 1000 * 30,
       enabled: true,
@@ -148,7 +142,7 @@ export const useSpotifyData = () => {
 
   const useListeningStats = (timeRange: string = 'medium_term') => {
     return useQuery({
-      queryKey: ['listening-stats', timeRange, USE_DUMMY_DATA],
+      queryKey: ['listening-stats', timeRange],
       queryFn: async () => {
         const tracks = await spotifyDataIntegration.getEnhancedTopTracks(timeRange, 1000);
         const timeRangeLabel = timeRange === 'short_term' ? 'Last 4 Weeks' :

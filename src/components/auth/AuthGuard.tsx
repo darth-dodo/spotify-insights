@@ -34,6 +34,7 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
   }, [user, isLoading]);
 
   // If we're on the root path and not authenticated, show the dashboard with sandbox-like behavior
+  // This is the ONLY place where we allow demo data outside of sandbox mode
   if (window.location.pathname === '/' && !user && !isLoading) {
     console.log('No authentication on root path, showing dashboard with demo data');
     return dashboardComponent || children;

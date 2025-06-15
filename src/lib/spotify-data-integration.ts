@@ -8,10 +8,9 @@ class SpotifyDataIntegration {
   private cache = new SpotifyDataCache();
   private currentSession: ListeningSession | null = null;
 
-  // Helper to check if we should use dummy data
+  // Helper to check if we should use dummy data - ONLY in sandbox mode
   private shouldUseDummyData(): boolean {
-    return window.location.pathname === '/sandbox' || 
-           (window.location.pathname === '/' && !localStorage.getItem('spotify_access_token'));
+    return window.location.pathname === '/sandbox';
   }
 
   // Helper to ensure non-negative numbers
@@ -33,9 +32,9 @@ class SpotifyDataIntegration {
   }
 
   async getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]> {
-    // Use dummy data if no authentication
+    // Use dummy data ONLY in sandbox mode
     if (this.shouldUseDummyData()) {
-      console.log('Using dummy data for recently played tracks');
+      console.log('Using dummy data for recently played tracks (sandbox mode)');
       return extensiveRecentlyPlayed.items
         .slice(0, limit)
         .map(item => ({
@@ -52,6 +51,9 @@ class SpotifyDataIntegration {
     }
 
     const token = localStorage.getItem('spotify_access_token');
+    if (!token) {
+      throw new Error('No access token available. Please authenticate with Spotify to view your listening data.');
+    }
 
     try {
       // Fetch from API with pagination
@@ -69,6 +71,10 @@ class SpotifyDataIntegration {
           break;
         }
       } while (nextUrl && totalFetched < limit);
+
+      if (apiTracks.length === 0) {
+        throw new Error('No recently played tracks found. Start listening to music on Spotify to see your activity here.');
+      }
 
       // Convert API data to integrated format with validation
       const apiIntegratedTracks = apiTracks
@@ -114,16 +120,23 @@ class SpotifyDataIntegration {
       return combinedTracks.slice(0, limit);
     } catch (error) {
       console.error('Error fetching enhanced recently played:', error);
-      return this.cache.getCachedRecentlyPlayed().length > 0 ? 
-             this.cache.getCachedRecentlyPlayed() : 
-             spotifyPlaybackSDK.getSessionTracks().slice(0, limit);
+      
+      // Try to return cached data if available
+      const cached = this.cache.getCachedRecentlyPlayed();
+      if (cached.length > 0) {
+        console.log('Returning cached recently played data');
+        return cached;
+      }
+      
+      // If no cached data and we're not in sandbox mode, throw the error
+      throw new Error('Unable to load your listening data. Please check your internet connection and try again.');
     }
   }
 
   async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedTrackData[]> {
-    // Use dummy data if no authentication
+    // Use dummy data ONLY in sandbox mode
     if (this.shouldUseDummyData()) {
-      console.log('Using dummy data for top tracks');
+      console.log('Using dummy data for top tracks (sandbox mode)');
       return extensiveTopTracks.items
         .slice(0, totalLimit)
         .map((track: any, index: number) => ({
@@ -146,11 +159,14 @@ class SpotifyDataIntegration {
     }
 
     const token = localStorage.getItem('spotify_access_token');
+    if (!token) {
+      throw new Error('No access token available. Please authenticate with Spotify to view your top tracks.');
+    }
     
     try {
       const response = await spotifyAPI.getExtendedTopTracks(token, timeRange, totalLimit);
       
-      if (response?.items) {
+      if (response?.items && response.items.length > 0) {
         const integratedTracks = response.items
           .filter(track => this.validateTrackData(track))
           .map((track: any, index: number) => ({
@@ -169,18 +185,27 @@ class SpotifyDataIntegration {
         
         this.cache.setCachedTopTracks(cacheKey, enhanced);
         return enhanced;
+      } else {
+        throw new Error('No top tracks found. Listen to more music on Spotify to build your top tracks list.');
       }
     } catch (error) {
       console.error('Error fetching enhanced top tracks:', error);
+      
+      // Try to return cached data if available
+      const cached = this.cache.getCachedTopTracks(cacheKey);
+      if (cached && cached.length > 0) {
+        console.log('Returning cached top tracks data');
+        return cached;
+      }
+      
+      throw new Error('Unable to load your top tracks. Please check your internet connection and try again.');
     }
-
-    return this.cache.getCachedTopTracks(cacheKey) || [];
   }
 
   async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedArtistData[]> {
-    // Use dummy data if no authentication
+    // Use dummy data ONLY in sandbox mode
     if (this.shouldUseDummyData()) {
-      console.log('Using dummy data for top artists');
+      console.log('Using dummy data for top artists (sandbox mode)');
       return extensiveTopArtists.items
         .slice(0, totalLimit)
         .map((artist: any, index: number) => ({
@@ -202,11 +227,14 @@ class SpotifyDataIntegration {
     }
 
     const token = localStorage.getItem('spotify_access_token');
+    if (!token) {
+      throw new Error('No access token available. Please authenticate with Spotify to view your top artists.');
+    }
     
     try {
       const response = await spotifyAPI.getExtendedTopArtists(token, timeRange, totalLimit);
       
-      if (response?.items) {
+      if (response?.items && response.items.length > 0) {
         const integratedArtists = response.items.map((artist: any, index: number) => ({
           id: artist.id,
           name: artist.name,
@@ -219,12 +247,21 @@ class SpotifyDataIntegration {
 
         this.cache.setCachedTopArtists(cacheKey, integratedArtists);
         return integratedArtists;
+      } else {
+        throw new Error('No top artists found. Listen to more music on Spotify to build your top artists list.');
       }
     } catch (error) {
       console.error('Error fetching enhanced top artists:', error);
+      
+      // Try to return cached data if available
+      const cached = this.cache.getCachedTopArtists(cacheKey);
+      if (cached && cached.length > 0) {
+        console.log('Returning cached top artists data');
+        return cached;
+      }
+      
+      throw new Error('Unable to load your top artists. Please check your internet connection and try again.');
     }
-
-    return this.cache.getCachedTopArtists(cacheKey) || [];
   }
 
   calculateListeningStats(tracks: IntegratedTrackData[], timeRangeLabel: string) {

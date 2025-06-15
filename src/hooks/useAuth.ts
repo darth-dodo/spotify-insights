@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { sanitizeUserData, hashData } from '@/lib/data-utils';
@@ -82,7 +83,7 @@ export const useAuthState = () => {
       localStorage.setItem('user_profile', JSON.stringify(sanitizedUser));
       storeProfileImage(userData);
       
-      console.log('User data fetched and stored successfully');
+      console.log('User data fetched and stored successfully:', sanitizedUser);
       return sanitizedUser;
     } catch (apiError: any) {
       console.error('Failed to fetch user data:', apiError);
@@ -191,7 +192,9 @@ export const useAuthState = () => {
         // For dummy data, manually set the user after fake login
         const token = localStorage.getItem('spotify_access_token');
         if (token) {
+          console.log('Dummy data login completed, fetching user data...');
           await fetchAndSetUser(token);
+          console.log('User data set successfully after dummy login');
         }
       }
       // For real auth, the redirect will handle the rest and the useEffect will pick up the changes

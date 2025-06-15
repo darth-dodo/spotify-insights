@@ -1,7 +1,8 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { CalmingLoader } from '@/components/ui/CalmingLoader';
+import { BlurLoader } from '@/components/ui/BlurLoader';
+import { ErrorDialog } from '@/components/auth/ErrorDialog';
 import { spotifyPlaybackSDK } from '@/lib/spotify-playback-sdk';
 import { LandingPage } from '@/components/LandingPage';
 
@@ -14,6 +15,7 @@ interface AuthGuardProps {
 export const AuthGuard = ({ children, loginComponent, dashboardComponent }: AuthGuardProps) => {
   const { user, isLoading, error } = useAuth();
   const sdkCleanupDone = useRef(false);
+  const [errorDialogOpen, setErrorDialogOpen] = React.useState(false);
 
   console.log('AuthGuard state:', { 
     user: !!user, 
@@ -21,6 +23,13 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     error, 
     path: window.location.pathname 
   });
+
+  // Show error dialog if there's an auth error
+  useEffect(() => {
+    if (error) {
+      setErrorDialogOpen(true);
+    }
+  }, [error]);
 
   // Clean up Spotify SDK in demo mode
   useEffect(() => {
@@ -41,20 +50,10 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     }
   }, [user, isLoading]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <CalmingLoader 
-          title="Initializing your music dashboard..."
-          description="Setting up your personalized experience"
-        />
-      </div>
-    );
-  }
-
-  if (error) {
-    console.error('Auth error in AuthGuard:', error);
-  }
+  const handleRetryAuth = () => {
+    setErrorDialogOpen(false);
+    window.location.reload();
+  };
 
   // Show dashboard if user is authenticated
   if (user) {
@@ -62,13 +61,35 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     return dashboardComponent || children;
   }
 
-  // For root path without authentication, show landing page (not dashboard)
+  // For root path without authentication, show landing page with blur loader
   if (window.location.pathname === '/' && !user) {
     console.log('No authentication on root path, showing landing page');
-    return <LandingPage />;
+    return (
+      <BlurLoader isLoading={isLoading}>
+        <LandingPage />
+        <ErrorDialog
+          open={errorDialogOpen}
+          onOpenChange={setErrorDialogOpen}
+          title="Authentication Error"
+          message={error || 'An error occurred during authentication'}
+          onRetry={handleRetryAuth}
+        />
+      </BlurLoader>
+    );
   }
 
-  // For other paths or explicit login, show landing page
+  // For other paths or explicit login, show landing page with blur loader
   console.log('User not authenticated, showing landing page');
-  return <LandingPage />;
+  return (
+    <BlurLoader isLoading={isLoading}>
+      <LandingPage />
+      <ErrorDialog
+        open={errorDialogOpen}
+        onOpenChange={setErrorDialogOpen}
+        title="Authentication Error"
+        message={error || 'An error occurred during authentication'}
+        onRetry={handleRetryAuth}
+      />
+    </BlurLoader>
+  );
 };

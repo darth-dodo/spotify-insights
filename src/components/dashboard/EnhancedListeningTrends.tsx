@@ -9,7 +9,6 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, Calendar, Clock, Music, Trophy, Loader2 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
-import { ListeningHeatmap } from './ListeningHeatmap';
 
 export const EnhancedListeningTrends = () => {
   const [timeRange, setTimeRange] = useState('week');
@@ -238,127 +237,114 @@ export const EnhancedListeningTrends = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="trends" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="heatmap">Activity Heatmap</TabsTrigger>
-        </TabsList>
+      {/* Main Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            {timeRanges.find(r => r.value === timeRange)?.label} Activity
+          </CardTitle>
+          <CardDescription>
+            Your music consumption over the selected time period
+            {topTracksData?.items && " (based on your Spotify data)"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={listeningData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="period" 
+                  className="text-muted-foreground"
+                />
+                <YAxis className="text-muted-foreground" />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line 
+                  type="monotone" 
+                  dataKey={metric}
+                  stroke="hsl(var(--accent))" 
+                  strokeWidth={3}
+                  dot={{ fill: "hsl(var(--accent))", strokeWidth: 2, r: 6 }}
+                  activeDot={{ r: 8, stroke: "hsl(var(--accent))", strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="trends" className="space-y-6">
-          {/* Main Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                {timeRanges.find(r => r.value === timeRange)?.label} Activity
-              </CardTitle>
-              <CardDescription>
-                Your music consumption over the selected time period
-                {topTracksData?.items && " (based on your Spotify data)"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={listeningData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="period" 
-                      className="text-muted-foreground"
-                    />
-                    <YAxis className="text-muted-foreground" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey={metric}
-                      stroke="hsl(var(--accent))" 
-                      strokeWidth={3}
-                      dot={{ fill: "hsl(var(--accent))", strokeWidth: 2, r: 6 }}
-                      activeDot={{ r: 8, stroke: "hsl(var(--accent))", strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Most Played Tracks */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
-                  Most Played in {timeRanges.find(r => r.value === timeRange)?.label}
-                </CardTitle>
-                <CardDescription>
-                  Your top tracks by play count in this period
-                  {topTracksData?.items && " (from your Spotify library)"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {mostPlayedTracks.map((track, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center">
-                        {index + 1}
-                      </Badge>
-                      <div>
-                        <h4 className="font-medium">{track.track}</h4>
-                        <p className="text-sm text-muted-foreground">{track.artist}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{track.plays} plays</div>
-                      <div className="text-sm text-muted-foreground">{track.minutes}m total</div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Insights */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Period Insights</CardTitle>
-                <CardDescription>
-                  Key findings from your {timeRanges.find(r => r.value === timeRange)?.label.toLowerCase()} listening data
-                  {topTracksData?.items && " (analyzed from your Spotify activity)"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
-                    <h4 className="font-medium text-accent mb-2">Peak Activity</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Your highest listening period was {listeningData.reduce((max, day) => 
-                        day.listening_time > max.listening_time ? day : max
-                      ).period} with {listeningData.reduce((max, day) => 
-                        day.listening_time > max.listening_time ? day : max
-                      ).listening_time} minutes
-                    </p>
-                  </div>
-                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <h4 className="font-medium text-primary mb-2">Total Listening</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {listeningData.reduce((sum, day) => sum + day.listening_time, 0)} minutes across {listeningData.reduce((sum, day) => sum + day.tracks, 0)} tracks
-                    </p>
-                  </div>
-                  <div className="p-4 bg-secondary/10 rounded-lg border border-secondary/20">
-                    <h4 className="font-medium text-secondary mb-2">Artist Diversity</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Discovered {Math.max(...listeningData.map(d => d.artists))} unique artists in your best period
-                    </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Most Played Tracks */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5" />
+              Most Played in {timeRanges.find(r => r.value === timeRange)?.label}
+            </CardTitle>
+            <CardDescription>
+              Your top tracks by play count in this period
+              {topTracksData?.items && " (from your Spotify library)"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {mostPlayedTracks.map((track, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center">
+                    {index + 1}
+                  </Badge>
+                  <div>
+                    <h4 className="font-medium">{track.track}</h4>
+                    <p className="text-sm text-muted-foreground">{track.artist}</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                <div className="text-right">
+                  <div className="font-medium">{track.plays} plays</div>
+                  <div className="text-sm text-muted-foreground">{track.minutes}m total</div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
-        <TabsContent value="heatmap" className="space-y-6">
-          <ListeningHeatmap />
-        </TabsContent>
-      </Tabs>
+        {/* Insights */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Period Insights</CardTitle>
+            <CardDescription>
+              Key findings from your {timeRanges.find(r => r.value === timeRange)?.label.toLowerCase()} listening data
+              {topTracksData?.items && " (analyzed from your Spotify activity)"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
+                <h4 className="font-medium text-accent mb-2">Peak Activity</h4>
+                <p className="text-sm text-muted-foreground">
+                  Your highest listening period was {listeningData.reduce((max, day) => 
+                    day.listening_time > max.listening_time ? day : max
+                  ).period} with {listeningData.reduce((max, day) => 
+                    day.listening_time > max.listening_time ? day : max
+                  ).listening_time} minutes
+                </p>
+              </div>
+              <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                <h4 className="font-medium text-primary mb-2">Total Listening</h4>
+                <p className="text-sm text-muted-foreground">
+                  {listeningData.reduce((sum, day) => sum + day.listening_time, 0)} minutes across {listeningData.reduce((sum, day) => sum + day.tracks, 0)} tracks
+                </p>
+              </div>
+              <div className="p-4 bg-secondary/10 rounded-lg border border-secondary/20">
+                <h4 className="font-medium text-secondary mb-2">Artist Diversity</h4>
+                <p className="text-sm text-muted-foreground">
+                  Discovered {Math.max(...listeningData.map(d => d.artists))} unique artists in your best period
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

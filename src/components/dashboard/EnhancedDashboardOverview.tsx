@@ -1,549 +1,660 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Music, Clock, Users, TrendingUp, Heart, Database, Star, Volume2, Zap, Lightbulb } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
-import { useAuth } from '@/hooks/useAuth';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { 
+  Music, Users, TrendingUp, Calendar, Clock, 
+  Star, Target, Zap, Trophy, Headphones, 
+  Heart, BarChart3, PieChart as PieChartIcon,
+  Activity, Play, Shuffle, Volume2
+} from 'lucide-react';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
-import { BlurLoader } from '@/components/ui/BlurLoader';
-import { CalmingLoader } from '@/components/ui/CalmingLoader';
-import { ErrorDialog } from '@/components/auth/ErrorDialog';
-import { OverviewHeader } from './overview/OverviewHeader';
 
-interface EnhancedDashboardOverviewProps {
-  onNavigate?: (view: string) => void;
-}
+export const EnhancedDashboardOverview = () => {
+  const [selectedTimeRange, setSelectedTimeRange] = useState('medium_term');
 
-export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverviewProps) => {
-  const { tracks, artists, isLoading, getTopTracks, getTopArtists, getStats, getGenreAnalysis, error } = useExtendedSpotifyDataStore();
-  const { user } = useAuth();
-  const [errorDialogOpen, setErrorDialogOpen] = React.useState(false);
-  const [currentError, setCurrentError] = React.useState<string>('');
-  const [currentFunFact, setCurrentFunFact] = React.useState<string>('');
+  const { useTopTracks, useTopArtists, useAudioFeatures } = useSpotifyData();
+  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(selectedTimeRange, 50);
+  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(selectedTimeRange, 50);
+  const { data: audioFeaturesData, isLoading: featuresLoading } = useAudioFeatures(
+    topTracksData?.items?.slice(0, 50)?.map((track: any) => track.id) || []
+  );
 
-  // Handle errors
-  React.useEffect(() => {
-    if (error) {
-      setCurrentError(typeof error === 'string' ? error : error.message || 'An unknown error occurred');
-      setErrorDialogOpen(true);
+  const isLoading = tracksLoading || artistsLoading || featuresLoading;
+
+  // Generate insights from Spotify data
+  const generateInsights = () => {
+    if (!topTracksData?.items || !topArtistsData?.items) {
+      return {
+        totalTracks: 0,
+        totalArtists: 0,
+        avgPopularity: 0,
+        topGenres: [],
+        listening_minutes: 0,
+        discoveries: 0,
+        diversity_score: 0,
+        energy_level: 50
+      };
     }
-  }, [error]);
 
-  const stats = getStats();
-  const genreAnalysis = getGenreAnalysis();
-
-  // Enhanced insights from the full 2000-item dataset
-  const getEnhancedInsights = () => {
-    if (!tracks.length || !artists.length) return null;
-
-    const topGenres = genreAnalysis.slice(0, 3);
-    const libraryCompleteness = Math.round((tracks.length / 2000) * 100);
-    const artistCoverage = Math.round((artists.length / 2000) * 100);
+    const tracks = topTracksData.items;
+    const artists = topArtistsData.items;
     
-    // Calculate music discovery patterns
-    const genreSpread = genreAnalysis.length;
-    const diversityScore = Math.min((genreSpread / 15) * 100, 100);
+    // Calculate metrics
+    const totalTracks = tracks.length;
+    const totalArtists = artists.length;
+    const avgPopularity = Math.round(tracks.reduce((acc: number, track: any) => acc + (track.popularity || 0), 0) / totalTracks);
     
-    // Calculate taste sophistication
-    const avgPopularity = stats?.avgPopularity || 0;
-    const tasteLevel = avgPopularity >= 80 ? 'Mainstream' : 
-                      avgPopularity >= 60 ? 'Popular' : 
-                      avgPopularity >= 40 ? 'Alternative' : 'Underground';
+    // Extract and count genres
+    const allGenres = artists.flatMap((artist: any) => artist.genres || []);
+    const genreCounts = allGenres.reduce((acc: any, genre: string) => {
+      acc[genre] = (acc[genre] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const topGenres = Object.entries(genreCounts)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .slice(0, 5)
+      .map(([genre]) => genre);
 
-    // Consistent level calculation
-    const level = Math.min(Math.floor((tracks.length + artists.length) / 40) + 1, 50);
+    // Estimate listening time (rough calculation)
+    const avgTrackDuration = tracks.reduce((acc: number, track: any) => acc + (track.duration_ms || 0), 0) / tracks.length;
+    const estimatedListeningMinutes = Math.round((avgTrackDuration / 1000 / 60) * totalTracks * 2); // Rough estimate
+
+    // Calculate diversity score based on genre variety
+    const diversityScore = Math.min(Math.round((Object.keys(genreCounts).length / totalArtists) * 100), 100);
+
+    // Calculate discoveries (artists with lower popularity)
+    const discoveries = artists.filter((artist: any) => (artist.popularity || 0) < 50).length;
+
+    // Energy level from audio features
+    const energyLevel = audioFeaturesData && audioFeaturesData.length > 0 
+      ? Math.round(audioFeaturesData.reduce((acc: number, feature: any) => acc + (feature.energy || 0.5), 0) / audioFeaturesData.length * 100)
+      : 65;
 
     return {
+      totalTracks,
+      totalArtists,
+      avgPopularity,
       topGenres,
-      libraryCompleteness,
-      artistCoverage,
-      genreSpread,
-      diversityScore,
-      tasteLevel,
-      totalHours: Math.round((stats?.listeningTime || 0) / 60),
-      dataQuality: Math.round(((tracks.length + artists.length) / 4000) * 100),
-      level
+      listening_minutes: estimatedListeningMinutes,
+      discoveries,
+      diversity_score: diversityScore,
+      energy_level: energyLevel
     };
   };
 
-  const insights = getEnhancedInsights();
+  const insights = generateInsights();
 
-  // Check if we have any Spotify data
-  const hasSpotifyData = stats?.hasSpotifyData && (tracks.length > 0 || artists.length > 0);
-
-  // Generate random fun facts that change every session
-  const generateRandomFunFacts = () => {
-    if (!insights || !stats) return [];
-
-    const allFacts = [
-      `You have enough tracks to listen for ${Math.round(stats.totalTracks * 3.5 / 60)} hours straight without repeating a song!`,
-      `Your musical taste spans ${stats.uniqueGenres} genres - that's more diverse than most radio stations!`,
-      `You support ${stats.totalArtists} different artists - imagine if they all played at the same festival!`,
-      `If you played all your top tracks back-to-back, it would take ${insights.totalHours} hours - that's ${Math.round(insights.totalHours / 24)} days of continuous music!`,
-      `Your music library could soundtrack ${Math.round(stats.totalTracks / 12)} movies (assuming 12 songs per movie)!`,
-      `You've discovered artists from ${Math.min(stats.uniqueGenres * 3, 50)} different musical movements and cultures!`,
-      `Your playlist is ${stats.totalTracks} songs deep - that's equivalent to ${Math.round(stats.totalTracks / 200)} full album collections!`,
-      `With ${stats.totalArtists} artists in your library, you could host a music festival lasting ${Math.round(stats.totalArtists / 50)} days!`,
-      `Your musical DNA contains ${insights.diversityScore}% variety - making you more adventurous than most listeners!`,
-      `If each artist performed for 3 minutes, your personal concert would last ${Math.round(stats.totalArtists * 3 / 60)} hours!`,
-      `Your ${stats.totalTracks} tracks represent roughly ${Math.round(stats.totalTracks * 3.5 / 60 / 24)} days of pure musical content!`,
-      `You listen to ${insights.tasteLevel.toLowerCase()} music - ${insights.tasteLevel === 'Underground' ? 'you\'re a true music explorer!' : 'you know what\'s trending!'}`,
-      `Your library spans ${stats.uniqueGenres} genres - from mainstream hits to hidden gems across the musical spectrum!`,
-      `With ${insights.libraryCompleteness}% of our limited dataset captured, you're a dedicated music enthusiast!`,
-      `Your artist network includes ${stats.totalArtists} creators - that's enough to fill multiple music festivals!`
-    ];
-
-    // Select 3-4 random facts for this session
-    const sessionFacts = [];
-    const factIndices = new Set();
+  // Generate chart data
+  const generateChartData = () => {
+    if (!topTracksData?.items) return [];
     
-    while (sessionFacts.length < 4 && factIndices.size < allFacts.length) {
-      const randomIndex = Math.floor(Math.random() * allFacts.length);
-      if (!factIndices.has(randomIndex)) {
-        factIndices.add(randomIndex);
-        sessionFacts.push(allFacts[randomIndex]);
-      }
-    }
-
-    return sessionFacts;
+    const tracks = topTracksData.items.slice(0, 10);
+    return tracks.map((track: any) => ({
+      name: track.name.length > 15 ? track.name.substring(0, 15) + '...' : track.name,
+      fullName: track.name,
+      popularity: track.popularity || 0,
+      artist: track.artists?.[0]?.name || 'Unknown'
+    }));
   };
 
-  // Update fun fact on component mount and every few seconds
-  React.useEffect(() => {
-    if (hasSpotifyData) {
-      const facts = generateRandomFunFacts();
-      if (facts.length > 0) {
-        setCurrentFunFact(facts[Math.floor(Math.random() * facts.length)]);
-        
-        // Change fact every 8 seconds
-        const interval = setInterval(() => {
-          setCurrentFunFact(facts[Math.floor(Math.random() * facts.length)]);
-        }, 8000);
+  const chartData = generateChartData();
 
-        return () => clearInterval(interval);
-      }
+  // Generate genre distribution data
+  const generateGenreData = () => {
+    if (!topArtistsData?.items) return [];
+    
+    const allGenres = topArtistsData.items.flatMap((artist: any) => artist.genres || []);
+    const genreCounts = allGenres.reduce((acc: any, genre: string) => {
+      acc[genre] = (acc[genre] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+    
+    return Object.entries(genreCounts)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .slice(0, 6)
+      .map(([genre, count], index) => ({
+        name: genre,
+        value: count as number,
+        color: colors[index % colors.length]
+      }));
+  };
+
+  const genreData = generateGenreData();
+
+  const getTimeRangeLabel = (range: string) => {
+    switch (range) {
+      case 'short_term': return 'Last Month';
+      case 'medium_term': return 'Last Six Months';
+      case 'long_term': return 'All Time';
+      default: return 'This Period';
     }
-  }, [hasSpotifyData, stats?.totalTracks, stats?.totalArtists]);
-
-  const handleRetryError = () => {
-    setErrorDialogOpen(false);
-    window.location.reload();
   };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <OverviewHeader onNavigate={onNavigate} />
-        <CalmingLoader 
-          title="Analyzing your complete music library..."
-          description="Processing up to 2000 tracks and artists from your limited dataset to deliver comprehensive insights"
-        />
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
+          <p className="text-muted-foreground">Loading your music insights...</p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin h-8 w-8 border-2 border-accent rounded-full border-t-transparent" />
+        </div>
       </div>
     );
   }
 
   return (
-    <BlurLoader isLoading={isLoading}>
-      <div className="space-y-6">
-        {/* Enhanced Header with Navigation */}
-        <OverviewHeader onNavigate={onNavigate} />
-
-        {/* Enhanced Stats Grid with Meaningful Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                Library Depth
-                <InfoButton
-                  title="Library Depth Analysis"
-                  description="Your musical footprint represents the total number of unique tracks in your limited dataset (capped at 2000 for optimal performance)."
-                  calculation="This metric shows how many different songs you've listened to enough to appear in your top tracks. A larger number indicates more diverse listening habits and active music discovery. The calculation uses Spotify's personalization algorithms to rank your most played tracks from a limited dataset of up to 2000 tracks."
-                  funFacts={[
-                    "The average Spotify user has around 200-300 tracks in their regular rotation",
-                    "Music collectors typically have 500+ unique tracks in their top listening data",
-                    "Your library depth directly influences Spotify's recommendation accuracy",
-                    "We limit the dataset to 2000 tracks to ensure optimal app performance"
-                  ]}
-                  metrics={[
-                    { label: "Your Tracks", value: `${stats?.totalTracks || 0}`, description: "Unique songs in your limited dataset" },
-                    { label: "Completion", value: `${insights?.libraryCompleteness || 0}%`, description: "Of maximum 2000 track limit" }
-                  ]}
-                />
-              </CardTitle>
-              <Music className="h-4 w-4 text-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-accent">
-                {hasSpotifyData ? (stats?.totalTracks || 0) : 'No data'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {hasSpotifyData ? 'Unique tracks in your musical DNA' : 'Connect to see data'}
-              </p>
-              {insights && hasSpotifyData && (
-                <Progress value={insights.libraryCompleteness} className="h-2 mt-2" />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                Artist Network
-                <InfoButton
-                  title="Artist Network Analysis"
-                  description="The breadth of your musical connections - how many different artists shape your sound from our limited dataset."
-                  calculation="Count of unique artists from your limited dataset (up to 2000 artists for performance optimization). This includes primary artists, featured artists, and collaborators. Higher numbers suggest you explore music widely rather than focusing on just a few artists."
-                  funFacts={[
-                    "The typical music fan follows 50-100 artists regularly",
-                    "Diverse artist networks often predict openness to new music genres",
-                    "Supporting many artists helps fund the entire music ecosystem",
-                    "Our dataset is limited to 2000 artists to maintain app responsiveness"
-                  ]}
-                  metrics={[
-                    { label: "Your Artists", value: `${stats?.totalArtists || 0}`, description: "Unique artists you listen to" },
-                    { label: "Coverage", value: `${insights?.artistCoverage || 0}%`, description: "Of maximum 2000 artist limit" }
-                  ]}
-                />
-              </CardTitle>
-              <Users className="h-4 w-4 text-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-accent">
-                {hasSpotifyData ? (stats?.totalArtists || 0) : 'No data'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {hasSpotifyData ? 'Artists in your musical universe' : 'Will show when connected'}
-              </p>
-              {insights && hasSpotifyData && (
-                <Progress value={insights.artistCoverage} className="h-2 mt-2" />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                Genre Exploration
-                <InfoButton
-                  title="Genre Exploration Score"
-                  description="Measures the diversity of your musical taste across different genres and styles from your limited dataset."
-                  calculation="Calculated from unique genres of all artists in your limited library (capped at 2000 for performance). The score considers both the number of genres and their diversity. 10+ genres = Eclectic Explorer, 6-9 = Genre Adventurer, 3-5 = Selective Listener, <3 = Genre Loyalist."
-                  funFacts={[
-                    "Most people stick to 3-5 genres throughout their lives",
-                    "Genre exploration peaks in teenage years and early twenties",
-                    "Listening to diverse genres can enhance cognitive flexibility",
-                    "Some genres are 'gateway drugs' to discovering others (like indie to folk to country)",
-                    "We analyze up to 2000 tracks/artists to ensure smooth performance"
-                  ]}
-                  metrics={[
-                    { label: "Your Genres", value: `${stats?.uniqueGenres || 0}`, description: "Different genres you explore" },
-                    { label: "Diversity", value: `${insights?.diversityScore || 0}%`, description: "Musical exploration score" }
-                  ]}
-                />
-              </CardTitle>
-              <Volume2 className="h-4 w-4 text-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-accent">
-                {hasSpotifyData ? (stats?.uniqueGenres || 0) : 'No data'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {hasSpotifyData ? 
-                  `${stats?.uniqueGenres >= 10 ? 'Eclectic Explorer' : 
-                    stats?.uniqueGenres >= 6 ? 'Genre Adventurer' : 
-                    stats?.uniqueGenres >= 3 ? 'Selective Listener' : 'Genre Loyalist'}` : 
-                  'Connect to discover'
-                }
-              </p>
-              {insights && hasSpotifyData && (
-                <Progress value={insights.diversityScore} className="h-2 mt-2" />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                Taste Profile
-                <InfoButton
-                  title="Taste Sophistication Analysis"
-                  description="Indicates whether you gravitate toward mainstream hits or underground gems based on your limited dataset."
-                  calculation="Based on average popularity scores (0-100) of your tracks from the limited dataset (up to 2000 tracks). Spotify calculates popularity using recent play counts and user engagement. 80-100 = Mainstream, 60-79 = Popular, 40-59 = Alternative, 0-39 = Underground."
-                  funFacts={[
-                    "Underground music lovers often discover artists 2-3 years before they go mainstream",
-                    "Mainstream taste isn't bad - it means you like what resonates with millions of people!",
-                    "Your taste profile can predict your personality traits (openness, extraversion)",
-                    "The 'popularity paradox': some of the best music has low popularity scores",
-                    "Analysis is based on your limited dataset for optimal performance"
-                  ]}
-                  metrics={[
-                    { label: "Avg Popularity", value: `${stats?.avgPopularity || 0}/100`, description: "Your taste mainstream level" },
-                    { label: "Profile", value: insights?.tasteLevel || 'Unknown', description: "Your musical archetype" }
-                  ]}
-                />
-              </CardTitle>
-              <Star className="h-4 w-4 text-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-accent">
-                {hasSpotifyData ? (stats?.avgPopularity || 0) : 'No data'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {hasSpotifyData ? `${insights?.tasteLevel || 'Unknown'} taste profile` : 'Connect to analyze'}
-              </p>
-              {stats?.avgPopularity && hasSpotifyData && (
-                <Progress value={stats.avgPopularity} className="h-2 mt-2" />
-              )}
-            </CardContent>
-          </Card>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
+          <p className="text-muted-foreground">
+            Your comprehensive music listening insights and statistics
+          </p>
         </div>
+        
+        <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Time range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="short_term">Last Month</SelectItem>
+            <SelectItem value="medium_term">Last Six Months</SelectItem>
+            <SelectItem value="long_term">All Time</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Random Fun Facts Section (replacing heatmap) */}
-        {hasSpotifyData && currentFunFact && (
-          <Card className="bg-gradient-to-r from-accent/10 to-primary/10 border-accent/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-accent" />
-                Musical Fun Fact
-                <InfoButton
-                  title="Musical Fun Facts"
-                  description="Discover interesting insights about your music library that change with each session."
-                  calculation="Generated from your listening data including track counts, artist diversity, genre exploration, and listening time. Facts are randomly selected and rotate every few seconds to keep things interesting."
-                  funFacts={[
-                    "Fun facts are generated from your actual listening data",
-                    "Each session shows different facts to keep things fresh",
-                    "Facts consider your total tracks, artists, genres, and listening time",
-                    "Based on your limited dataset of up to 2000 tracks for performance"
-                  ]}
-                  metrics={[
-                    { label: "Data Source", value: "Limited Dataset", description: "Up to 2000 tracks/artists" },
-                    { label: "Fact Rotation", value: "Every 8 seconds", description: "Keeps content fresh" }
-                  ]}
-                />
-              </CardTitle>
-              <CardDescription>
-                Interesting insights from your limited music dataset that refresh each session
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border">
-                <div className="flex-shrink-0">
-                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-                </div>
-                <p className="text-sm font-medium text-foreground transition-all duration-500">
-                  {currentFunFact}
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                Fun facts refresh automatically • Based on your {stats.totalTracks} tracks and {stats.totalArtists} artists
-              </p>
-            </CardContent>
-          </Card>
-        )}
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Music className="h-5 w-5 text-accent" />
+              <span className="text-sm font-medium">Total Tracks</span>
+              <InfoButton
+                title="Total Tracks"
+                description="The number of unique tracks in your top listening data for the selected time period."
+                funFacts={[
+                  "Your track count reflects your music exploration habits",
+                  "Higher counts suggest diverse listening patterns",
+                  "Track variety affects personalized recommendations"
+                ]}
+              />
+            </div>
+            <div className="text-2xl font-bold">{insights.totalTracks}</div>
+            <div className="text-xs text-muted-foreground">discovered</div>
+          </CardContent>
+        </Card>
 
-        {/* Enhanced Genre Distribution from Limited Dataset */}
-        {hasSpotifyData && genreAnalysis.length > 0 && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Artists</span>
+              <InfoButton
+                title="Unique Artists"
+                description="The number of different artists in your top listening data, indicating your musical diversity."
+                calculation="Counted from your top tracks and artists lists for the selected time period."
+                funFacts={[
+                  "Most people follow 20-50 artists regularly",
+                  "Higher artist counts indicate eclectic taste",
+                  "Artist variety improves music discovery"
+                ]}
+              />
+            </div>
+            <div className="text-2xl font-bold">{insights.totalArtists}</div>
+            <div className="text-xs text-muted-foreground">unique</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="h-5 w-5 text-secondary" />
+              <span className="text-sm font-medium">Avg Popularity</span>
+              <InfoButton
+                title="Average Popularity"
+                description="The average popularity score (0-100) of your top tracks. Higher scores indicate more mainstream listening habits."
+                calculation="Calculated from Spotify's popularity metric for each track in your top list, then averaged."
+                funFacts={[
+                  "Scores above 70 indicate mainstream taste",
+                  "Scores below 50 suggest you discover underground music",
+                  "Popularity changes as tracks gain/lose momentum"
+                ]}
+              />
+            </div>
+            <div className="text-2xl font-bold">{insights.avgPopularity}</div>
+            <div className="text-xs text-muted-foreground">out of 100</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm font-medium">Est. Listening</span>
+              <InfoButton
+                title="Estimated Listening Time"
+                description="Rough estimate of your total listening time based on track durations and frequency in your top lists."
+                calculation="Based on average track duration multiplied by estimated play frequency for tracks in your top lists."
+                funFacts={[
+                  "Average person listens to 2-4 hours of music daily",
+                  "This is a conservative estimate based on top tracks",
+                  "Actual listening time is likely much higher"
+                ]}
+              />
+            </div>
+            <div className="text-2xl font-bold">{insights.listening_minutes}</div>
+            <div className="text-xs text-muted-foreground">minutes</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="insights">Insights</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Top Tracks Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Volume2 className="h-5 w-5" />
-                Your Musical DNA Analysis
-                <InfoButton
-                  title="Musical DNA Deep Dive"
-                  description="Deep dive into your musical identity through comprehensive genre analysis from your limited dataset."
-                  calculation="Each percentage represents how much that genre influences your overall taste, calculated from all artists in your limited dataset (up to 2000 items for performance). This creates your unique musical fingerprint by analyzing artist genres, track characteristics, and listening patterns."
-                  funFacts={generateRandomFunFacts()}
-                  metrics={[
-                    { label: "Total Artists", value: `${stats.totalArtists}`, description: "Artists analyzed for genre data" },
-                    { label: "Genre Diversity", value: `${genreAnalysis.length}`, description: "Unique genres identified" },
-                    { label: "Top Genre", value: genreAnalysis[0]?.name || 'N/A', description: "Your most dominant genre" },
-                    { label: "Dataset Limit", value: "2000", description: "Tracks/artists cap for performance" }
-                  ]}
-                  variant="modal"
-                />
+                <BarChart3 className="h-5 w-5" />
+                Top Tracks Popularity - {getTimeRangeLabel(selectedTimeRange)}
               </CardTitle>
               <CardDescription>
-                Comprehensive genre breakdown from {stats.totalArtists} artists in your limited dataset (capped at 2000 for performance)
+                Popularity scores of your most played tracks
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {genreAnalysis.slice(0, 8).map((genre, index) => (
-                  <div key={index} className="p-4 rounded-lg border transition-all hover:shadow-md" 
-                       style={{ 
-                         backgroundColor: `hsl(var(--accent) / 0.1)`, 
-                         borderColor: `hsl(var(--accent) / 0.3)` 
-                       }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-sm capitalize">{genre.name}</h4>
-                      <Badge variant="secondary" className="text-accent">
-                        {genre.value}%
-                      </Badge>
-                    </div>
-                    <div className="space-y-1 text-xs text-muted-foreground">
-                      <div className="flex justify-between">
-                        <span>Artists:</span>
-                        <span className="font-medium">{genre.artists}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Influence:</span>
-                        <span className="font-medium">
-                          {genre.value >= 15 ? 'Major' : genre.value >= 8 ? 'Moderate' : 'Minor'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2 mt-3">
-                      <div 
-                        className="h-2 rounded-full transition-all duration-500 bg-accent"
-                        style={{ width: `${genre.value}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {genreAnalysis.length > 8 && (
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    +{genreAnalysis.length - 8} more genres in your musical universe
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => onNavigate?.('genres')}
-                  >
-                    Explore All Genres
-                  </Button>
-                </div>
-              )}
+              <ChartContainer config={{}} className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="name" 
+                      className="text-muted-foreground text-xs"
+                      interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis className="text-muted-foreground text-xs" />
+                    <ChartTooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload[0]) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-background border border-border rounded-lg p-3 shadow-md">
+                              <p className="font-medium text-sm">{data.fullName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                by {data.artist}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Popularity: {data.popularity}/100
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="popularity" fill="hsl(var(--accent))" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
-        )}
 
-        {/* Spotify Connection Status */}
-        {!hasSpotifyData && (
-          <Card className="border-accent/20 bg-accent/5">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Star className="h-4 w-4" />
+                  Music Diversity
+                  <InfoButton
+                    title="Music Diversity Score"
+                    description="Measures how varied your music taste is based on genre spread and artist variety in your listening habits."
+                    calculation="Based on the ratio of unique genres to total artists, scaled to 0-100. Higher scores indicate more eclectic taste."
+                    funFacts={[
+                      "Scores above 60 indicate very diverse taste",
+                      "Genre variety is key to high diversity scores",
+                      "Exploring new genres increases your score"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-primary mb-2">{insights.diversity_score}</div>
+                  <Progress value={insights.diversity_score} className="mb-2" />
+                  <p className="text-xs text-muted-foreground">
+                    {insights.diversity_score > 70 ? 'Very Diverse' : 
+                     insights.diversity_score > 50 ? 'Moderately Diverse' :
+                     insights.diversity_score > 30 ? 'Somewhat Focused' : 'Focused Taste'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Target className="h-4 w-4" />
+                  Discoveries
+                  <InfoButton
+                    title="Music Discoveries"
+                    description="Number of artists in your top list with lower popularity scores, indicating you discover less mainstream music."
+                    calculation="Count of artists with popularity scores below 50 in your top artists list."
+                    funFacts={[
+                      "Underground artists often have scores below 50",
+                      "Discovering new artists helps music diversity",
+                      "Early supporters help artists grow their audience"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-accent mb-2">{insights.discoveries}</div>
+                  <p className="text-sm text-muted-foreground">underground artists</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {insights.discoveries > 15 ? 'Great discoverer!' :
+                     insights.discoveries > 8 ? 'Good explorer' :
+                     insights.discoveries > 3 ? 'Some discoveries' : 'Try exploring more!'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Zap className="h-4 w-4" />
+                  Energy Level
+                  <InfoButton
+                    title="Music Energy Level"
+                    description="Average energy score of your top tracks based on Spotify's audio analysis. Higher scores indicate more energetic music preferences."
+                    calculation="Calculated from Spotify's energy audio feature (0-1 scale) converted to percentage for your top tracks."
+                    funFacts={[
+                      "Energy measures intensity and power in music",
+                      "Scores above 70 indicate high-energy preferences",
+                      "Energy levels can reflect your activity patterns"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-secondary mb-2">{insights.energy_level}%</div>
+                  <Progress value={insights.energy_level} className="mb-2" />
+                  <p className="text-xs text-muted-foreground">
+                    {insights.energy_level > 80 ? 'High Energy' :
+                     insights.energy_level > 60 ? 'Moderate Energy' :
+                     insights.energy_level > 40 ? 'Balanced' : 'Chill Vibes'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="insights" className="space-y-6">
+          {/* Top Genres */}
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Music className="h-5 w-5" />
-                Unlock Your Musical Universe
+                Your Top Genres - {getTimeRangeLabel(selectedTimeRange)}
               </CardTitle>
               <CardDescription>
-                Connect your Spotify account to access comprehensive insights from up to 2000 tracks and artists (limited dataset for optimal performance)
+                Most represented genres in your music library
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col lg:flex-row gap-6 items-start">
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">What you'll discover:</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-accent" />
-                        <span>Complete top 2000 tracks analysis</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-accent" />
-                        <span>Comprehensive artist network mapping</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Volume2 className="h-4 w-4 text-accent" />
-                        <span>Deep genre diversity analysis</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-accent" />
-                        <span>Advanced taste profiling</span>
-                      </div>
+              <div className="space-y-3">
+                {insights.topGenres.slice(0, 8).map((genre, index) => (
+                  <div key={genre} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center">
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium capitalize">{genre.replace(/-/g, ' ')}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-3">
-                      * Dataset limited to 2000 tracks/artists for optimal app performance
+                    <Badge variant="secondary">Popular</Badge>
+                  </div>
+                ))}
+                {insights.topGenres.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Music className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No genre data available</p>
+                    <p className="text-sm">Listen to more music to see your top genres</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Listening Insights */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Listening Insights
+                </CardTitle>
+                <CardDescription>
+                  Key findings about your music preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
+                    <h4 className="font-medium text-accent mb-2">Most Popular Track</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {chartData[0]?.fullName || 'No data available'} 
+                      {chartData[0] && ` (${chartData[0].popularity}/100)`}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                    <h4 className="font-medium text-primary mb-2">Genre Variety</h4>
+                    <p className="text-sm text-muted-foreground">
+                      You listen to {insights.topGenres.length} different genres regularly
+                    </p>
+                  </div>
+                  <div className="p-4 bg-secondary/10 rounded-lg border border-secondary/20">
+                    <h4 className="font-medium text-secondary mb-2">Discovery Rate</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {Math.round((insights.discoveries / insights.totalArtists) * 100)}% of your artists are underground discoveries
                     </p>
                   </div>
                 </div>
-                <Button size="lg" className="whitespace-nowrap">
-                  <Music className="h-4 w-4 mr-2" />
-                  Connect Spotify
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
 
-        {/* Dataset Quality & Performance Insights */}
-        {hasSpotifyData && insights && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                Your Music Library Analytics
-                <InfoButton
-                  title="Library Analytics Deep Dive"
-                  description="Comprehensive metrics about your music library's depth, diversity, and listening patterns from the limited dataset."
-                  calculation="Coverage shows how much of your total listening history we've captured (up to 2000 items for performance). Quality combines completeness metrics. Your musical level is calculated from total tracks + artists divided by 40, representing your exploration intensity within our performance-optimized limits."
-                  funFacts={[
-                    `If you discovered one new artist per week, it would take ${Math.round(stats.totalArtists / 52)} years to find all the artists in your limited library!`,
-                    "Your musical level increases as you discover more artists and tracks - you're currently a music explorer!",
-                    `Your library diversity score of ${Math.round(insights.diversityScore)}% means you're more adventurous than ${insights.diversityScore}% of music listeners`,
-                    "High coverage percentages indicate you're a dedicated music fan with deep listening habits",
-                    "We cap the dataset at 2000 tracks/artists to ensure the app runs smoothly on all devices"
-                  ]}
-                  metrics={[
-                    { label: "Tracks Analyzed", value: `${stats.totalTracks}/2000`, description: "Complete track coverage" },
-                    { label: "Artists Covered", value: `${stats.totalArtists}/2000`, description: "Artist network size" },
-                    { label: "Musical Level", value: `${insights.level}`, description: "Based on exploration depth" },
-                    { label: "Performance Cap", value: "2000", description: "Items limit for optimization" }
-                  ]}
-                  variant="modal"
-                />
-              </CardTitle>
-              <CardDescription>
-                Advanced insights into your musical preferences and library composition (limited to 2000 items for performance)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-accent/10 rounded-lg border border-accent/20">
-                  <div className="text-2xl font-bold text-accent">{insights.libraryCompleteness}%</div>
-                  <div className="text-sm font-medium">Track Coverage</div>
-                  <div className="text-xs text-muted-foreground mt-1">{stats.totalTracks}/2000 tracks analyzed</div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Headphones className="h-5 w-5" />
+                  Music Profile
+                </CardTitle>
+                <CardDescription>
+                  Your unique listening personality
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-accent to-primary rounded-full flex items-center justify-center">
+                      <Heart className="h-8 w-8 text-white" />
+                    </div>
+                    <h3 className="font-semibold mb-2">
+                      {insights.diversity_score > 70 && insights.discoveries > 10 ? 'Music Explorer' :
+                       insights.avgPopularity > 70 ? 'Mainstream Enthusiast' :
+                       insights.energy_level > 75 ? 'High Energy Listener' :
+                       insights.discoveries > 8 ? 'Underground Discoverer' : 'Focused Listener'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {insights.diversity_score > 70 && insights.discoveries > 10 ? 
+                        'You love discovering new artists and genres' :
+                       insights.avgPopularity > 70 ? 
+                        'You enjoy popular hits and trending music' :
+                       insights.energy_level > 75 ? 
+                        'You prefer energetic and upbeat tracks' :
+                       insights.discoveries > 8 ? 
+                        'You have a talent for finding hidden gems' : 
+                        'You have refined taste in specific genres'}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center p-4 bg-primary/10 rounded-lg border border-primary/20">
-                  <div className="text-2xl font-bold text-primary">{insights.artistCoverage}%</div>
-                  <div className="text-sm font-medium">Artist Coverage</div>
-                  <div className="text-xs text-muted-foreground mt-1">{stats.totalArtists}/2000 artists analyzed</div>
-                </div>
-                <div className="text-center p-4 bg-secondary/10 rounded-lg border border-secondary/20">
-                  <div className="text-2xl font-bold">{Math.round(insights.diversityScore)}%</div>
-                  <div className="text-sm font-medium">Musical Diversity</div>
-                  <div className="text-xs text-muted-foreground mt-1">{stats.uniqueGenres} unique genres</div>
-                </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg border border-muted">
-                  <div className="text-2xl font-bold text-accent">Level {insights.level}</div>
-                  <div className="text-sm font-medium">Musical Explorer</div>
-                  <div className="text-xs text-muted-foreground mt-1">Based on limited library size</div>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <strong>Performance Note:</strong> Your library is capped at 2000 tracks and artists to ensure optimal app performance across all devices.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-        {/* Error Dialog */}
-        <ErrorDialog
-          open={errorDialogOpen}
-          onOpenChange={setErrorDialogOpen}
-          title="Data Loading Error"
-          message={currentError}
-          onRetry={handleRetryError}
-        />
-      </div>
-    </BlurLoader>
+        <TabsContent value="analytics" className="space-y-6">
+          {genreData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChartIcon className="h-5 w-5" />
+                  Genre Distribution
+                </CardTitle>
+                <CardDescription>
+                  Breakdown of your music preferences by genre
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={{}} className="h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={genreData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={120}
+                        innerRadius={60}
+                      >
+                        {genreData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload[0]) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background border border-border rounded-lg p-3 shadow-md">
+                                <p className="font-medium text-sm capitalize">{data.name.replace(/-/g, ' ')}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {data.value} artists
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+                <div className="flex flex-wrap gap-2 justify-center mt-4">
+                  {genreData.map((entry, index) => (
+                    <Badge key={entry.name} variant="outline" className="text-xs">
+                      <div 
+                        className="w-2 h-2 rounded-full mr-2" 
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      {entry.name.replace(/-/g, ' ')}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Additional Analytics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Listening Statistics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Total unique tracks</span>
+                    <span className="font-medium">{insights.totalTracks}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Total unique artists</span>
+                    <span className="font-medium">{insights.totalArtists}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Average popularity</span>
+                    <span className="font-medium">{insights.avgPopularity}/100</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Estimated listening time</span>
+                    <span className="font-medium">{insights.listening_minutes}m</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Music Characteristics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Energy Level</span>
+                      <span className="text-sm font-medium">{insights.energy_level}%</span>
+                    </div>
+                    <Progress value={insights.energy_level} className="h-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Diversity Score</span>
+                      <span className="text-sm font-medium">{insights.diversity_score}%</span>
+                    </div>
+                    <Progress value={insights.diversity_score} className="h-2" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Underground discoveries</span>
+                    <span className="font-medium">{insights.discoveries}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Genre variety</span>
+                    <span className="font-medium">{insights.topGenres.length}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };

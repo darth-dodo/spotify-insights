@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,66 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { Music, TrendingUp, Star, Shuffle, Database } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { Music, TrendingUp, Star, Database } from 'lucide-react';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 export const GenreAnalysis = () => {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const { tracks, artists, isLoading, getGenreAnalysis, getTracksByGenre } = useExtendedSpotifyDataStore();
 
-  // Use extended data hooks to get up to 1000 items
-  const { useExtendedTopTracks, useExtendedTopArtists } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useExtendedTopTracks(timeRange, 1000);
-  const { data: topArtistsData, isLoading: artistsLoading } = useExtendedTopArtists(timeRange, 1000);
-
-  const isLoading = tracksLoading || artistsLoading;
-
-  // Generate genre data from the actual 1000-item dataset
-  const genreData = React.useMemo(() => {
-    if (!topArtistsData?.items) return [];
-    
-    const genreCounts: Record<string, { count: number; tracks: number; artists: Set<string>; hours: number; color: string }> = {};
-    const artists = topArtistsData.items;
-    const tracks = topTracksData?.items || [];
-    
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
-    let colorIndex = 0;
-
-    artists.forEach((artist: any, index: number) => {
-      artist.genres?.forEach((genre: string) => {
-        const genreName = genre.charAt(0).toUpperCase() + genre.slice(1);
-        if (!genreCounts[genreName]) {
-          genreCounts[genreName] = { 
-            count: 0, 
-            tracks: 0, 
-            artists: new Set(), 
-            hours: 0,
-            color: colors[colorIndex % colors.length]
-          };
-          colorIndex++;
-        }
-        genreCounts[genreName].count++;
-        genreCounts[genreName].artists.add(artist.id);
-        // Estimate tracks and hours based on artist popularity and position
-        const trackCount = Math.floor((50 - (index / 20)) * Math.random()) + 5;
-        genreCounts[genreName].tracks += trackCount;
-        genreCounts[genreName].hours += Math.floor(trackCount * 3.5); // ~3.5 min average
-      });
-    });
-    
-    const totalArtists = artists.length;
-    return Object.entries(genreCounts)
-      .sort(([,a], [,b]) => b.count - a.count)
-      .slice(0, 8) // Show top 8 genres
-      .map(([name, data]) => ({
-        name,
-        value: Math.round((data.count / totalArtists) * 100),
-        color: data.color,
-        tracks: data.tracks,
-        artists: data.artists.size,
-        hours: Math.round(data.hours / 60)
-      }));
-  }, [topArtistsData, topTracksData, timeRange]);
+  const genreData = getGenreAnalysis();
 
   // Generate mood data based on actual genres
   const moodData = React.useMemo(() => {
@@ -108,26 +56,11 @@ export const GenreAnalysis = () => {
     });
   }, [genreData]);
 
-  // Generate top tracks by genre from actual data
+  // Get top tracks by genre from memory
   const topGenreTracks = React.useMemo(() => {
-    if (!topTracksData?.items || !selectedGenre) return {};
+    if (!selectedGenre) return {};
     
-    // Find artists of the selected genre
-    const genreArtists = topArtistsData?.items?.filter((artist: any) =>
-      artist.genres?.some((g: string) => 
-        g.toLowerCase().includes(selectedGenre.toLowerCase()) ||
-        selectedGenre.toLowerCase().includes(g.toLowerCase())
-      )
-    ) || [];
-    
-    const artistIds = new Set(genreArtists.map((artist: any) => artist.id));
-    
-    // Find tracks by these artists
-    const genreTracks = topTracksData.items
-      .filter((track: any) => 
-        track.artists?.some((artist: any) => artistIds.has(artist.id))
-      )
-      .slice(0, 3)
+    const genreTracks = getTracksByGenre(selectedGenre, 3)
       .map((track: any) => ({
         name: track.name,
         artist: track.artists[0]?.name || 'Unknown',
@@ -135,7 +68,7 @@ export const GenreAnalysis = () => {
       }));
     
     return { [selectedGenre]: genreTracks };
-  }, [topTracksData, topArtistsData, selectedGenre]);
+  }, [selectedGenre, getTracksByGenre]);
 
   const chartConfig = {
     value: {
@@ -151,18 +84,11 @@ export const GenreAnalysis = () => {
           <h1 className="text-3xl font-bold text-foreground">Genre Analysis</h1>
           <p className="text-muted-foreground">Loading your music data...</p>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[...Array(2)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-muted rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 bg-muted rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <CalmingLoader 
+          title="Analyzing your musical genres..."
+          description="Processing your extended music library to discover patterns"
+          variant="card"
+        />
       </div>
     );
   }
@@ -177,42 +103,9 @@ export const GenreAnalysis = () => {
         </p>
         <Badge variant="secondary" className="flex items-center gap-1 w-fit">
           <Database className="h-3 w-3" />
-          Full Dataset ({topTracksData?.items?.length || 0} tracks, {topArtistsData?.items?.length || 0} artists)
+          Full Dataset ({tracks.length} tracks, {artists.length} artists)
         </Badge>
       </div>
-
-      {/* Time Range Selector */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Analysis Settings</CardTitle>
-          <CardDescription>Select time range for genre analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              variant={timeRange === 'short_term' ? 'default' : 'outline'} 
-              size="sm" 
-              onClick={() => setTimeRange('short_term')}
-            >
-              Last Month
-            </Button>
-            <Button 
-              variant={timeRange === 'medium_term' ? 'default' : 'outline'} 
-              size="sm" 
-              onClick={() => setTimeRange('medium_term')}
-            >
-              Last 6 Months
-            </Button>
-            <Button 
-              variant={timeRange === 'long_term' ? 'default' : 'outline'} 
-              size="sm" 
-              onClick={() => setTimeRange('long_term')}
-            >
-              All Time
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Genre Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -394,12 +287,12 @@ export const GenreAnalysis = () => {
         </Card>
       )}
 
-      {/* Musical Profile Insights - Enhanced with real data */}
+      {/* Musical Profile Insights */}
       <Card>
         <CardHeader>
           <CardTitle>Musical Profile Insights</CardTitle>
           <CardDescription>
-            AI-powered analysis of your musical preferences from {topArtistsData?.items?.length || 0} artists
+            AI-powered analysis of your musical preferences from {artists.length} artists
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -423,11 +316,11 @@ export const GenreAnalysis = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>New Genre Exploration</span>
-                  <span>{Math.min(100, Math.round((new Set(topArtistsData?.items?.flatMap((artist: any) => artist.genres || [])).size || 0) * 1.5))}%</span>
+                  <span>{Math.min(100, Math.round((new Set(artists.flatMap((artist: any) => artist.genres || [])).size || 0) * 1.5))}%</span>
                 </div>
-                <Progress value={Math.min(100, Math.round((new Set(topArtistsData?.items?.flatMap((artist: any) => artist.genres || [])).size || 0) * 1.5))} className="h-2" />
+                <Progress value={Math.min(100, Math.round((new Set(artists.flatMap((artist: any) => artist.genres || [])).size || 0) * 1.5))} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  {new Set(topArtistsData?.items?.flatMap((artist: any) => artist.genres || [])).size || 0} unique genre tags in your library
+                  {new Set(artists.flatMap((artist: any) => artist.genres || [])).size || 0} unique genre tags in your library
                 </p>
               </div>
             </div>
@@ -440,11 +333,11 @@ export const GenreAnalysis = () => {
                 <div className="text-sm text-muted-foreground">Primary Genres</div>
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
-                <div className="text-2xl font-bold text-primary">{topArtistsData?.items?.length || 0}</div>
+                <div className="text-2xl font-bold text-primary">{artists.length}</div>
                 <div className="text-sm text-muted-foreground">Total Artists</div>
               </div>
               <div className="text-center p-4 bg-secondary/10 rounded-lg">
-                <div className="text-2xl font-bold text-secondary">{topTracksData?.items?.length || 0}</div>
+                <div className="text-2xl font-bold text-secondary">{tracks.length}</div>
                 <div className="text-sm text-muted-foreground">Unique Tracks</div>
               </div>
             </div>

@@ -1,65 +1,22 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Music, Clock, Users, TrendingUp, Play, Heart, Database } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { Music, Clock, Users, TrendingUp, Heart, Database } from 'lucide-react';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { InfoButton } from '@/components/ui/InfoButton';
 import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 export const DashboardOverview = () => {
-  // Use extended data hooks to get up to 1000 items
-  const { useExtendedTopTracks, useExtendedTopArtists, useRecentlyPlayed } = useSpotifyData();
-  
-  const { data: topTracksData, isLoading: tracksLoading } = useExtendedTopTracks('medium_term', 1000);
-  const { data: topArtistsData, isLoading: artistsLoading } = useExtendedTopArtists('medium_term', 1000);
-  const { data: recentlyPlayedData, isLoading: recentLoading } = useRecentlyPlayed(50);
+  const { tracks, artists, isLoading, getTopTracks, getTopArtists, getStats } = useExtendedSpotifyDataStore();
 
-  const isLoading = tracksLoading || artistsLoading || recentLoading;
-
-  // Calculate dynamic stats from real Spotify data
-  const calculateStats = () => {
-    const tracks = topTracksData?.items || [];
-    const artists = topArtistsData?.items || [];
-    const recent = recentlyPlayedData?.items || [];
-
-    // Calculate total listening time from recent tracks
-    const totalListeningTime = recent.reduce((acc: number, item: any) => {
-      return acc + (item.track?.duration_ms || 0);
-    }, 0) / (1000 * 60); // Convert to minutes
-
-    // Get unique genres from top artists
-    const allGenres = artists.flatMap((artist: any) => artist.genres || []);
-    const uniqueGenres = [...new Set(allGenres)];
-    const topGenre = uniqueGenres[0] || 'Unknown';
-
-    // Calculate average track popularity
-    const avgPopularity = tracks.length > 0 ? 
-      tracks.reduce((acc: number, track: any) => acc + (track.popularity || 0), 0) / tracks.length : 0;
-
-    return {
-      totalTracks: tracks.length,
-      totalArtists: artists.length,
-      listeningTime: Math.round(totalListeningTime),
-      topGenre,
-      uniqueGenres: uniqueGenres.length,
-      avgPopularity: Math.round(avgPopularity),
-      recentTracksCount: recent.length,
-      hasSpotifyData: tracks.length > 0 || artists.length > 0 || recent.length > 0
-    };
-  };
-
-  const stats = calculateStats();
+  const stats = getStats();
 
   // Generate top tracks with real data only
-  const getTopTracks = () => {
-    if (!topTracksData?.items?.length) {
-      return [];
-    }
+  const getTopTracksForDisplay = () => {
+    if (!tracks.length) return [];
 
-    return topTracksData.items.slice(0, 3).map((track: any) => ({
+    return getTopTracks(3).map((track: any) => ({
       name: track.name,
       artist: track.artists?.[0]?.name || 'Unknown Artist',
       popularity: track.popularity || 0,
@@ -68,12 +25,10 @@ export const DashboardOverview = () => {
   };
 
   // Generate top artists with real data only
-  const getTopArtists = () => {
-    if (!topArtistsData?.items?.length) {
-      return [];
-    }
+  const getTopArtistsForDisplay = () => {
+    if (!artists.length) return [];
 
-    return topArtistsData.items.slice(0, 3).map((artist: any) => ({
+    return getTopArtists(3).map((artist: any) => ({
       name: artist.name,
       popularity: artist.popularity || 0,
       followers: artist.followers?.total ? 
@@ -82,9 +37,6 @@ export const DashboardOverview = () => {
           `${Math.round(artist.followers.total / 1000)}K`) : '0'
     }));
   };
-
-  const topTracks = getTopTracks();
-  const topArtists = getTopArtists();
 
   if (isLoading) {
     return (
@@ -101,20 +53,23 @@ export const DashboardOverview = () => {
     );
   }
 
+  const topTracksDisplay = getTopTracksForDisplay();
+  const topArtistsDisplay = getTopArtistsForDisplay();
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold text-foreground">
-          {stats.hasSpotifyData ? 'Welcome back! 🎵' : 'Welcome to your Music Dashboard! 🎵'}
+          {stats?.hasSpotifyData ? 'Welcome back! 🎵' : 'Welcome to your Music Dashboard! 🎵'}
         </h1>
         <p className="text-muted-foreground">
-          {stats.hasSpotifyData ? 
+          {stats?.hasSpotifyData ? 
             `Here's your music listening overview ${stats.topGenre !== 'Unknown' ? `- you love ${stats.topGenre}!` : ''}` :
             'Connect your Spotify account to see personalized insights'
           }
         </p>
-        {stats.hasSpotifyData && (
+        {stats?.hasSpotifyData && (
           <Badge variant="secondary" className="flex items-center gap-1 w-fit">
             <Database className="h-3 w-3" />
             Extended Dataset ({stats.totalTracks} tracks, {stats.totalArtists} artists)
@@ -127,7 +82,7 @@ export const DashboardOverview = () => {
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              {stats.hasSpotifyData ? 'Top Tracks' : 'Your Tracks'}
+              {stats?.hasSpotifyData ? 'Top Tracks' : 'Your Tracks'}
               <InfoButton
                 title="Top Tracks"
                 description="Your most played songs based on Spotify's algorithm and your listening history."
@@ -137,9 +92,9 @@ export const DashboardOverview = () => {
             <Music className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{stats.totalTracks}</div>
+            <div className="text-2xl font-bold text-accent">{stats?.totalTracks || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.hasSpotifyData ? 'In your extended dataset' : 'Will show when connected'}
+              {stats?.hasSpotifyData ? 'In your extended dataset' : 'Will show when connected'}
             </p>
           </CardContent>
         </Card>
@@ -147,7 +102,7 @@ export const DashboardOverview = () => {
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              {stats.hasSpotifyData ? 'Recent Listening' : 'Listening Time'}
+              {stats?.hasSpotifyData ? 'Recent Listening' : 'Listening Time'}
               <InfoButton
                 title="Recent Listening Time"
                 description="Total listening time calculated from your recently played tracks."
@@ -158,10 +113,10 @@ export const DashboardOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent">
-              {stats.hasSpotifyData ? `${stats.listeningTime}m` : '0m'}
+              {stats?.hasSpotifyData ? `${stats.listeningTime}m` : '0m'}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats.hasSpotifyData ? 'From recent tracks' : 'Connect to see data'}
+              {stats?.hasSpotifyData ? 'From recent tracks' : 'Connect to see data'}
             </p>
           </CardContent>
         </Card>
@@ -169,7 +124,7 @@ export const DashboardOverview = () => {
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              {stats.hasSpotifyData ? 'Top Artists' : 'Your Artists'}
+              {stats?.hasSpotifyData ? 'Top Artists' : 'Your Artists'}
               <InfoButton
                 title="Top Artists"
                 description="Artists you listen to most frequently, ranked by Spotify's algorithm."
@@ -179,16 +134,16 @@ export const DashboardOverview = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{stats.totalArtists}</div>
+            <div className="text-2xl font-bold text-accent">{stats?.totalArtists || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.hasSpotifyData ? 'In your extended dataset' : 'Will appear here'}
+              {stats?.hasSpotifyData ? 'In your extended dataset' : 'Will appear here'}
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Spotify Connection Status */}
-      {!stats.hasSpotifyData && (
+      {!stats?.hasSpotifyData && (
         <Card className="border-accent/20 bg-accent/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -219,7 +174,7 @@ export const DashboardOverview = () => {
       )}
 
       {/* Top Content Grid - Only show if we have data */}
-      {stats.hasSpotifyData && (
+      {stats?.hasSpotifyData && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Tracks */}
           <Card>
@@ -238,9 +193,9 @@ export const DashboardOverview = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {topTracks.length > 0 ? (
+              {topTracksDisplay.length > 0 ? (
                 <>
-                  {topTracks.map((track, index) => (
+                  {topTracksDisplay.map((track, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
@@ -284,9 +239,9 @@ export const DashboardOverview = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {topArtists.length > 0 ? (
+              {topArtistsDisplay.length > 0 ? (
                 <>
-                  {topArtists.map((artist, index) => (
+                  {topArtistsDisplay.map((artist, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center text-accent-foreground font-bold">
@@ -315,7 +270,7 @@ export const DashboardOverview = () => {
       )}
 
       {/* Additional Insights for Spotify Users */}
-      {stats.hasSpotifyData && (
+      {stats?.hasSpotifyData && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -361,7 +316,7 @@ export const DashboardOverview = () => {
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
           <CardDescription>
-            {stats.hasSpotifyData ? 'Explore your music data' : 'Available after connecting Spotify'}
+            {stats?.hasSpotifyData ? 'Explore your music data' : 'Available after connecting Spotify'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -369,7 +324,7 @@ export const DashboardOverview = () => {
             <Button 
               variant="outline" 
               className="h-auto p-4 flex flex-col gap-2"
-              disabled={!stats.hasSpotifyData}
+              disabled={!stats?.hasSpotifyData}
             >
               <TrendingUp className="h-6 w-6" />
               <span>View Trends</span>
@@ -378,7 +333,7 @@ export const DashboardOverview = () => {
             <Button 
               variant="outline" 
               className="h-auto p-4 flex flex-col gap-2"
-              disabled={!stats.hasSpotifyData}
+              disabled={!stats?.hasSpotifyData}
             >
               <Music className="h-6 w-6" />
               <span>Genre Analysis</span>
@@ -387,7 +342,7 @@ export const DashboardOverview = () => {
             <Button 
               variant="outline" 
               className="h-auto p-4 flex flex-col gap-2"
-              disabled={!stats.hasSpotifyData}
+              disabled={!stats?.hasSpotifyData}
             >
               <Heart className="h-6 w-6" />
               <span>Saved Music</span>

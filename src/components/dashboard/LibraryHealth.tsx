@@ -1,28 +1,18 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { Music, Users, TrendingUp, Calendar, Star, Headphones, Database } from 'lucide-react';
 
 export const LibraryHealth = () => {
-  const { useExtendedTopTracks, useExtendedTopArtists, useRecentlyPlayed } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useExtendedTopTracks('medium_term', 500);
-  const { data: topArtistsData, isLoading: artistsLoading } = useExtendedTopArtists('medium_term', 500);
-  const { data: recentlyPlayedData, isLoading: recentLoading } = useRecentlyPlayed(50);
-
-  const isLoading = tracksLoading || artistsLoading || recentLoading;
+  const { tracks, artists, recentlyPlayed, isLoading } = useExtendedSpotifyDataStore();
 
   // Calculate library metrics
   const libraryMetrics = React.useMemo(() => {
-    if (!topTracksData?.items || !topArtistsData?.items || !recentlyPlayedData?.items) {
+    if (!tracks.length || !artists.length) {
       return null;
     }
-
-    const tracks = topTracksData.items;
-    const artists = topArtistsData.items;
-    const recentTracks = recentlyPlayedData.items;
 
     // Genre analysis
     const genreMap = new Map<string, number>();
@@ -98,14 +88,14 @@ export const LibraryHealth = () => {
       genreCount: genreMap.size,
       uniqueArtists
     };
-  }, [topTracksData, topArtistsData, recentlyPlayedData]);
+  }, [tracks, artists]);
 
   if (isLoading) {
     return (
       <div className="space-y-6 p-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Enhanced Library Health</h1>
-          <p className="text-muted-foreground">Analyzing your extended music library (up to 500 tracks & artists)...</p>
+          <p className="text-muted-foreground">Analyzing your extended music library (up to 1000 tracks & artists)...</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(8)].map((_, i) => (
@@ -144,7 +134,7 @@ export const LibraryHealth = () => {
         </p>
         <Badge variant="secondary" className="flex items-center gap-1 w-fit">
           <Database className="h-3 w-3" />
-          Extended Dataset (up to 500 items)
+          Extended Dataset (up to 1000 items)
         </Badge>
       </div>
 

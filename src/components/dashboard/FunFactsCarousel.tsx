@@ -24,7 +24,7 @@ export const FunFactsCarousel = () => {
     const artists = topArtistsData.items;
 
     // Total listening time with proper type checking
-    const totalDurationMs = tracks.reduce((sum, track) => {
+    const totalDurationMs: number = tracks.reduce((sum: number, track) => {
       const duration = track.duration_ms;
       if (typeof duration === 'number' && duration > 0) {
         return sum + duration;

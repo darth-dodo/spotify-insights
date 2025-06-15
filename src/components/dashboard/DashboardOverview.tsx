@@ -1,3 +1,3 @@
 
 export { EnhancedDashboardOverview as DashboardOverview } from './EnhancedDashboardOverview';
-export { ConsolidatedActivityHeatmap } from './overview/ConsolidatedActivityHeatmap';
+export { ActivityHeatmap } from './overview/ActivityHeatmap';

@@ -24,7 +24,7 @@ export const ActivityHeatmap = () => {
   const { useEnhancedRecentlyPlayed } = useSpotifyData();
   const { data: recentlyPlayedData, isLoading, error } = useEnhancedRecentlyPlayed(500);
 
-  // Generate heatmap data from real Spotify data or demo data
+  // Generate heatmap data from real Spotify data or demo data (last 90 days only)
   const generateHeatmapData = (): HeatmapDay[] => {
     const data: HeatmapDay[] = [];
     const today = new Date();
@@ -40,8 +40,8 @@ export const ActivityHeatmap = () => {
         }
       });
     } else if (!isLoading && !error) {
-      // Generate demo data for the last 30 days when no real data is available
-      for (let i = 29; i >= 0; i--) {
+      // Generate demo data for the last 90 days when no real data is available
+      for (let i = 89; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
@@ -54,8 +54,8 @@ export const ActivityHeatmap = () => {
       }
     }
 
-    // Generate 365 days - real/demo data where available, empty otherwise
-    for (let i = 364; i >= 0; i--) {
+    // Generate last 90 days only
+    for (let i = 89; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
@@ -125,7 +125,26 @@ export const ActivityHeatmap = () => {
     return weeks;
   }, {} as Record<number, HeatmapDay[]>);
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  // Generate month labels for 90 days
+  const generateMonthLabels = () => {
+    const labels = [];
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 89);
+    
+    const currentMonth = startDate.getMonth();
+    let month = currentMonth;
+    
+    for (let i = 0; i < 3; i++) {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      labels.push(monthNames[month % 12]);
+      month++;
+    }
+    
+    return labels;
+  };
+
+  const monthLabels = generateMonthLabels();
 
   const handleDayClick = (day: HeatmapDay) => {
     setSelectedDay(day);
@@ -139,7 +158,7 @@ export const ActivityHeatmap = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Activity Heatmap
+            Activity Heatmap (90 Days)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -162,10 +181,10 @@ export const ActivityHeatmap = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Activity Heatmap
+            Activity Heatmap (90 Days)
             <InfoButton
               title="Activity Heatmap"
-              description="Visual representation of your daily listening activity based on your Spotify listening history."
+              description="Visual representation of your daily listening activity over the last 90 days based on your Spotify listening history."
               calculation="Shows actual play counts for each day based on your recent Spotify activity. Days without data appear empty."
               variant="modal"
             />
@@ -190,76 +209,69 @@ export const ActivityHeatmap = () => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between text-lg">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Activity Heatmap
+          <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-sm sm:text-base">Activity Heatmap (90 Days)</span>
               <InfoButton
                 title="Activity Heatmap"
-                description="Visual representation of your daily listening activity based on your Spotify listening history."
+                description="Visual representation of your daily listening activity over the last 90 days based on your Spotify listening history."
                 calculation="Shows actual play counts for each day based on your recent Spotify activity. Darker squares indicate more listening activity."
                 variant="modal"
               />
               {hasRealData && (
-                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                <Badge variant="outline" className="text-xs text-blue-600 border-blue-600">
                   {recentlyPlayedData.length} tracks
                 </Badge>
               )}
               {!hasRealData && hasAnyData && (
-                <Badge variant="outline" className="text-orange-600 border-orange-600">
+                <Badge variant="outline" className="text-xs text-orange-600 border-orange-600">
                   Demo Data
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-3 text-sm">
+            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
               <div className="flex items-center gap-1">
-                <Flame className="h-4 w-4 text-orange-500" />
+                <Flame className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />
                 <span className="text-orange-500">{currentStreak} day streak</span>
               </div>
-              <Badge variant="outline">{Math.round((activeDays/365)*100)}% active</Badge>
+              <Badge variant="outline" className="text-xs">{Math.round((activeDays/90)*100)}% active</Badge>
             </div>
           </CardTitle>
-          <CardDescription>
-            Your listening activity over the past year {hasRealData ? 'based on Spotify data' : 'with demo activity'}.
+          <CardDescription className="text-xs sm:text-sm">
+            Your listening activity over the past 90 days {hasRealData ? 'based on Spotify data' : 'with demo activity'}.
             {hasRealData && ` Showing data from ${recentlyPlayedData.length} recent tracks.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {/* Stats Summary */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <div className="text-2xl font-bold text-primary">{totalPlays.toLocaleString()}</div>
+          <div className="space-y-3 sm:space-y-4">
+            {/* Stats Summary - Mobile Responsive */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold text-primary">{totalPlays.toLocaleString()}</div>
                 <div className="text-xs text-muted-foreground">Total Plays</div>
               </div>
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <div className="text-2xl font-bold text-orange-500">{currentStreak}</div>
+              <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold text-orange-500">{currentStreak}</div>
                 <div className="text-xs text-muted-foreground">Day Streak</div>
               </div>
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
-                <div className="text-2xl font-bold text-green-500">{activeDays}</div>
+              <div className="text-center p-2 sm:p-3 bg-muted/30 rounded-lg">
+                <div className="text-lg sm:text-2xl font-bold text-green-500">{activeDays}</div>
                 <div className="text-xs text-muted-foreground">Active Days</div>
               </div>
             </div>
 
             {/* Month labels - responsive */}
-            <div className="hidden md:flex justify-between text-xs text-muted-foreground px-2">
-              {months.map((month, index) => (
-                <span key={index}>{month}</span>
+            <div className="flex justify-between text-xs text-muted-foreground px-1 sm:px-2">
+              {monthLabels.map((month, index) => (
+                <span key={index} className="text-xs sm:text-sm">{month}</span>
               ))}
             </div>
             
-            {/* Mobile month labels */}
-            <div className="md:hidden flex justify-between text-xs text-muted-foreground px-1">
-              {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((month, index) => (
-                <span key={index}>{month}</span>
-              ))}
-            </div>
-            
-            {/* Heatmap grid - responsive */}
-            <div className="flex gap-1 overflow-x-auto pb-2">
+            {/* Heatmap grid - Mobile optimized */}
+            <div className="flex gap-0.5 sm:gap-1 overflow-x-auto pb-2">
               {Object.values(weeklyData).map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1 min-w-[10px] md:min-w-[12px]">
+                <div key={weekIndex} className="flex flex-col gap-0.5 sm:gap-1 min-w-[8px] sm:min-w-[12px]">
                   {[0, 1, 2, 3, 4, 5, 6].map(dayOfWeek => {
                     const day = week.find(d => d.dayOfWeek === dayOfWeek);
                     
@@ -267,7 +279,7 @@ export const ActivityHeatmap = () => {
                       <button
                         key={`${weekIndex}-${dayOfWeek}`}
                         className={`
-                          w-2.5 h-2.5 md:w-3 md:h-3 rounded-sm border cursor-pointer transition-all hover:scale-125 hover:z-10 relative focus:ring-2 focus:ring-primary focus:outline-none
+                          w-2 h-2 sm:w-3 sm:h-3 rounded-sm border cursor-pointer transition-all hover:scale-125 hover:z-10 relative focus:ring-2 focus:ring-primary focus:outline-none
                           ${day ? getIntensityClass(day.level) : 'bg-muted/20 border-border/10 hover:bg-muted/30'}
                         `}
                         onClick={() => day && handleDayClick(day)}
@@ -280,17 +292,17 @@ export const ActivityHeatmap = () => {
               ))}
             </div>
             
-            {/* Legend */}
+            {/* Legend - Mobile responsive */}
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Less</span>
               <div className="flex gap-1 items-center">
                 {[0, 1, 2, 3, 4].map(level => (
                   <div
                     key={level}
-                    className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-sm border ${getIntensityClass(level).split(' hover:')[0]}`}
+                    className={`w-2 h-2 sm:w-3 sm:h-3 rounded-sm border ${getIntensityClass(level).split(' hover:')[0]}`}
                   />
                 ))}
-                <span className="ml-2">More</span>
+                <span className="ml-1 sm:ml-2">More</span>
               </div>
             </div>
           </div>

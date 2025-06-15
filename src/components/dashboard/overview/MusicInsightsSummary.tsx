@@ -83,20 +83,20 @@ export const MusicInsightsSummary = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card className="lg:col-span-2 animate-pulse">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Star className="h-4 w-4 sm:h-5 sm:w-5" />
               Loading Music Profile...
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="text-center p-4 bg-muted/50 rounded-lg border">
-                  <div className="text-2xl font-bold text-muted-foreground mb-1">...</div>
-                  <div className="text-sm text-muted-foreground">Loading</div>
+                <div key={i} className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg border">
+                  <div className="text-xl sm:text-2xl font-bold text-muted-foreground mb-1">...</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Loading</div>
                 </div>
               ))}
             </div>
@@ -108,35 +108,35 @@ export const MusicInsightsSummary = () => {
 
   if (!insights.hasData) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Star className="h-4 w-4 sm:h-5 sm:w-5" />
               Music Profile (Connect to View Data)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-muted/50 rounded-lg border">
-                <div className="text-2xl font-bold text-muted-foreground mb-1">No data</div>
-                <div className="text-sm text-muted-foreground">Total Tracks</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg border">
+                <div className="text-xl sm:text-2xl font-bold text-muted-foreground mb-1">No data</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Total Tracks</div>
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg border">
-                <div className="text-2xl font-bold text-muted-foreground mb-1">No data</div>
-                <div className="text-sm text-muted-foreground">Total Artists</div>
+              <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg border">
+                <div className="text-xl sm:text-2xl font-bold text-muted-foreground mb-1">No data</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Total Artists</div>
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg border">
-                <div className="text-2xl font-bold text-muted-foreground mb-1">No data</div>
-                <div className="text-sm text-muted-foreground">Recent Listening</div>
+              <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg border">
+                <div className="text-xl sm:text-2xl font-bold text-muted-foreground mb-1">No data</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Recent Listening</div>
               </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg border">
-                <div className="text-2xl font-bold text-muted-foreground mb-1">No data</div>
-                <div className="text-sm text-muted-foreground">Unique Genres</div>
+              <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg border">
+                <div className="text-xl sm:text-2xl font-bold text-muted-foreground mb-1">No data</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Unique Genres</div>
               </div>
             </div>
-            <div className="mt-6 text-center">
-              <p className="text-muted-foreground">Connect your Spotify account to see your detailed music insights</p>
+            <div className="mt-4 sm:mt-6 text-center">
+              <p className="text-sm text-muted-foreground">Connect your Spotify account to see your detailed music insights</p>
             </div>
           </CardContent>
         </Card>
@@ -145,49 +145,49 @@ export const MusicInsightsSummary = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Extended Music Profile */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {/* Enhanced Music Profile - Mobile Responsive */}
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Star className="h-4 w-4 sm:h-5 sm:w-5" />
             Enhanced Music Profile (Extended Dataset)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-accent/5 rounded-lg border border-accent/20">
-              <div className="text-2xl font-bold text-accent mb-1">{insights.totalTracks}</div>
-              <div className="text-sm text-muted-foreground">Total Tracks</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="text-center p-3 sm:p-4 bg-accent/5 rounded-lg border border-accent/20">
+              <div className="text-xl sm:text-2xl font-bold text-accent mb-1">{insights.totalTracks}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Total Tracks</div>
             </div>
-            <div className="text-center p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <div className="text-2xl font-bold text-primary mb-1">{insights.totalArtists}</div>
-              <div className="text-sm text-muted-foreground">Total Artists</div>
+            <div className="text-center p-3 sm:p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <div className="text-xl sm:text-2xl font-bold text-primary mb-1">{insights.totalArtists}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Total Artists</div>
             </div>
-            <div className="text-center p-4 bg-secondary/5 rounded-lg border border-secondary/20">
-              <div className="text-2xl font-bold text-secondary mb-1">{insights.totalListeningTime}m</div>
-              <div className="text-sm text-muted-foreground">Recent Listening</div>
+            <div className="text-center p-3 sm:p-4 bg-secondary/5 rounded-lg border border-secondary/20">
+              <div className="text-xl sm:text-2xl font-bold text-secondary mb-1">{insights.totalListeningTime}m</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Recent Listening</div>
             </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg border border-muted">
-              <div className="text-2xl font-bold mb-1">{insights.uniqueGenres}</div>
-              <div className="text-sm text-muted-foreground">Unique Genres</div>
+            <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg border border-muted">
+              <div className="text-xl sm:text-2xl font-bold mb-1">{insights.uniqueGenres}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Unique Genres</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Enhanced Genre Diversity */}
+      {/* Enhanced Genre Diversity - Mobile Responsive */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Music className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Music className="h-4 w-4 sm:h-5 sm:w-5" />
             Genre Exploration (Full Dataset)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <div className="flex justify-between text-sm mb-2">
+              <div className="flex justify-between text-xs sm:text-sm mb-2">
                 <span>Diversity Score</span>
                 <span className="font-medium">{insights.diversityScore}%</span>
               </div>
@@ -198,8 +198,8 @@ export const MusicInsightsSummary = () => {
             </div>
             
             <div>
-              <h4 className="font-medium mb-2">Top Genres (from {insights.totalArtists} artists)</h4>
-              <div className="flex flex-wrap gap-2">
+              <h4 className="font-medium mb-2 text-sm sm:text-base">Top Genres (from {insights.totalArtists} artists)</h4>
+              <div className="flex flex-wrap gap-1 sm:gap-2">
                 {insights.topGenres.length > 0 ? (
                   insights.topGenres.map((genre, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
@@ -215,7 +215,7 @@ export const MusicInsightsSummary = () => {
             </div>
 
             <div>
-              <div className="flex justify-between text-sm mb-2">
+              <div className="flex justify-between text-xs sm:text-sm mb-2">
                 <span>Library Depth</span>
                 <span className="font-medium">{insights.libraryDepth}%</span>
               </div>
@@ -228,20 +228,20 @@ export const MusicInsightsSummary = () => {
         </CardContent>
       </Card>
 
-      {/* Enhanced Taste Analysis */}
+      {/* Enhanced Taste Analysis - Mobile Responsive */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             Advanced Taste Analysis
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm">Music Taste Profile</span>
-                <Badge variant="outline" className={insights.avgPopularity > 0 ? popularityLevel.color : 'text-muted-foreground'}>
+                <span className="text-xs sm:text-sm">Music Taste Profile</span>
+                <Badge variant="outline" className={`text-xs ${insights.avgPopularity > 0 ? popularityLevel.color : 'text-muted-foreground'}`}>
                   {insights.avgPopularity > 0 ? popularityLevel.label : 'No data'}
                 </Badge>
               </div>
@@ -251,19 +251,19 @@ export const MusicInsightsSummary = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-2 gap-3 text-center">
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <div className="text-lg font-bold">{insights.recentActivity}</div>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 text-center">
+              <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
+                <div className="text-base sm:text-lg font-bold">{insights.recentActivity}</div>
                 <div className="text-xs text-muted-foreground">Recent Activity</div>
               </div>
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <div className="text-lg font-bold">{Math.round(insights.totalListeningTime / 60)}h</div>
+              <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
+                <div className="text-base sm:text-lg font-bold">{Math.round(insights.totalListeningTime / 60)}h</div>
                 <div className="text-xs text-muted-foreground">Total Hours</div>
               </div>
             </div>
 
             <div>
-              <div className="flex justify-between text-sm mb-2">
+              <div className="flex justify-between text-xs sm:text-sm mb-2">
                 <span>Artist Coverage</span>
                 <span className="font-medium">{insights.artistCoverage}%</span>
               </div>

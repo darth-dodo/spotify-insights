@@ -12,7 +12,7 @@ interface HeatmapData {
 }
 
 export const ListeningHeatmap = () => {
-  // Generate mock heatmap data
+  // Generate mock heatmap data for the last 90 days
   const generateHeatmapData = (): HeatmapData[] => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const data: HeatmapData[] = [];
@@ -56,46 +56,46 @@ export const ListeningHeatmap = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Listening Activity Heatmap
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+          Weekly Listening Pattern
           <InfoButton
-            title="Listening Activity Heatmap"
-            description="Visual representation of your music listening patterns throughout the week, showing when you're most active."
-            calculation="Based on your listening history data, showing activity levels for each hour of each day of the week."
+            title="Weekly Listening Pattern"
+            description="Visual representation of your music listening patterns throughout the week, showing when you're most active during different hours and days."
+            calculation="Based on your listening history data over the last 90 days, showing activity levels for each hour of each day of the week."
             variant="modal"
           />
         </CardTitle>
-        <CardDescription>
-          Your music listening patterns throughout the week
+        <CardDescription className="text-xs sm:text-sm">
+          Your music listening patterns throughout the week (based on 90-day data)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {/* Hour labels */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground ml-12">
+        <div className="space-y-3 sm:space-y-4">
+          {/* Hour labels - Mobile Responsive */}
+          <div className="flex items-center gap-0.5 sm:gap-1 text-xs text-muted-foreground ml-8 sm:ml-12 overflow-x-auto">
             {hours.filter((_, i) => i % 4 === 0).map(hour => (
-              <div key={hour} className="w-6 text-center">
+              <div key={hour} className="w-4 sm:w-6 text-center shrink-0">
                 {hour.toString().padStart(2, '0')}
               </div>
             ))}
           </div>
           
-          {/* Heatmap grid */}
-          <div className="space-y-1">
+          {/* Heatmap grid - Mobile Optimized */}
+          <div className="space-y-0.5 sm:space-y-1 overflow-x-auto">
             {days.map(day => (
-              <div key={day} className="flex items-center gap-1">
-                <div className="w-10 text-xs font-medium text-muted-foreground">
+              <div key={day} className="flex items-center gap-0.5 sm:gap-1 min-w-fit">
+                <div className="w-6 sm:w-10 text-xs font-medium text-muted-foreground shrink-0">
                   {day}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-0.5 sm:gap-1">
                   {hours.map(hour => {
                     const dataPoint = heatmapData.find(d => d.day === day && d.hour === hour);
                     const activity = dataPoint?.activity || 0;
                     return (
                       <div
                         key={`${day}-${hour}`}
-                        className={`w-6 h-6 rounded-sm ${getActivityColor(activity)} hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer`}
+                        className={`w-4 h-4 sm:w-6 sm:h-6 rounded-sm ${getActivityColor(activity)} hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer shrink-0`}
                         title={`${day} ${hour}:00 - Activity: ${activity}%`}
                       />
                     );
@@ -105,15 +105,15 @@ export const ListeningHeatmap = () => {
             ))}
           </div>
           
-          {/* Legend */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-4">
+          {/* Legend - Mobile Responsive */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 sm:pt-4">
             <span>Less active</span>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-muted" />
-              <div className="w-3 h-3 rounded-sm bg-primary/20" />
-              <div className="w-3 h-3 rounded-sm bg-primary/40" />
-              <div className="w-3 h-3 rounded-sm bg-primary/60" />
-              <div className="w-3 h-3 rounded-sm bg-primary/80" />
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-sm bg-muted" />
+              <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-sm bg-primary/20" />
+              <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-sm bg-primary/40" />
+              <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-sm bg-primary/60" />
+              <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-sm bg-primary/80" />
             </div>
             <span>More active</span>
           </div>

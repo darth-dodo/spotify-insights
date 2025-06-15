@@ -40,7 +40,8 @@ export class PlaybackSessionManager {
     const now = new Date();
     const data: HeatmapDay[] = [];
 
-    for (let i = 6; i >= 0; i--) {
+    // Generate data for the last 90 days only (reduced from 365)
+    for (let i = 89; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       

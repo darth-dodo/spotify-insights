@@ -8,16 +8,31 @@ export class SpotifyPlaybackSDK {
   private isInitialized: boolean = false;
   private sessionManager: PlaybackSessionManager;
   private initializationAttempted: boolean = false;
+  private sdkLoadPromise: Promise<void> | null = null;
   
   constructor() {
     this.sessionManager = new PlaybackSessionManager();
-    // Only initialize if we have a token
+    // Set up the global callback immediately
+    this.setupGlobalCallback();
+    
+    // Only initialize if we have a token and we're not in demo mode
     const token = localStorage.getItem('spotify_access_token');
-    if (token) {
+    const isRootPathWithoutAuth = window.location.pathname === '/' && !token;
+    
+    if (token && !isRootPathWithoutAuth) {
       this.initializeSDK();
     } else {
-      console.log('Spotify SDK initialization skipped - no access token available');
+      console.log('Spotify SDK initialization skipped - no access token or demo mode');
     }
+  }
+
+  private setupGlobalCallback() {
+    // Define the global callback that Spotify SDK expects
+    (window as any).onSpotifyWebPlaybackSDKReady = () => {
+      console.log('Spotify Web Playback SDK Ready');
+      // The SDK is now available, we can proceed with player initialization
+      this.initializePlayerAfterSDKReady();
+    };
   }
 
   private async initializeSDK() {
@@ -31,12 +46,16 @@ export class SpotifyPlaybackSDK {
       return;
     }
 
-    try {
-      if (!window.Spotify) {
-        await this.loadSDKScript();
-      }
+    // Prevent loading in demo mode (root path without auth)
+    const isRootPathWithoutAuth = window.location.pathname === '/' && !token;
+    if (isRootPathWithoutAuth) {
+      console.log('Skipping SDK initialization - demo mode detected');
+      return;
+    }
 
-      await this.initializePlayer(token);
+    try {
+      await this.loadSDKScript();
+      // Note: Player initialization now happens in the global callback
     } catch (error) {
       console.error('Failed to initialize Spotify SDK:', error);
       // Don't throw the error to prevent app crashes
@@ -44,9 +63,23 @@ export class SpotifyPlaybackSDK {
   }
 
   private loadSDKScript(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (document.querySelector('script[src*="sdk.scdn.co"]')) {
-        resolve();
+    // Return existing promise if already loading
+    if (this.sdkLoadPromise) {
+      return this.sdkLoadPromise;
+    }
+
+    this.sdkLoadPromise = new Promise((resolve, reject) => {
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src*="sdk.scdn.co"]');
+      if (existingScript) {
+        // If SDK is already loaded, resolve immediately
+        if (window.Spotify?.Player) {
+          resolve();
+        } else {
+          // Wait for the existing script to load
+          existingScript.addEventListener('load', () => resolve());
+          existingScript.addEventListener('error', () => reject(new Error('Failed to load existing Spotify SDK script')));
+        }
         return;
       }
 
@@ -60,6 +93,7 @@ export class SpotifyPlaybackSDK {
 
       script.onload = () => {
         clearTimeout(timeout);
+        console.log('Spotify SDK script loaded successfully');
         resolve();
       };
       
@@ -70,11 +104,20 @@ export class SpotifyPlaybackSDK {
       
       document.head.appendChild(script);
     });
+
+    return this.sdkLoadPromise;
   }
 
-  private async initializePlayer(token: string) {
+  private async initializePlayerAfterSDKReady() {
+    const token = localStorage.getItem('spotify_access_token');
+    if (!token) {
+      console.warn('Cannot initialize player - no access token available');
+      return;
+    }
+
     if (!window.Spotify?.Player) {
-      throw new Error('Spotify Web Playback SDK not loaded');
+      console.error('Spotify Player not available after SDK ready');
+      return;
     }
 
     try {
@@ -91,7 +134,7 @@ export class SpotifyPlaybackSDK {
         console.log('Successfully connected to Spotify Web Playback SDK');
         this.isInitialized = true;
       } else {
-        throw new Error('Failed to connect to Spotify Web Playback SDK');
+        console.warn('Failed to connect to Spotify Web Playback SDK');
       }
     } catch (error) {
       console.error('Player initialization failed:', error);
@@ -170,9 +213,23 @@ export class SpotifyPlaybackSDK {
       }
       this.player = null;
     }
+    
+    // Clean up global callback
+    if ((window as any).onSpotifyWebPlaybackSDKReady) {
+      delete (window as any).onSpotifyWebPlaybackSDKReady;
+    }
+    
+    // Remove SDK script
+    const existingScript = document.querySelector('script[src*="sdk.scdn.co"]');
+    if (existingScript) {
+      existingScript.remove();
+      console.log('Removed Spotify SDK script');
+    }
+    
     this.sessionManager.clearSessionData();
     this.isInitialized = false;
     this.initializationAttempted = false;
+    this.sdkLoadPromise = null;
     console.log('Disconnected from Web Playback SDK and cleared all data');
   }
 

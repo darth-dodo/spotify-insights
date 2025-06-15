@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { CalmingLoader } from '@/components/ui/CalmingLoader';
+import { spotifyPlaybackSDK } from '@/lib/spotify-playback-sdk';
 
 interface AuthGuardProps {
   children?: React.ReactNode;
@@ -23,12 +24,20 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
   // Prevent Spotify SDK from loading when in demo mode - run only once
   useEffect(() => {
     if (window.location.pathname === '/' && !user && !isLoading && !sdkCleanupDone.current) {
-      // Clear any existing SDK initialization attempts
-      const existingScript = document.querySelector('script[src*="sdk.scdn.co"]');
-      if (existingScript) {
-        existingScript.remove();
-        console.log('Removed Spotify SDK script for demo mode');
+      // Clear any existing SDK initialization attempts and scripts
+      try {
+        spotifyPlaybackSDK.disconnect();
+        
+        // Also remove the global callback if it exists
+        if ((window as any).onSpotifyWebPlaybackSDKReady) {
+          delete (window as any).onSpotifyWebPlaybackSDKReady;
+        }
+        
+        console.log('Cleaned up Spotify SDK for demo mode');
+      } catch (error) {
+        console.warn('Error during SDK cleanup:', error);
       }
+      
       sdkCleanupDone.current = true;
     }
   }, [user, isLoading]);

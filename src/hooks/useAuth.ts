@@ -25,7 +25,7 @@ export const useAuth = () => {
   return context;
 };
 
-export const useAuthState = () => {
+export const useAuthProvider = () => {
   const { user, setUser, isLoading, setIsLoading, error, setError, clearError } = useAuthState();
   
   const { clearAllUserData, fetchAndSetUser } = useAuthHelpers(setUser, setError);

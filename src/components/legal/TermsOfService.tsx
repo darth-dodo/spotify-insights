@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
+import { FileText, AlertTriangle, CheckCircle, Shield, Code } from 'lucide-react';
 
 export const TermsOfService = () => {
   return (
@@ -20,13 +20,13 @@ export const TermsOfService = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-accent" />
-            Agreement to Terms
+            Privacy-First Music Analytics Service
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-foreground">
-            By using the Spotify Analytics Dashboard, you agree to these Terms of Service. 
-            This application is provided as-is for personal music analytics and insights.
+            By using this Spotify Analytics Dashboard, you agree to these Terms of Service. This is an open-source, 
+            privacy-first application designed for personal music analytics with zero data collection.
           </p>
         </CardContent>
       </Card>
@@ -34,30 +34,38 @@ export const TermsOfService = () => {
       {/* Service Description */}
       <Card>
         <CardHeader>
-          <CardTitle>Service Description</CardTitle>
+          <CardTitle>What This Service Provides</CardTitle>
           <CardDescription>
-            What this application does and doesn't do
+            A transparent, privacy-focused music analytics experience
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <h4 className="font-medium text-foreground mb-2">Our Service Provides:</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Personal analytics based on your Spotify listening data</li>
-                <li>• Visualization of your music preferences and trends</li>
-                <li>• Privacy-focused data processing with minimal storage</li>
-                <li>• Local-only data storage with no external sharing</li>
+              <h4 className="font-medium text-green-700 dark:text-green-400 mb-2 flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                What We Provide:
+              </h4>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                <li>• Local-only music analytics computed in your browser</li>
+                <li>• Direct connection to your Spotify account via OAuth 2.0</li>
+                <li>• Real-time visualization of your music preferences</li>
+                <li>• Complete data transparency and user control</li>
+                <li>• Open-source codebase for full auditability</li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-medium text-foreground mb-2">Our Service Does NOT:</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Store your data on external servers</li>
-                <li>• Share your information with third parties</li>
+              <h4 className="font-medium text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                What We Do NOT Do:
+              </h4>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                <li>• Store any personal or music data on external servers</li>
+                <li>• Share information with third parties</li>
+                <li>• Track your behavior or usage patterns</li>
                 <li>• Modify your Spotify account or playlists</li>
-                <li>• Collect personal information beyond what's necessary</li>
+                <li>• Collect analytics or telemetry data</li>
               </ul>
             </div>
           </div>
@@ -68,100 +76,130 @@ export const TermsOfService = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-accent" />
+            <Shield className="h-5 w-5 text-accent" />
             Your Responsibilities
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div>
-              <h4 className="font-medium text-foreground">Spotify Account</h4>
+              <h4 className="font-medium text-foreground">Valid Spotify Account</h4>
               <p className="text-sm text-muted-foreground">
-                You must have a valid Spotify account and authorize our application to access your data
+                You must have a valid Spotify account and authorize this application through Spotify's OAuth system
               </p>
             </div>
             
             <div>
               <h4 className="font-medium text-foreground">Appropriate Use</h4>
               <p className="text-sm text-muted-foreground">
-                Use this service only for personal analytics and insights. Do not attempt to reverse engineer or misuse the application
+                Use this service only for personal music analytics. Do not attempt to circumvent rate limits or abuse the Spotify API
               </p>
             </div>
             
             <div>
-              <h4 className="font-medium text-foreground">Data Management</h4>
+              <h4 className="font-medium text-foreground">Browser Security</h4>
               <p className="text-sm text-muted-foreground">
-                You are responsible for managing your data permissions through Spotify and can revoke access at any time
+                Maintain the security of your browser and devices where you access this application
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Privacy & Data */}
+      {/* Open Source & Transparency */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-accent" />
-            Privacy & Data Protection
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4">
-            <div>
-              <h4 className="font-medium text-foreground">Minimal Data Collection</h4>
-              <p className="text-sm text-muted-foreground">
-                We collect only the minimum data necessary: basic profile info (hashed), top tracks/artists, and recent listening history
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-foreground">Local Storage Only</h4>
-              <p className="text-sm text-muted-foreground">
-                All data is stored locally in your browser and automatically deleted when you logout
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-foreground">No External Sharing</h4>
-              <p className="text-sm text-muted-foreground">
-                We never share, sell, or transmit your data to external parties or analytics services
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Limitations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Service Limitations
+            <Code className="h-5 w-5 text-accent" />
+            Open Source & Transparency
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div>
+              <h4 className="font-medium text-foreground">MIT License</h4>
+              <p className="text-sm text-muted-foreground">
+                This application is released under the MIT License, allowing you to inspect, modify, and distribute the code
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-foreground">Code Transparency</h4>
+              <p className="text-sm text-muted-foreground">
+                All source code is available for inspection, ensuring complete transparency in how your data is handled
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-foreground">No Hidden Functionality</h4>
+              <p className="text-sm text-muted-foreground">
+                The application contains no hidden analytics, tracking, or data collection beyond what is documented
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Service Limitations */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            Service Limitations & Dependencies
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div>
+              <h4 className="font-medium text-foreground">Spotify API Dependency</h4>
+              <p className="text-sm text-muted-foreground">
+                This service depends on Spotify's Web API. Service availability is subject to Spotify's terms and API limits
+              </p>
+            </div>
+            
+            <div>
               <h4 className="font-medium text-foreground">Data Accuracy</h4>
               <p className="text-sm text-muted-foreground">
-                Analytics are based on data provided by Spotify's API. We cannot guarantee complete accuracy of all metrics
+                Analytics are based on data provided by Spotify's API and are subject to Spotify's data accuracy and availability
               </p>
             </div>
             
             <div>
-              <h4 className="font-medium text-foreground">Service Availability</h4>
+              <h4 className="font-medium text-foreground">Browser Requirements</h4>
               <p className="text-sm text-muted-foreground">
-                Service availability depends on Spotify's API. We are not responsible for Spotify service outages
+                Requires a modern web browser with JavaScript enabled and local storage capabilities
               </p>
             </div>
             
             <div>
-              <h4 className="font-medium text-foreground">Browser Compatibility</h4>
+              <h4 className="font-medium text-foreground">No Offline Functionality</h4>
               <p className="text-sm text-muted-foreground">
-                This application requires a modern web browser with local storage capabilities
+                This application requires an internet connection to fetch data from Spotify's API
               </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Privacy & Data Protection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Privacy & Data Protection Commitment</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="border border-green-200 bg-green-50/50 dark:bg-green-900/10 rounded-lg p-4">
+            <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">Zero Data Collection Policy</h4>
+            <p className="text-sm text-green-600 dark:text-green-500">
+              This application collects zero personal data. All processing occurs locally in your browser, 
+              and only essential session tokens are stored temporarily to maintain functionality.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-foreground">GDPR & Privacy Compliance</h4>
+            <p className="text-sm text-muted-foreground">
+              By design, this application complies with GDPR and other privacy regulations through its zero-collection approach
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -169,28 +207,28 @@ export const TermsOfService = () => {
       {/* Disclaimers */}
       <Card>
         <CardHeader>
-          <CardTitle>Disclaimers</CardTitle>
+          <CardTitle>Disclaimers & Liability</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div>
               <h4 className="font-medium text-foreground">No Warranty</h4>
               <p className="text-sm text-muted-foreground">
-                This service is provided "as-is" without any warranties, express or implied
+                This service is provided "as-is" without warranties of any kind, express or implied
               </p>
             </div>
             
             <div>
               <h4 className="font-medium text-foreground">Limitation of Liability</h4>
               <p className="text-sm text-muted-foreground">
-                We are not liable for any damages arising from the use of this service
+                We are not liable for any damages arising from the use of this service or interruptions in Spotify's API
               </p>
             </div>
             
             <div>
-              <h4 className="font-medium text-foreground">Third-Party Services</h4>
+              <h4 className="font-medium text-foreground">Spotify Independence</h4>
               <p className="text-sm text-muted-foreground">
-                We are not responsible for Spotify's terms of service or data handling practices
+                This application is independent and not affiliated with Spotify AB. Spotify's terms and policies apply to your Spotify account usage
               </p>
             </div>
           </div>
@@ -200,12 +238,12 @@ export const TermsOfService = () => {
       {/* Changes to Terms */}
       <Card>
         <CardHeader>
-          <CardTitle>Changes to Terms</CardTitle>
+          <CardTitle>Updates to These Terms</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            We may update these Terms of Service from time to time. Any changes will be reflected 
-            in the "Last updated" date above. Continued use of the service constitutes acceptance of updated terms.
+            We may update these Terms of Service to reflect changes in functionality or legal requirements. 
+            Any changes will be reflected in the "Last updated" date. Continued use constitutes acceptance of updated terms.
           </p>
         </CardContent>
       </Card>
@@ -213,11 +251,12 @@ export const TermsOfService = () => {
       {/* Contact */}
       <Card>
         <CardHeader>
-          <CardTitle>Contact Information</CardTitle>
+          <CardTitle>Questions or Concerns</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            For questions about these Terms of Service, please use the Help & Security section of the application.
+            For questions about these Terms of Service or to report issues, please use the Help section of the application 
+            or review the open-source code for technical details.
           </p>
         </CardContent>
       </Card>

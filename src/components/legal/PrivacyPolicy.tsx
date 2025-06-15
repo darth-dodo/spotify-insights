@@ -21,79 +21,83 @@ export const PrivacyPolicy = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-accent" />
-            Your Privacy Matters
+            Privacy-First Music Analytics
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-foreground">
-            This Privacy Policy describes how we collect, use, and protect your information when you use our Spotify Analytics Dashboard. 
-            We are committed to minimal data collection and maximum privacy protection.
+            This Spotify Analytics Dashboard is designed with privacy as the core principle. We collect and store 
+            absolutely no personal data, process everything locally in your browser, and maintain complete transparency 
+            about our minimal data practices.
           </p>
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary" className="flex items-center gap-1">
               <Lock className="h-3 w-3" />
-              No Email Collection
+              Zero Data Collection
             </Badge>
             <Badge variant="secondary" className="flex items-center gap-1">
               <Database className="h-3 w-3" />
-              Minimal Data Storage
+              Local Processing Only
             </Badge>
             <Badge variant="secondary" className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              Session-Only Data
+              Session-Only Storage
             </Badge>
           </div>
         </CardContent>
       </Card>
 
-      {/* Data Collection */}
+      {/* What We Don't Collect */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5 text-accent" />
-            Information We Collect
+            <Eye className="h-5 w-5 text-green-500" />
+            What We DON'T Collect or Store
           </CardTitle>
           <CardDescription>
-            We collect only the minimum data necessary for functionality
+            Complete transparency about our zero-collection approach
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="border border-border rounded-lg p-4">
-              <h4 className="font-medium text-foreground mb-2">From Spotify (with your permission):</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Basic profile information (name, country - hashed and truncated)</li>
-                <li>• Your top tracks and artists for analytics</li>
-                <li>• Recent listening history for trend analysis</li>
-                <li>• Profile picture availability (boolean flag only)</li>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="border border-green-200 bg-green-50/50 dark:bg-green-900/10 rounded-lg p-4">
+              <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">Personal Information:</h4>
+              <ul className="text-sm text-green-600 dark:text-green-500 space-y-1">
+                <li>• No email addresses</li>
+                <li>• No real names or usernames</li>
+                <li>• No profile pictures</li>
+                <li>• No location data</li>
+                <li>• No contact information</li>
               </ul>
             </div>
             
-            <div className="border border-border rounded-lg p-4">
-              <h4 className="font-medium text-foreground mb-2">Local Application Data:</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Theme and UI preferences</li>
-                <li>• Temporary authentication tokens</li>
-                <li>• Dashboard customization settings</li>
+            <div className="border border-green-200 bg-green-50/50 dark:bg-green-900/10 rounded-lg p-4">
+              <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">Music Data:</h4>
+              <ul className="text-sm text-green-600 dark:text-green-500 space-y-1">
+                <li>• No listening history stored</li>
+                <li>• No playlist contents saved</li>
+                <li>• No music preferences tracked</li>
+                <li>• No usage analytics collected</li>
+                <li>• No behavioral data recorded</li>
               </ul>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Data Usage */}
+      {/* How It Actually Works */}
       <Card>
         <CardHeader>
-          <CardTitle>How We Use Your Information</CardTitle>
+          <CardTitle>How Our Privacy-First System Works</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4">
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <h4 className="font-medium text-foreground">Analytics Generation</h4>
+                <h4 className="font-medium text-foreground">Direct Spotify Connection</h4>
                 <p className="text-sm text-muted-foreground">
-                  Create personalized music analytics and insights from your Spotify data
+                  Your browser connects directly to Spotify's API using OAuth 2.0. We never see or intercept this data.
                 </p>
               </div>
             </div>
@@ -101,9 +105,9 @@ export const PrivacyPolicy = () => {
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <h4 className="font-medium text-foreground">Dashboard Customization</h4>
+                <h4 className="font-medium text-foreground">Local-Only Processing</h4>
                 <p className="text-sm text-muted-foreground">
-                  Remember your preferences for themes, colors, and layout settings
+                  All analytics are computed in your browser using JavaScript. No data leaves your device.
                 </p>
               </div>
             </div>
@@ -111,9 +115,9 @@ export const PrivacyPolicy = () => {
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <h4 className="font-medium text-foreground">Authentication</h4>
+                <h4 className="font-medium text-foreground">Temporary Session Storage</h4>
                 <p className="text-sm text-muted-foreground">
-                  Maintain secure access to your Spotify data during your session
+                  Only essential session data (OAuth tokens) stored temporarily to maintain your connection.
                 </p>
               </div>
             </div>
@@ -121,74 +125,90 @@ export const PrivacyPolicy = () => {
         </CardContent>
       </Card>
 
-      {/* Data Protection */}
+      {/* Minimal Technical Storage */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-accent" />
-            How We Protect Your Data
+            <Database className="h-5 w-5 text-accent" />
+            Minimal Technical Storage
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-foreground">Data Minimization</h4>
-              <p className="text-sm text-muted-foreground">
-                We collect only what's necessary and hash sensitive identifiers using SHA-256
-              </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            The only data we store locally in your browser for functionality:
+          </p>
+          <div className="space-y-3">
+            <div className="border rounded-lg p-3">
+              <h4 className="font-medium text-foreground">OAuth Access Tokens (Temporary)</h4>
+              <p className="text-sm text-muted-foreground">Encrypted tokens to maintain your Spotify connection</p>
+              <div className="text-xs text-muted-foreground mt-1">
+                Storage: Browser localStorage • Duration: Until logout • Size: ~2KB
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <h4 className="font-medium text-foreground">Local Storage</h4>
-              <p className="text-sm text-muted-foreground">
-                All data is stored locally in your browser with automatic cleanup on logout
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium text-foreground">No External Sharing</h4>
-              <p className="text-sm text-muted-foreground">
-                We never share your data with third parties or external analytics services
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium text-foreground">Secure Communication</h4>
-              <p className="text-sm text-muted-foreground">
-                All communication with Spotify uses HTTPS encryption and OAuth 2.0 PKCE
-              </p>
+            <div className="border rounded-lg p-3">
+              <h4 className="font-medium text-foreground">App Preferences</h4>
+              <p className="text-sm text-muted-foreground">Theme settings and UI preferences only</p>
+              <div className="text-xs text-muted-foreground mt-1">
+                Storage: Browser localStorage • Duration: Until cleared • Size: ~0.5KB
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* User Rights */}
+      {/* Your Rights & Controls */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Rights</CardTitle>
+          <CardTitle>Complete User Control</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div>
-              <h4 className="font-medium text-foreground">Access & Export</h4>
+              <h4 className="font-medium text-foreground">Instant Data Clearing</h4>
               <p className="text-sm text-muted-foreground">
-                You can view and export all data we store about you through the Privacy Controls section
+                Clear all stored data instantly through Privacy Settings or by logging out
               </p>
             </div>
             
             <div>
-              <h4 className="font-medium text-foreground">Delete</h4>
+              <h4 className="font-medium text-foreground">Revoke Access Anytime</h4>
               <p className="text-sm text-muted-foreground">
-                You can delete all your data instantly at any time through the Privacy Controls
+                Disconnect from Spotify through your Spotify account settings or our app
               </p>
             </div>
             
             <div>
-              <h4 className="font-medium text-foreground">Revoke Access</h4>
+              <h4 className="font-medium text-foreground">Export Preferences</h4>
               <p className="text-sm text-muted-foreground">
-                You can revoke Spotify access permissions at any time through your Spotify account settings
+                Download your app preferences as a JSON file (contains no personal data)
               </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Third-Party Services */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Third-Party Services</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-medium text-foreground mb-2">Spotify Integration</h4>
+            <p className="text-sm text-muted-foreground">
+              This app connects to Spotify's Web API to fetch your music data. This connection is governed by 
+              Spotify's own privacy policy. We only request read-only access to your top tracks, artists, and 
+              recent listening history.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-foreground mb-2">No Other Services</h4>
+            <p className="text-sm text-muted-foreground">
+              We do not integrate with any analytics services, advertising networks, or data collection platforms. 
+              This application is completely self-contained.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -196,12 +216,12 @@ export const PrivacyPolicy = () => {
       {/* Contact */}
       <Card>
         <CardHeader>
-          <CardTitle>Contact Us</CardTitle>
+          <CardTitle>Questions About Privacy</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            If you have any questions about this Privacy Policy or our data practices, 
-            please contact us through the Help & Security section of the application.
+            This application is open source and available for review. If you have questions about our 
+            privacy practices, you can examine the code directly or contact us through the Help section.
           </p>
         </CardContent>
       </Card>

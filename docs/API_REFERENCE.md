@@ -1,4 +1,3 @@
-
 # API Reference Documentation
 
 ## Table of Contents
@@ -9,6 +8,7 @@
 5. [Extended Data Fetching](#extended-data-fetching)
 6. [Error Handling](#error-handling)
 7. [Rate Limiting](#rate-limiting)
+8. [Security & Privacy](#security--privacy)
 
 ## Authentication
 
@@ -55,15 +55,27 @@ Body:
 
 ## Data Structures
 
-### User Profile (Sanitized)
+### User Profile (Sanitized & Secure)
 ```typescript
 interface User {
   id: string;           // Hashed user ID (SHA-256, shortened)
   display_name: string; // Truncated to 20 characters
   has_image: boolean;   // Boolean flag for profile image
   country: string;      // 2-letter country code
+  images?: Array<{      // Securely stored profile images
+    url: string;
+    height: number;
+    width: number;
+  }>;
 }
 ```
+
+**Profile Image Security:**
+- Profile images are stored in `localStorage` under the key `user_profile_image`
+- Images are only stored when explicitly available from Spotify API
+- Image URLs are validated and sanitized before storage
+- Images are automatically cleared on logout for privacy
+- Fallback avatars use user initials when images are unavailable
 
 ### Original Spotify User Response
 ```typescript
@@ -421,19 +433,141 @@ const progressiveDelay = (requestIndex: number): number => {
 };
 ```
 
-## Security Considerations
+## Security & Privacy
 
-### Extended Data Protection
-- **Minimize Storage**: Don't store extended datasets in localStorage
-- **Memory Management**: Clear large datasets when not needed
-- **Rate Limit Compliance**: Respect API limits to maintain access
-- **Error Logging**: Log pagination errors without exposing tokens
+### Profile Image Storage
 
-### Privacy with Large Datasets
-- **Data Minimization**: Only fetch what's needed for current analysis
-- **Temporary Storage**: Keep extended data in memory only
-- **User Control**: Allow users to choose dataset size
-- **Clear Indicators**: Show when extended data is being used
+#### Secure Storage Implementation
+```typescript
+const storeProfileImage = (userData: any) => {
+  try {
+    if (userData?.images?.[0]?.url) {
+      // Validate image URL before storage
+      const imageUrl = userData.images[0].url;
+      if (imageUrl.startsWith('https://') && imageUrl.includes('spotify')) {
+        localStorage.setItem('user_profile_image', imageUrl);
+        console.log('Profile image stored securely');
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to store profile image:', error);
+  }
+};
+```
+
+#### Profile Image Retrieval
+```typescript
+const getUserProfileImage = () => {
+  // Check for cached profile image first
+  const cachedImage = localStorage.getItem('user_profile_image');
+  if (cachedImage) {
+    return cachedImage;
+  }
+  
+  // Fallback to user.images if available
+  return user.images?.[0]?.url || null;
+};
+```
+
+### Data Clearing & Privacy
+
+#### Comprehensive Data Cleanup
+```typescript
+const clearAllUserData = () => {
+  try {
+    const keysToRemove = [
+      'spotify_access_token',
+      'spotify_refresh_token', 
+      'spotify_token_expiry',
+      'user_profile',
+      'user_profile_image'  // Profile image is cleared on logout
+    ];
+    
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    console.log('All user data cleared successfully');
+  } catch (error) {
+    console.error('Error clearing user data:', error);
+  }
+};
+```
+
+### Authentication Flow Improvements
+
+#### Enhanced Login Process
+- **Single-Step Login:** Fixed double login requirement
+- **Token Validation:** Background validation without blocking UI
+- **Error Recovery:** Graceful handling of expired or invalid tokens
+- **Secure Storage:** Profile images stored with validation
+
+#### Logout Enhancement
+```typescript
+const logout = async () => {
+  try {
+    console.log('Logging out user...');
+    setUser(null);
+    setError(null);
+    clearAllUserData(); // Includes profile image cleanup
+    console.log('Logout completed successfully');
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Still clear local state even if there's an error
+    setUser(null);
+    setError(null);
+    clearAllUserData();
+  }
+};
+```
+
+### Error Handling & Recovery
+
+#### Site Stability Improvements
+- **Graceful Degradation:** App doesn't break when data is cleared
+- **Error Recovery UI:** User-friendly error messages with recovery options
+- **Token Expiry Handling:** Automatic cleanup of expired authentication data
+- **Background Validation:** Non-blocking token verification
+
+#### Error Recovery Component
+```typescript
+// Enhanced AuthGuard with error recovery
+if (error && !user) {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="max-w-md mx-auto p-6 text-center">
+        <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-destructive font-bold text-xl">!</span>
+        </div>
+        <h2 className="text-lg font-semibold mb-2">Connection Issue</h2>
+        <p className="text-sm text-muted-foreground mb-4">{error}</p>
+        <div className="space-y-2">
+          <button onClick={() => window.location.reload()}>Refresh Page</button>
+          <button onClick={() => window.location.href = '/index'}>Back to Home</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+### Navigation Security
+
+#### Protected Navigation
+- **Dashboard Access:** Properly secured dashboard routes
+- **Back Navigation:** Fixed "Back to Dashboard" buttons routing correctly
+- **Logout Security:** Complete session cleanup on sign out
+- **Profile Protection:** Avatar display with secure image handling
+
+### Best Practices Implemented
+
+1. **Privacy by Design:** All sensitive data cleared on logout
+2. **Secure Storage:** Profile images validated before storage
+3. **Error Recovery:** Graceful handling of authentication failures
+4. **Single Sign-On:** Fixed double login requirement
+5. **Session Management:** Proper token expiry and refresh handling
+6. **UI Consistency:** Fixed navigation button behaviors
+7. **Fallback Handling:** Graceful degradation when APIs fail
 
 ## Testing
 

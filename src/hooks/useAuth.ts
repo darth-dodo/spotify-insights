@@ -11,6 +11,7 @@ interface User {
   display_name: string; // truncated display name
   has_image: boolean; // boolean flag instead of storing image URLs
   country: string; // 2-letter country code only
+  images?: Array<{ url: string; height: number; width: number }>; // Keep for avatar display
 }
 
 interface AuthContextType {
@@ -38,30 +39,88 @@ export const useAuthState = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to safely store profile image
+  const storeProfileImage = (userData: any) => {
+    try {
+      if (userData?.images?.[0]?.url) {
+        // Store the profile image URL securely
+        localStorage.setItem('user_profile_image', userData.images[0].url);
+        console.log('Profile image stored securely');
+      }
+    } catch (error) {
+      console.warn('Failed to store profile image:', error);
+    }
+  };
+
+  // Helper function to clear all user data safely
+  const clearAllUserData = () => {
+    try {
+      const keysToRemove = [
+        'spotify_access_token',
+        'spotify_refresh_token', 
+        'spotify_token_expiry',
+        'user_profile',
+        'user_profile_image'
+      ];
+      
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      
+      console.log('All user data cleared successfully');
+    } catch (error) {
+      console.error('Error clearing user data:', error);
+    }
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        // Check if we have cached user data first
+        // Check if we have a valid token first
+        const token = localStorage.getItem('spotify_access_token');
+        const tokenExpiry = localStorage.getItem('spotify_token_expiry');
+        
+        // Check if token is expired
+        if (token && tokenExpiry) {
+          const isExpired = Date.now() > parseInt(tokenExpiry);
+          if (isExpired && !USE_DUMMY_DATA) {
+            console.log('Token expired, clearing auth data');
+            clearAllUserData();
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Check if we have cached user data
         const cachedUser = localStorage.getItem('user_profile');
-        if (cachedUser) {
+        if (cachedUser && token) {
           try {
             const parsedUser = JSON.parse(cachedUser);
             setUser(parsedUser);
-            setIsLoading(false);
+            console.log('Loaded cached user data');
             
-            // Still validate the token in background
-            const token = localStorage.getItem('spotify_access_token');
-            if (token && !USE_DUMMY_DATA) {
+            // Validate token in background for real auth
+            if (!USE_DUMMY_DATA) {
               try {
-                await spotifyAuth.getCurrentUser(token);
-              } catch (tokenError) {
-                console.warn('Token validation failed, will need re-auth:', tokenError);
-                // Don't immediately clear - let user try to use the app first
+                const freshUserData = await spotifyAuth.getCurrentUser(token);
+                const sanitizedUser = sanitizeUserData(freshUserData);
+                
+                // Update stored data if needed
+                if (JSON.stringify(sanitizedUser) !== JSON.stringify(parsedUser)) {
+                  setUser(sanitizedUser);
+                  localStorage.setItem('user_profile', JSON.stringify(sanitizedUser));
+                  storeProfileImage(freshUserData);
+                }
+              } catch (backgroundError) {
+                console.warn('Background token validation failed:', backgroundError);
+                // Don't immediately clear - let user try to use the app
               }
             }
+            
+            setIsLoading(false);
             return;
           } catch (parseError) {
             console.error('Error parsing cached user data:', parseError);
@@ -69,24 +128,25 @@ export const useAuthState = () => {
           }
         }
 
-        const token = localStorage.getItem('spotify_access_token');
+        // If we have a token but no cached user, fetch user data
         if (token) {
           try {
+            console.log('Fetching fresh user data...');
             const userData = await spotifyAuth.getCurrentUser(token);
             const sanitizedUser = sanitizeUserData(userData);
+            
             setUser(sanitizedUser);
             localStorage.setItem('user_profile', JSON.stringify(sanitizedUser));
+            storeProfileImage(userData);
+            
+            console.log('User data fetched and stored successfully');
           } catch (apiError: any) {
             console.error('Failed to fetch user data:', apiError);
             
             // Handle different types of API errors
             if (apiError.message?.includes('401') || apiError.message?.includes('invalid_token')) {
               setError('Your session has expired. Please log in again.');
-              if (!USE_DUMMY_DATA) {
-                localStorage.removeItem('spotify_access_token');
-                localStorage.removeItem('spotify_refresh_token');
-                localStorage.removeItem('user_profile');
-              }
+              clearAllUserData();
             } else if (apiError.message?.includes('403')) {
               setError('Access denied. Please check your Spotify account permissions.');
             } else if (apiError.message?.includes('429')) {
@@ -112,6 +172,7 @@ export const useAuthState = () => {
       setIsLoading(true);
       setError(null);
       
+      console.log('Starting login process...');
       await spotifyAuth.login();
       
       if (USE_DUMMY_DATA) {
@@ -120,7 +181,8 @@ export const useAuthState = () => {
         const sanitizedUser = sanitizeUserData(userData);
         setUser(sanitizedUser);
         localStorage.setItem('user_profile', JSON.stringify(sanitizedUser));
-        setIsLoading(false);
+        storeProfileImage(userData);
+        console.log('Dummy login completed');
       }
       // For real auth, the redirect will handle the rest
     } catch (error: any) {
@@ -133,31 +195,40 @@ export const useAuthState = () => {
       } else {
         setError('Login failed. Please try again.');
       }
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setError(null);
-    // Clear all stored data
-    localStorage.removeItem('spotify_access_token');
-    localStorage.removeItem('spotify_refresh_token');
-    localStorage.removeItem('spotify_token_expiry');
-    localStorage.removeItem('user_profile');
+  const logout = async () => {
+    try {
+      console.log('Logging out user...');
+      setUser(null);
+      setError(null);
+      clearAllUserData();
+      console.log('Logout completed successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear local state even if there's an error
+      setUser(null);
+      setError(null);
+      clearAllUserData();
+    }
   };
 
   const refreshToken = async () => {
     try {
       setError(null);
-      const refreshToken = localStorage.getItem('spotify_refresh_token');
-      if (refreshToken) {
-        const tokens = await spotifyAuth.refreshAccessToken(refreshToken);
+      const refreshTokenValue = localStorage.getItem('spotify_refresh_token');
+      if (refreshTokenValue) {
+        console.log('Refreshing access token...');
+        const tokens = await spotifyAuth.refreshAccessToken(refreshTokenValue);
         localStorage.setItem('spotify_access_token', tokens.access_token);
         if (tokens.refresh_token) {
           localStorage.setItem('spotify_refresh_token', tokens.refresh_token);
         }
         localStorage.setItem('spotify_token_expiry', (Date.now() + tokens.expires_in * 1000).toString());
+        console.log('Token refreshed successfully');
       }
     } catch (error: any) {
       console.error('Token refresh error:', error);

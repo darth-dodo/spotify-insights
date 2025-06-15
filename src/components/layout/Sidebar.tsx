@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,7 @@ import {
   Heart,
   Activity
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -33,6 +34,12 @@ interface SidebarProps {
 
 export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBackNavigation = () => {
+    // Navigate to the public landing page, not dashboard
+    navigate('/index');
+  };
 
   const navigationItems = [
     {
@@ -122,7 +129,7 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
       <div className="p-6 border-b">
         <Button
           variant="ghost"
-          onClick={() => navigate('/')}
+          onClick={handleBackNavigation}
           className="w-full justify-start p-2 h-auto"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

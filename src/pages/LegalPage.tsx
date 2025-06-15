@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PrivacyPolicy } from '@/components/legal/PrivacyPolicy';
 import { TermsOfService } from '@/components/legal/TermsOfService';
+import { ComprehensivePrivacyDoc } from '@/components/legal/ComprehensivePrivacyDoc';
 
 export const LegalPage = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export const LegalPage = () => {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Legal Information</h1>
               <p className="text-sm text-muted-foreground">
-                Privacy Policy and Terms of Service
+                Privacy Policy, Terms of Service, and Data Privacy Details
               </p>
             </div>
           </div>
@@ -37,12 +38,17 @@ export const LegalPage = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <Tabs defaultValue="privacy" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+        <div className="max-w-6xl mx-auto">
+          <Tabs defaultValue="privacy-comprehensive" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="privacy-comprehensive">Data Privacy</TabsTrigger>
               <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
               <TabsTrigger value="terms">Terms of Service</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="privacy-comprehensive" className="space-y-6">
+              <ComprehensivePrivacyDoc />
+            </TabsContent>
             
             <TabsContent value="privacy" className="space-y-6">
               <PrivacyPolicy />

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,8 +36,8 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
   const location = useLocation();
 
   const handleBackNavigation = () => {
-    // Navigate to the public landing page, not dashboard
-    navigate('/index');
+    // Navigate to the main landing page
+    navigate('/');
   };
 
   const navigationItems = [

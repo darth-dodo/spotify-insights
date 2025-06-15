@@ -18,7 +18,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { Info, Settings, FileText, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ImprovedArtistExplorer } from './dashboard/ImprovedArtistExplorer';
 import { ImprovedGenreAnalysis } from './dashboard/ImprovedGenreAnalysis';
 import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
 
@@ -140,7 +139,7 @@ export const Dashboard = () => {
                 {activeView === 'trends' && <ListeningActivity />}
                 {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
                 {activeView === 'genres' && <ImprovedGenreAnalysis />}
-                {activeView === 'artists' && <ImprovedArtistExplorer />}
+                {activeView === 'artists' && <ArtistExploration />}
                 {activeView === 'library-health' && <LibraryHealth />}
                 {activeView === 'listening-patterns' && <ListeningPatterns />}
                 {activeView === 'privacy' && <PrivacySettings />}

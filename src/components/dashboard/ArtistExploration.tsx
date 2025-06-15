@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, Music, TrendingUp, ExternalLink, Play, Heart, Calendar, Clock, Info } from 'lucide-react';
+import { Users, Music, TrendingUp, ExternalLink, Play, Heart, Calendar, Clock, Info, Album } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { ArtistDetailModal } from './artist/ArtistDetailModal';
 
@@ -223,113 +224,252 @@ export const ArtistExploration = () => {
           </CardContent>
         </Card>
       ) : (
-        <>
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-            {/* Top Artists List */}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="detailed">Detailed</TabsTrigger>
+            <TabsTrigger value="charts">Charts</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4 md:space-y-6">
+            {/* Main Content Grid - Visual List Format */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              {/* Top Artists List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Top Artists - {getTimeRangeLabel(timeRange)}
+                  </CardTitle>
+                  <CardDescription>
+                    Click any artist to see detailed information and top songs
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {artistAnalytics.slice(0, 10).map((artist, index) => (
+                      <div 
+                        key={artist.id} 
+                        className="flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer hover:bg-accent/5 border hover:border-accent/20"
+                        onClick={() => handleArtistClick(artist)}
+                      >
+                        <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center text-xs font-medium">
+                          {artist.rank}
+                        </div>
+                        {artist.image && (
+                          <img 
+                            src={artist.image} 
+                            alt={artist.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{artist.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-muted-foreground">
+                              {artist.popularity}% popularity
+                            </p>
+                            {artist.genres.length > 0 && (
+                              <Badge variant="secondary" className="text-xs">
+                                {artist.genres[0]}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Info className="h-3 w-3 text-muted-foreground" />
+                          {artist.external_urls?.spotify && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(artist.external_urls.spotify, '_blank');
+                              }}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Genre Distribution Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Genre Distribution</CardTitle>
+                  <CardDescription>
+                    Your musical taste breakdown by genre
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {genreDistribution.length > 0 ? (
+                    <ChartContainer config={chartConfig} className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={genreDistribution}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ genre, percent }) => `${genre} ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="count"
+                          >
+                            {genreDistribution.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+                            ))}
+                          </Pie>
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                      <p>No genre data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="detailed" className="space-y-4 md:space-y-6">
+            {/* Tiled Artist Grid */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Top Artists - {getTimeRangeLabel(timeRange)}
+                  Artist Gallery - {getTimeRangeLabel(timeRange)}
                 </CardTitle>
                 <CardDescription>
-                  Click any artist to see detailed information and top songs
+                  Tap any artist card to explore their complete profile
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {artistAnalytics.slice(0, 10).map((artist, index) => (
-                    <div 
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                  {artistAnalytics.slice(0, 12).map((artist) => (
+                    <Card 
                       key={artist.id} 
-                      className="flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer hover:bg-accent/5 border hover:border-accent/20"
+                      className="hover:shadow-md transition-shadow cursor-pointer"
                       onClick={() => handleArtistClick(artist)}
                     >
-                      <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center text-xs font-medium">
-                        {artist.rank}
-                      </div>
-                      {artist.image && (
-                        <img 
-                          src={artist.image} 
-                          alt={artist.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{artist.name}</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-muted-foreground">
-                            {artist.popularity}% popularity
-                          </p>
+                      <CardContent className="p-3 md:p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            #{artist.rank}
+                          </Badge>
+                          <div className="text-right">
+                            <div className="text-xs text-muted-foreground">Popularity</div>
+                            <div className="text-sm font-bold text-accent">{artist.popularity}</div>
+                          </div>
+                        </div>
+                        
+                        {artist.image && (
+                          <div className="mb-3">
+                            <img 
+                              src={artist.image} 
+                              alt={artist.name}
+                              className="w-full h-24 object-cover rounded-lg"
+                            />
+                          </div>
+                        )}
+                        
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm truncate">{artist.name}</h3>
+                          
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Music className="h-3 w-3" />
+                              <span>{artist.followers > 1000000 ? 
+                                `${(artist.followers / 1000000).toFixed(1)}M` : 
+                                `${Math.round(artist.followers / 1000)}K`} followers</span>
+                            </div>
+                          </div>
+                          
                           {artist.genres.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {artist.genres[0]}
-                            </Badge>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {artist.genres.slice(0, 2).map((genre) => (
+                                <Badge key={genre} variant="secondary" className="text-xs px-1.5 py-0">
+                                  {genre}
+                                </Badge>
+                              ))}
+                              {artist.genres.length > 2 && (
+                                <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                                  +{artist.genres.length - 2}
+                                </Badge>
+                              )}
+                            </div>
                           )}
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Info className="h-3 w-3 text-muted-foreground" />
-                        {artist.external_urls?.spotify && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(artist.external_urls.spotify, '_blank');
-                            }}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
 
-            {/* Genre Distribution Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Genre Distribution</CardTitle>
-                <CardDescription>
-                  Your musical taste breakdown by genre
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {genreDistribution.length > 0 ? (
+          <TabsContent value="charts" className="space-y-4 md:space-y-6">
+            {/* Charts View */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Artist Popularity</CardTitle>
+                  <CardDescription>
+                    Popularity scores of your top artists
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <ChartContainer config={chartConfig} className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={genreDistribution}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ genre, percent }) => `${genre} ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="count"
-                        >
-                          {genreDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
-                          ))}
-                        </Pie>
+                      <BarChart data={artistAnalytics.slice(0, 10).map(artist => ({
+                        name: artist.name.length > 12 ? artist.name.substring(0, 12) + '...' : artist.name,
+                        popularity: artist.popularity
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                        <YAxis />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                      </PieChart>
+                        <Bar dataKey="popularity" fill="hsl(var(--accent))" />
+                      </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
-                ) : (
-                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                    <p>No genre data available</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Follower Distribution</CardTitle>
+                  <CardDescription>
+                    Artist follower counts comparison
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={artistAnalytics.slice(0, 10).map(artist => ({
+                        name: artist.name.length > 12 ? artist.name.substring(0, 12) + '...' : artist.name,
+                        followers: Math.round(artist.followers / 1000000)
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                        <YAxis />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="followers" fill="hsl(var(--primary))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Artist Detail Modal */}

@@ -1,49 +1,15 @@
 
 import { spotifyAPI } from './spotify-api';
 import { spotifyPlaybackSDK } from './spotify-playback-sdk';
-
-interface IntegratedTrackData {
-  id: string;
-  name: string;
-  artists: Array<{ id: string; name: string }>;
-  duration_ms: number;
-  popularity: number;
-  playedAt?: string;
-  playCount: number;
-  totalListeningTime: number;
-  source: 'api' | 'sdk' | 'combined';
-}
-
-interface IntegratedArtistData {
-  id: string;
-  name: string;
-  genres: string[];
-  popularity: number;
-  playCount: number;
-  totalListeningTime: number;
-  source: 'api' | 'sdk' | 'combined';
-}
-
-interface ListeningSession {
-  startTime: Date;
-  endTime?: Date;
-  tracks: IntegratedTrackData[];
-  totalTime: number;
-  isActive: boolean;
-}
+import { SpotifyDataCache } from './spotify-data-cache';
+import type { IntegratedTrackData, IntegratedArtistData, ListeningSession } from './spotify-data-types';
 
 class SpotifyDataIntegration {
-  private cachedRecentlyPlayed: any[] = [];
-  private cachedTopTracks: Map<string, any[]> = new Map();
-  private cachedTopArtists: Map<string, any[]> = new Map();
+  private cache = new SpotifyDataCache();
   private currentSession: ListeningSession | null = null;
 
-  /**
-   * Get enhanced recently played tracks combining API data with real-time SDK data
-   */
   async getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]> {
     const token = localStorage.getItem('spotify_access_token');
-    const recentTracks: IntegratedTrackData[] = [];
 
     try {
       // Fetch from API with pagination
@@ -93,31 +59,28 @@ class SpotifyDataIntegration {
       const combinedTracks = this.combineTrackData([...apiIntegratedTracks, ...sdkIntegratedTracks]);
       
       // Cache the result
-      this.cachedRecentlyPlayed = combinedTracks;
+      this.cache.setCachedRecentlyPlayed(combinedTracks);
       
       return combinedTracks.slice(0, limit);
     } catch (error) {
       console.error('Error fetching enhanced recently played:', error);
-      // Return cached data or SDK data as fallback
-      return this.cachedRecentlyPlayed.length > 0 ? this.cachedRecentlyPlayed : 
+      return this.cache.getCachedRecentlyPlayed().length > 0 ? 
+             this.cache.getCachedRecentlyPlayed() : 
              spotifyPlaybackSDK.getSessionTracks().slice(0, limit);
     }
   }
 
-  /**
-   * Get enhanced top tracks with extended dataset
-   */
   async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedTrackData[]> {
     const cacheKey = `${timeRange}_${totalLimit}`;
     
-    if (this.cachedTopTracks.has(cacheKey)) {
-      return this.cachedTopTracks.get(cacheKey)!;
+    const cached = this.cache.getCachedTopTracks(cacheKey);
+    if (cached) {
+      return cached;
     }
 
     const token = localStorage.getItem('spotify_access_token');
     
     try {
-      // Use the extended API method
       const response = await spotifyAPI.getExtendedTopTracks(token, timeRange, totalLimit);
       
       if (response?.items) {
@@ -127,34 +90,30 @@ class SpotifyDataIntegration {
           artists: track.artists,
           duration_ms: track.duration_ms,
           popularity: track.popularity,
-          playCount: Math.max(100 - index, 1), // Estimate based on ranking
+          playCount: Math.max(100 - index, 1),
           totalListeningTime: (Math.max(100 - index, 1)) * track.duration_ms,
           source: 'api' as const
         }));
 
-        // Enhance with SDK data if available
         const sdkData = spotifyPlaybackSDK.getSessionTracks();
         const enhanced = this.enhanceTracksWithSDKData(integratedTracks, sdkData);
         
-        this.cachedTopTracks.set(cacheKey, enhanced);
+        this.cache.setCachedTopTracks(cacheKey, enhanced);
         return enhanced;
       }
     } catch (error) {
       console.error('Error fetching enhanced top tracks:', error);
     }
 
-    // Fallback to cached or simulated data
-    return this.cachedTopTracks.get(cacheKey) || [];
+    return this.cache.getCachedTopTracks(cacheKey) || [];
   }
 
-  /**
-   * Get enhanced top artists with extended dataset
-   */
   async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedArtistData[]> {
     const cacheKey = `${timeRange}_${totalLimit}`;
     
-    if (this.cachedTopArtists.has(cacheKey)) {
-      return this.cachedTopArtists.get(cacheKey)!;
+    const cached = this.cache.getCachedTopArtists(cacheKey);
+    if (cached) {
+      return cached;
     }
 
     const token = localStorage.getItem('spotify_access_token');
@@ -169,30 +128,26 @@ class SpotifyDataIntegration {
           genres: artist.genres,
           popularity: artist.popularity,
           playCount: Math.max(50 - Math.floor(index / 2), 1),
-          totalListeningTime: (Math.max(50 - Math.floor(index / 2), 1)) * 180000, // Avg 3min per play
+          totalListeningTime: (Math.max(50 - Math.floor(index / 2), 1)) * 180000,
           source: 'api' as const
         }));
 
-        this.cachedTopArtists.set(cacheKey, integratedArtists);
+        this.cache.setCachedTopArtists(cacheKey, integratedArtists);
         return integratedArtists;
       }
     } catch (error) {
       console.error('Error fetching enhanced top artists:', error);
     }
 
-    return this.cachedTopArtists.get(cacheKey) || [];
+    return this.cache.getCachedTopArtists(cacheKey) || [];
   }
 
-  /**
-   * Calculate real listening statistics
-   */
   calculateListeningStats(tracks: IntegratedTrackData[], timeRangeLabel: string) {
     const totalPlayCount = tracks.reduce((sum, track) => sum + track.playCount, 0);
     const totalMinutes = Math.floor(tracks.reduce((sum, track) => sum + track.totalListeningTime, 0) / 60000);
     const totalHours = Math.floor(totalMinutes / 60);
     const uniqueArtists = new Set(tracks.flatMap(track => track.artists.map(a => a.id))).size;
     
-    // Calculate days for average
     const days = timeRangeLabel.includes('Week') ? 7 :
                  timeRangeLabel.includes('Month') ? 30 :
                  timeRangeLabel.includes('6 Months') ? 180 :
@@ -212,9 +167,6 @@ class SpotifyDataIntegration {
     };
   }
 
-  /**
-   * Start tracking a new listening session
-   */
   startListeningSession(): void {
     this.currentSession = {
       startTime: new Date(),
@@ -226,9 +178,6 @@ class SpotifyDataIntegration {
     spotifyPlaybackSDK.startSession();
   }
 
-  /**
-   * End current listening session
-   */
   endListeningSession(): ListeningSession | null {
     if (this.currentSession) {
       this.currentSession.endTime = new Date();
@@ -243,9 +192,6 @@ class SpotifyDataIntegration {
     return null;
   }
 
-  /**
-   * Get current listening session
-   */
   getCurrentSession(): ListeningSession | null {
     return this.currentSession;
   }
@@ -256,7 +202,6 @@ class SpotifyDataIntegration {
     tracks.forEach(track => {
       const existing = trackMap.get(track.id);
       if (existing) {
-        // Combine data from multiple sources
         existing.playCount += track.playCount;
         existing.totalListeningTime += track.totalListeningTime;
         existing.source = 'combined';
@@ -302,13 +247,8 @@ class SpotifyDataIntegration {
     return 'low';
   }
 
-  /**
-   * Clear all cached data
-   */
   clearCache(): void {
-    this.cachedRecentlyPlayed = [];
-    this.cachedTopTracks.clear();
-    this.cachedTopArtists.clear();
+    this.cache.clearCache();
     this.currentSession = null;
   }
 }

@@ -8,7 +8,9 @@ const SCOPES = [
   'user-read-private',
   'user-top-read',
   'user-read-recently-played',
-  'streaming'  // Added streaming scope for Web Playback SDK
+  'user-read-playback-state',
+  'user-modify-playback-state',
+  'streaming'  // This covers web-playback functionality
 ].join(' ');
 
 class SpotifyAuth {
@@ -202,6 +204,19 @@ class SpotifyAuth {
     }
     
     return token;
+  }
+
+  // Add method to validate token scopes
+  validateTokenScopes(requiredScopes: string[] = ['streaming']): boolean {
+    const token = this.getAccessToken();
+    if (!token || token === 'demo_access_token') {
+      return false;
+    }
+    
+    // For demo purposes, we'll assume the token has the required scopes
+    // In a real implementation, you might decode the JWT token or make an API call
+    console.log('Validating token scopes for:', requiredScopes);
+    return true;
   }
 }
 

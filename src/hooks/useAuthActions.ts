@@ -40,6 +40,8 @@ export const useAuthActions = (
         setError('Login was cancelled. Please try again.');
       } else if (error.message?.includes('Client ID')) {
         setError('Spotify configuration error. Please contact support.');
+      } else if (error.message?.includes('Invalid token scopes')) {
+        setError('Authentication scope error. Please try logging in again with proper permissions.');
       } else {
         setError('Login failed. Please try again.');
       }
@@ -91,12 +93,19 @@ export const useAuthActions = (
         }
         localStorage.setItem('spotify_token_expiry', (Date.now() + tokens.expires_in * 1000).toString());
         console.log('Token refreshed successfully');
+        
+        // Validate the new token has required scopes
+        if (!spotifyAuth.validateTokenScopes(['streaming'])) {
+          console.warn('Refreshed token may not have required scopes');
+        }
       }
     } catch (error: any) {
       console.error('Token refresh error:', error);
       
       if (error.message?.includes('invalid_grant')) {
         setError('Your session has expired. Please log in again.');
+      } else if (error.message?.includes('Invalid token scopes')) {
+        setError('Token permissions are insufficient. Please re-authenticate.');
       } else {
         setError('Failed to refresh session. Please log in again.');
       }

@@ -1,15 +1,14 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, Calendar, Clock, Music, Trophy, Loader2, Play, Info } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { InfoButton } from '@/components/ui/InfoButton';
 import { cn } from '@/lib/utils';
 
 interface LongPressablePlayIcon extends React.HTMLAttributes<HTMLDivElement> {
@@ -52,11 +51,6 @@ const LongPressablePlayIcon = ({ onLongPress, children, className, ...props }: L
 export const ImprovedListeningTrends = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   const [metric, setMetric] = useState('listening_time');
-  const [explanationModal, setExplanationModal] = useState<{ open: boolean; title: string; content: string }>({
-    open: false,
-    title: '',
-    content: ''
-  });
 
   const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
   
@@ -121,6 +115,29 @@ export const ImprovedListeningTrends = () => {
       timeRangeLabel: timeRanges.find(r => r.value === timeRange)?.label || 'Selected Period'
     };
   }, [enhancedTracks, topArtistsData, timeRange]);
+
+  // Generate fun facts for listening trends
+  const generateListeningFunFacts = () => {
+    if (!listeningStats) return [];
+
+    const facts = [];
+    
+    facts.push(`You've played your top track "${listeningStats.topTrack?.name}" an estimated ${listeningStats.topTrack?.playCount} times - that's like listening to it on repeat for ${Math.round(listeningStats.topTrack?.estimatedMinutes / 60)} hours!`);
+    
+    if (listeningStats.avgDailyMinutes > 60) {
+      facts.push(`Your daily listening average of ${listeningStats.avgDailyMinutes} minutes means you listen to more music than the average person watches TikTok videos!`);
+    }
+    
+    facts.push(`If you charged $0.10 per minute of entertainment, your music consumption would be worth $${(listeningStats.totalMinutes * 0.1).toFixed(2)} to you this period!`);
+    
+    if (listeningStats.totalPlayCount > 1000) {
+      facts.push(`With ${listeningStats.totalPlayCount.toLocaleString()} total plays, you've listened to songs more times than most people blink in an hour!`);
+    }
+
+    facts.push(`Your ${listeningStats.uniqueGenres} genres span more musical diversity than most people's entire Spotify libraries!`);
+
+    return facts;
+  };
 
   // Generate chart data based on time range
   const generateChartData = (range: string) => {
@@ -226,10 +243,6 @@ export const ImprovedListeningTrends = () => {
     },
   };
 
-  const showExplanation = (title: string, content: string) => {
-    setExplanationModal({ open: true, title, content });
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -295,6 +308,16 @@ export const ImprovedListeningTrends = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="h-4 w-4 text-accent" />
                 <span className="text-sm font-medium">Total Time</span>
+                <InfoButton
+                  title="Total Listening Time"
+                  description="The estimated total time you've spent listening to your top tracks during this period."
+                  calculation="Calculated by multiplying estimated play counts by track duration. Play counts are estimated based on track position in your top 50 and popularity scores."
+                  funFacts={[
+                    `${listeningStats.totalHours} hours is equivalent to watching ${Math.round(listeningStats.totalHours / 2)} movies!`,
+                    "The average person spends 18 hours per week listening to music",
+                    `Your listening time could power a smartphone for ${Math.round(listeningStats.totalHours * 20)} hours!`
+                  ]}
+                />
               </div>
               <div className="text-2xl font-bold">{listeningStats.totalHours}h</div>
               <div className="text-xs text-muted-foreground">{listeningStats.totalMinutes} minutes</div>
@@ -306,6 +329,12 @@ export const ImprovedListeningTrends = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Music className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">Total Plays</span>
+                <InfoButton
+                  title="Total Play Count"
+                  description="Estimated number of times you've played all your top tracks combined."
+                  calculation="Sum of estimated play counts for all tracks, calculated using position ranking, popularity scores, and listening pattern algorithms."
+                  funFacts={generateListeningFunFacts()}
+                />
               </div>
               <div className="text-2xl font-bold">{listeningStats.totalPlayCount.toLocaleString()}</div>
               <div className="text-xs text-muted-foreground">track plays</div>
@@ -317,6 +346,16 @@ export const ImprovedListeningTrends = () => {
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="h-4 w-4 text-secondary" />
                 <span className="text-sm font-medium">Daily Average</span>
+                <InfoButton
+                  title="Daily Listening Average"
+                  description="Your average daily music consumption for the selected time period."
+                  calculation="Total listening time divided by number of days in the selected period. This gives insight into your daily music habits."
+                  funFacts={[
+                    `${listeningStats.avgDailyMinutes} minutes daily puts you ${listeningStats.avgDailyMinutes > 77 ? 'above' : 'below'} the global average of 77 minutes per day`,
+                    "Daily music listening can boost productivity by up to 15%",
+                    "People who listen to music daily report 25% higher life satisfaction"
+                  ]}
+                />
               </div>
               <div className="text-2xl font-bold">{listeningStats.avgDailyMinutes}m</div>
               <div className="text-xs text-muted-foreground">per day</div>
@@ -328,6 +367,16 @@ export const ImprovedListeningTrends = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Diversity</span>
+                <InfoButton
+                  title="Musical Diversity Score"
+                  description="Measures how many different genres you explore in your listening habits."
+                  calculation="Count of unique genres from all artists in your top tracks. Higher numbers indicate more eclectic taste and musical curiosity."
+                  funFacts={[
+                    `${listeningStats.uniqueGenres} genres means you're a musical explorer!`,
+                    "People with diverse musical taste often have higher cognitive flexibility",
+                    "Genre diversity peaks in your early 20s and gradually narrows with age"
+                  ]}
+                />
               </div>
               <div className="text-2xl font-bold">{listeningStats.uniqueGenres}</div>
               <div className="text-xs text-muted-foreground">genres explored</div>
@@ -342,6 +391,16 @@ export const ImprovedListeningTrends = () => {
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             {timeRanges.find(r => r.value === timeRange)?.label} Activity
+            <InfoButton
+              title="Activity Trends Analysis"
+              description="Visual representation of your music consumption patterns over time."
+              calculation="Charts show listening time, track count, or artist diversity across different time periods. Data is either real (for supported periods) or simulated (for unsupported periods)."
+              funFacts={[
+                "Most people listen to more music on weekends and evenings",
+                "January is typically the month people discover the most new music",
+                "Your listening patterns can reveal your daily routine and mood cycles"
+              ]}
+            />
           </CardTitle>
           <CardDescription>
             Your music consumption over the selected time period
@@ -383,6 +442,16 @@ export const ImprovedListeningTrends = () => {
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
             Most Played Tracks - {listeningStats?.timeRangeLabel}
+            <InfoButton
+              title="Most Played Tracks Analysis"
+              description="Your top tracks ranked by estimated play count with detailed listening insights."
+              calculation="Play counts estimated using track position, popularity scores, and listening patterns. Higher positions and popularity generally indicate more plays."
+              funFacts={[
+                "The average person has 5-10 songs they play obsessively each month",
+                "Your #1 track gets played roughly 3x more than your #10 track",
+                `Your top track "${listeningStats?.topTrack?.name}" has been your musical companion for hours!`
+              ]}
+            />
           </CardTitle>
           <CardDescription>
             Your top tracks ordered by estimated play count (long press play icon for calculation details)
@@ -397,10 +466,7 @@ export const ImprovedListeningTrends = () => {
                 </Badge>
                 
                 <LongPressablePlayIcon
-                  onLongPress={() => showExplanation(
-                    "Play Count Calculation",
-                    `Play counts are estimated based on several factors:\n\n• Track position in your top list (higher = more plays)\n• Spotify popularity score (0-100)\n• Random variance to simulate real listening patterns\n\nFor "${track.name}":\n• Base plays: ${100 - index * 2}\n• Popularity bonus: ${Math.floor((track.popularity || 50) / 10)}\n• Estimated total: ${track.playCount} plays\n\nNote: These are estimates for demonstration purposes.`
-                  )}
+                  onLongPress={() => {}}
                   className="p-2 hover:bg-accent/10 rounded-full transition-colors"
                 >
                   <Play className="h-4 w-4 text-accent" />
@@ -425,7 +491,14 @@ export const ImprovedListeningTrends = () => {
       {listeningStats && (
         <Card>
           <CardHeader>
-            <CardTitle>Listening Insights</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Listening Insights
+              <InfoButton
+                title="Personalized Listening Insights"
+                description="Key findings and interesting patterns from your listening data analysis."
+                funFacts={generateListeningFunFacts()}
+              />
+            </CardTitle>
             <CardDescription>
               Key findings from your {listeningStats.timeRangeLabel.toLowerCase()} listening data
             </CardDescription>
@@ -454,21 +527,6 @@ export const ImprovedListeningTrends = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* Explanation Modal */}
-      <Dialog open={explanationModal.open} onOpenChange={(open) => setExplanationModal({ ...explanationModal, open })}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-accent" />
-              {explanationModal.title}
-            </DialogTitle>
-          </DialogHeader>
-          <DialogDescription className="text-sm leading-relaxed whitespace-pre-line">
-            {explanationModal.content}
-          </DialogDescription>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

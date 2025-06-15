@@ -59,6 +59,35 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
 
   const insights = getEnhancedInsights();
 
+  // Generate fun facts for the overview
+  const generateOverviewFunFacts = () => {
+    if (!insights || !stats) return [];
+
+    const facts = [];
+    
+    if (stats.totalTracks > 500) {
+      facts.push(`You have enough tracks to listen for ${Math.round(stats.totalTracks * 3.5 / 60)} hours straight without repeating a song!`);
+    }
+    
+    if (stats.uniqueGenres > 10) {
+      facts.push(`Your musical taste spans ${stats.uniqueGenres} genres - that's more diverse than most radio stations!`);
+    }
+    
+    if (insights.tasteLevel === 'Underground') {
+      facts.push('You\'re a true music explorer! Your taste leans heavily toward underground and indie artists.');
+    } else if (insights.tasteLevel === 'Mainstream') {
+      facts.push('You keep up with the hits! Your playlist could easily be a top 40 radio station.');
+    }
+    
+    facts.push(`If you played all your top tracks back-to-back, it would take ${insights.totalHours} hours - that's ${Math.round(insights.totalHours / 24)} days of continuous music!`);
+    
+    if (stats.totalArtists > 300) {
+      facts.push(`You support ${stats.totalArtists} different artists - imagine if they all played at the same festival!`);
+    }
+
+    return facts;
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -83,9 +112,18 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               Library Depth
               <InfoButton
-                title="Library Depth"
+                title="Library Depth Analysis"
                 description="Your musical footprint represents the total number of unique tracks in your extended dataset."
-                calculation="This shows how many different songs you've listened to enough to appear in your top tracks. A larger number indicates more diverse listening habits and music discovery."
+                calculation="This metric shows how many different songs you've listened to enough to appear in your top tracks. A larger number indicates more diverse listening habits and active music discovery. The calculation uses Spotify's personalization algorithms to rank your most played tracks."
+                funFacts={[
+                  "The average Spotify user has around 200-300 tracks in their regular rotation",
+                  "Music collectors typically have 500+ unique tracks in their top listening data",
+                  "Your library depth directly influences Spotify's recommendation accuracy"
+                ]}
+                metrics={[
+                  { label: "Your Tracks", value: `${stats?.totalTracks || 0}`, description: "Unique songs in your data" },
+                  { label: "Completion", value: `${insights?.libraryCompleteness || 0}%`, description: "Of maximum dataset size" }
+                ]}
               />
             </CardTitle>
             <Music className="h-4 w-4 text-accent" />
@@ -106,9 +144,18 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               Artist Network
               <InfoButton
-                title="Artist Network"
+                title="Artist Network Analysis"
                 description="The breadth of your musical connections - how many different artists shape your sound."
-                calculation="Count of unique artists from your extended dataset. Higher numbers suggest you explore music widely rather than focusing on just a few artists."
+                calculation="Count of unique artists from your extended dataset. This includes primary artists, featured artists, and collaborators. Higher numbers suggest you explore music widely rather than focusing on just a few artists."
+                funFacts={[
+                  "The typical music fan follows 50-100 artists regularly",
+                  "Diverse artist networks often predict openness to new music genres",
+                  "Supporting many artists helps fund the entire music ecosystem"
+                ]}
+                metrics={[
+                  { label: "Your Artists", value: `${stats?.totalArtists || 0}`, description: "Unique artists you listen to" },
+                  { label: "Coverage", value: `${insights?.artistCoverage || 0}%`, description: "Of maximum dataset size" }
+                ]}
               />
             </CardTitle>
             <Users className="h-4 w-4 text-accent" />
@@ -131,7 +178,17 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
               <InfoButton
                 title="Genre Exploration Score"
                 description="Measures the diversity of your musical taste across different genres and styles."
-                calculation="Calculated from unique genres of all artists in your library. 10+ genres = Eclectic Explorer, 6-9 = Genre Adventurer, 3-5 = Selective Listener, <3 = Genre Loyalist"
+                calculation="Calculated from unique genres of all artists in your library. The score considers both the number of genres and their diversity. 10+ genres = Eclectic Explorer, 6-9 = Genre Adventurer, 3-5 = Selective Listener, <3 = Genre Loyalist."
+                funFacts={[
+                  "Most people stick to 3-5 genres throughout their lives",
+                  "Genre exploration peaks in teenage years and early twenties",
+                  "Listening to diverse genres can enhance cognitive flexibility",
+                  "Some genres are 'gateway drugs' to discovering others (like indie to folk to country)"
+                ]}
+                metrics={[
+                  { label: "Your Genres", value: `${stats?.uniqueGenres || 0}`, description: "Different genres you explore" },
+                  { label: "Diversity", value: `${insights?.diversityScore || 0}%`, description: "Musical exploration score" }
+                ]}
               />
             </CardTitle>
             <Volume2 className="h-4 w-4 text-accent" />
@@ -157,9 +214,19 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               Taste Profile
               <InfoButton
-                title="Taste Sophistication"
+                title="Taste Sophistication Analysis"
                 description="Indicates whether you gravitate toward mainstream hits or underground gems."
-                calculation="Based on average popularity scores (0-100) of your tracks. 80-100 = Mainstream, 60-79 = Popular, 40-59 = Alternative, 0-39 = Underground. Higher scores mean you like what's trending."
+                calculation="Based on average popularity scores (0-100) of your tracks. Spotify calculates popularity using recent play counts and user engagement. 80-100 = Mainstream, 60-79 = Popular, 40-59 = Alternative, 0-39 = Underground."
+                funFacts={[
+                  "Underground music lovers often discover artists 2-3 years before they go mainstream",
+                  "Mainstream taste isn't bad - it means you like what resonates with millions of people!",
+                  "Your taste profile can predict your personality traits (openness, extraversion)",
+                  "The 'popularity paradox': some of the best music has low popularity scores"
+                ]}
+                metrics={[
+                  { label: "Avg Popularity", value: `${stats?.avgPopularity || 0}/100`, description: "Your taste mainstream level" },
+                  { label: "Profile", value: insights?.tasteLevel || 'Unknown', description: "Your musical archetype" }
+                ]}
               />
             </CardTitle>
             <Star className="h-4 w-4 text-accent" />
@@ -187,10 +254,16 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
               <Volume2 className="h-5 w-5" />
               Your Musical DNA Analysis
               <InfoButton
-                title="Musical DNA Analysis"
+                title="Musical DNA Deep Dive"
                 description="Deep dive into your musical identity through comprehensive genre analysis."
-                calculation="Each percentage represents how much that genre influences your overall taste, calculated from all artists in your 1000-item dataset. This creates your unique musical fingerprint."
-                variant="popover"
+                calculation="Each percentage represents how much that genre influences your overall taste, calculated from all artists in your 1000-item dataset. This creates your unique musical fingerprint by analyzing artist genres, track characteristics, and listening patterns."
+                funFacts={generateOverviewFunFacts()}
+                metrics={[
+                  { label: "Total Artists", value: `${stats.totalArtists}`, description: "Artists analyzed for genre data" },
+                  { label: "Genre Diversity", value: `${genreAnalysis.length}`, description: "Unique genres identified" },
+                  { label: "Top Genre", value: genreAnalysis[0]?.name || 'N/A', description: "Your most dominant genre" }
+                ]}
+                variant="modal"
               />
             </CardTitle>
             <CardDescription>
@@ -304,10 +377,21 @@ export const EnhancedDashboardOverview = ({ onNavigate }: EnhancedDashboardOverv
               <Database className="h-5 w-5" />
               Your Music Library Analytics
               <InfoButton
-                title="Library Analytics Explained"
+                title="Library Analytics Deep Dive"
                 description="Comprehensive metrics about your music library's depth, diversity, and listening patterns."
-                calculation="Coverage shows how much of your total listening history we've captured. Quality combines completeness metrics. Your musical level is calculated from total tracks + artists divided by 40."
-                variant="popover"
+                calculation="Coverage shows how much of your total listening history we've captured. Quality combines completeness metrics. Your musical level is calculated from total tracks + artists divided by 40, representing your exploration intensity."
+                funFacts={[
+                  `If you discovered one new artist per week, it would take ${Math.round(stats.totalArtists / 52)} years to find all the artists in your library!`,
+                  "Your musical level increases as you discover more artists and tracks - you're currently a music explorer!",
+                  `Your library diversity score of ${Math.round(insights.diversityScore)}% means you're more adventurous than ${insights.diversityScore}% of music listeners`,
+                  "High coverage percentages indicate you're a dedicated music fan with deep listening habits"
+                ]}
+                metrics={[
+                  { label: "Tracks Analyzed", value: `${stats.totalTracks}/1000`, description: "Complete track coverage" },
+                  { label: "Artists Covered", value: `${stats.totalArtists}/1000`, description: "Artist network size" },
+                  { label: "Musical Level", value: `${insights.level}`, description: "Based on exploration depth" }
+                ]}
+                variant="modal"
               />
             </CardTitle>
             <CardDescription>

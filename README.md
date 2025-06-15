@@ -6,18 +6,18 @@ A privacy-first, real-time music analytics dashboard that provides deep insights
 ## 🎵 Features
 
 ### Core Analytics
-- **Real-Time Activity Heatmap** - Live playback tracking with local-only processing
+- **Real-Time Activity Heatmap** - Live playback tracking with local-only processing (no simulated data)
 - **Top Tracks & Artists** - Comprehensive listening statistics
 - **Genre Explorer** - Deep dive into your musical preferences
 - **Listening Trends** - Enhanced temporal analysis with real-time data
 - **Audio Features Analysis** - Technical breakdown of your music taste
 
-### Privacy-First Enhancements
+### Privacy-First Real-Time Processing
 - **Web Playback SDK Integration** - Real-time insights without compromising privacy
 - **Local-Only Processing** - All playback data processed in browser memory only
 - **Zero Permanent Storage** - Session data automatically cleared on browser close
 - **User-Controlled Data** - Instant disconnect and data clearing capabilities
-- **Transparent Processing** - Clear indicators of real-time vs. simulated data
+- **Transparent Processing** - Clear indicators when real data is available vs. unavailable
 
 ### Privacy & Security
 - **Zero-Data Policy** - No personal data stored permanently
@@ -28,8 +28,8 @@ A privacy-first, real-time music analytics dashboard that provides deep insights
 
 ## 🚀 Quick Start
 
-### Option 1: Live Demo with Simulated Data
-Visit our [live demo](https://spotify-insights-dashboard.lovable.app) to explore the interface with realistic simulated data.
+### Option 1: Live Demo with Authentication Required
+Visit our [live demo](https://spotify-insights-dashboard.lovable.app) and connect your Spotify account to see real analytics.
 
 ### Option 2: Connect Your Spotify Account
 1. Visit the dashboard and click "Connect Spotify"
@@ -63,7 +63,7 @@ Spotify → Your Browser → Local Processing → Visual Display
 - **Instant Disconnect** - One-click removal of all real-time processing
 - **Session Clearing** - Manual clearing of current session data
 - **Privacy Dashboard** - Full transparency into data processing
-- **Graceful Degradation** - Falls back to simulated data if preferred
+- **No Fallback Data** - Shows actual data availability status
 
 ## 🛠 Technology Stack
 
@@ -73,22 +73,22 @@ Spotify → Your Browser → Local Processing → Visual Display
 - **Authentication**: OAuth 2.0 with PKCE for security
 - **Real-Time**: Spotify Web Playback SDK (local processing only)
 - **Privacy**: Local-only data processing, zero permanent storage
-- **API**: Spotify Web API + extensive dummy data fallbacks
+- **API**: Spotify Web API with comprehensive error handling
 
 ## 📊 Enhanced Features
 
 ### Real-Time Activity Heatmap
 - Live tracking of your current listening session
 - Local-only processing ensures privacy
-- Combines real-time data with historical patterns
-- Clear indicators for live vs. simulated data
+- Uses only real Spotify API data - no simulated data
+- Clear indicators for data availability status
 - One-click privacy controls and data clearing
 
-### Intelligent Fallbacks
+### Intelligent Error Handling
 - Graceful degradation when Spotify API is unavailable
-- Extensive dummy data for demonstration purposes
-- Seamless switching between real and simulated data
+- Clear error states with actionable recovery steps
 - No functionality loss in any mode
+- Transparent data availability indicators
 
 ### Privacy-First Design
 - All privacy settings clearly displayed

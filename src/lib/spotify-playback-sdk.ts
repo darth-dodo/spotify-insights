@@ -9,10 +9,12 @@ export class SpotifyPlaybackSDK {
   private sessionManager: PlaybackSessionManager;
   private initializationAttempted: boolean = false;
   private sdkLoadPromise: Promise<void> | null = null;
+  private pendingInitialization: boolean = false;
   
   constructor() {
     this.sessionManager = new PlaybackSessionManager();
-    // Set up the global callback immediately
+    
+    // Set up the global callback immediately - this is critical
     this.setupGlobalCallback();
     
     // Only initialize if we have a token and we're not in demo mode
@@ -20,19 +22,35 @@ export class SpotifyPlaybackSDK {
     const isRootPathWithoutAuth = window.location.pathname === '/' && !token;
     
     if (token && !isRootPathWithoutAuth) {
-      this.initializeSDK();
+      // Delay initialization slightly to ensure callback is ready
+      setTimeout(() => {
+        this.initializeSDK();
+      }, 100);
     } else {
       console.log('Spotify SDK initialization skipped - no access token or demo mode');
     }
   }
 
   private setupGlobalCallback() {
+    // Ensure we don't override an existing callback
+    if ((window as any).onSpotifyWebPlaybackSDKReady) {
+      console.log('Spotify callback already exists, preserving it');
+      return;
+    }
+
     // Define the global callback that Spotify SDK expects
     (window as any).onSpotifyWebPlaybackSDKReady = () => {
-      console.log('Spotify Web Playback SDK Ready');
-      // The SDK is now available, we can proceed with player initialization
-      this.initializePlayerAfterSDKReady();
+      console.log('Spotify Web Playback SDK Ready - global callback triggered');
+      
+      // Only proceed if we have pending initialization
+      if (this.pendingInitialization) {
+        this.initializePlayerAfterSDKReady();
+      } else {
+        console.log('SDK ready but no pending initialization');
+      }
     };
+    
+    console.log('Global Spotify callback set up successfully');
   }
 
   private async initializeSDK() {
@@ -54,10 +72,21 @@ export class SpotifyPlaybackSDK {
     }
 
     try {
+      console.log('Starting SDK initialization...');
+      this.pendingInitialization = true;
+      
       await this.loadSDKScript();
-      // Note: Player initialization now happens in the global callback
+      
+      // Check if SDK is already available (callback might have been called already)
+      if (window.Spotify?.Player) {
+        console.log('SDK already available, initializing player directly');
+        this.initializePlayerAfterSDKReady();
+      } else {
+        console.log('SDK loading, waiting for callback...');
+      }
     } catch (error) {
       console.error('Failed to initialize Spotify SDK:', error);
+      this.pendingInitialization = false;
       // Don't throw the error to prevent app crashes
     }
   }
@@ -72,6 +101,7 @@ export class SpotifyPlaybackSDK {
       // Check if script already exists
       const existingScript = document.querySelector('script[src*="sdk.scdn.co"]');
       if (existingScript) {
+        console.log('SDK script already exists');
         // If SDK is already loaded, resolve immediately
         if (window.Spotify?.Player) {
           resolve();
@@ -83,6 +113,7 @@ export class SpotifyPlaybackSDK {
         return;
       }
 
+      console.log('Loading Spotify SDK script...');
       const script = document.createElement('script');
       script.src = 'https://sdk.scdn.co/spotify-player.js';
       script.async = true;
@@ -112,15 +143,19 @@ export class SpotifyPlaybackSDK {
     const token = localStorage.getItem('spotify_access_token');
     if (!token) {
       console.warn('Cannot initialize player - no access token available');
+      this.pendingInitialization = false;
       return;
     }
 
     if (!window.Spotify?.Player) {
       console.error('Spotify Player not available after SDK ready');
+      this.pendingInitialization = false;
       return;
     }
 
     try {
+      console.log('Initializing Spotify Player...');
+      
       this.player = new window.Spotify.Player({
         name: 'Spotify Analytics Dashboard',
         getOAuthToken: (cb: (token: string) => void) => cb(token),
@@ -139,6 +174,8 @@ export class SpotifyPlaybackSDK {
     } catch (error) {
       console.error('Player initialization failed:', error);
       // Don't throw to prevent app crashes
+    } finally {
+      this.pendingInitialization = false;
     }
   }
 
@@ -205,6 +242,8 @@ export class SpotifyPlaybackSDK {
   }
 
   disconnect() {
+    console.log('Disconnecting Spotify SDK...');
+    
     if (this.player) {
       try {
         this.player.disconnect();
@@ -214,9 +253,14 @@ export class SpotifyPlaybackSDK {
       this.player = null;
     }
     
-    // Clean up global callback
+    // Clean up global callback only if we own it
     if ((window as any).onSpotifyWebPlaybackSDKReady) {
-      delete (window as any).onSpotifyWebPlaybackSDKReady;
+      try {
+        delete (window as any).onSpotifyWebPlaybackSDKReady;
+        console.log('Cleaned up global callback');
+      } catch (error) {
+        console.warn('Could not clean up global callback:', error);
+      }
     }
     
     // Remove SDK script
@@ -229,6 +273,7 @@ export class SpotifyPlaybackSDK {
     this.sessionManager.clearSessionData();
     this.isInitialized = false;
     this.initializationAttempted = false;
+    this.pendingInitialization = false;
     this.sdkLoadPromise = null;
     console.log('Disconnected from Web Playback SDK and cleared all data');
   }

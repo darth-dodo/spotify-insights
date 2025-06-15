@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +24,7 @@ export const ActivityHeatmap = () => {
   const { useEnhancedRecentlyPlayed } = useSpotifyData();
   const { data: recentlyPlayedData, isLoading, error } = useEnhancedRecentlyPlayed(500);
 
-  // Generate heatmap data from real Spotify data
+  // Generate heatmap data from real Spotify data or demo data
   const generateHeatmapData = (): HeatmapDay[] => {
     const data: HeatmapDay[] = [];
     const today = new Date();
@@ -38,9 +39,22 @@ export const ActivityHeatmap = () => {
           playsByDate.set(date, (playsByDate.get(date) || 0) + playCount);
         }
       });
+    } else if (!isLoading && !error) {
+      // Generate demo data for the last 30 days when no real data is available
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Create some demo activity with random patterns
+        const demoPlays = Math.random() > 0.3 ? Math.floor(Math.random() * 50) + 1 : 0;
+        if (demoPlays > 0) {
+          playsByDate.set(dateStr, demoPlays);
+        }
+      }
     }
 
-    // Generate 365 days - real data where available, empty otherwise
+    // Generate 365 days - real/demo data where available, empty otherwise
     for (let i = 364; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
@@ -88,6 +102,7 @@ export const ActivityHeatmap = () => {
 
   const currentStreak = calculateCurrentStreak(displayData);
   const hasRealData = recentlyPlayedData && recentlyPlayedData.length > 0;
+  const hasAnyData = totalPlays > 0;
 
   const getIntensityClass = (level: number) => {
     const classes = [
@@ -140,8 +155,8 @@ export const ActivityHeatmap = () => {
     );
   }
 
-  // Show message when no data is available
-  if (error || !hasRealData) {
+  // Show message when no data is available and there's an error
+  if (error && !hasAnyData) {
     return (
       <Card>
         <CardHeader>
@@ -160,12 +175,9 @@ export const ActivityHeatmap = () => {
           <div className="flex items-center justify-center py-12">
             <div className="text-center max-w-md">
               <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-medium mb-2">No Activity Data</h3>
+              <h3 className="font-medium mb-2">Unable to Load Activity Data</h3>
               <p className="text-sm text-muted-foreground">
-                {error ? 
-                  'Unable to load your listening data. Please make sure you\'re authenticated with Spotify.' :
-                  'Start listening to music on Spotify to see your activity heatmap here.'
-                }
+                There was an error loading your listening data. Please try again later.
               </p>
             </div>
           </div>
@@ -193,6 +205,11 @@ export const ActivityHeatmap = () => {
                   {recentlyPlayedData.length} tracks
                 </Badge>
               )}
+              {!hasRealData && hasAnyData && (
+                <Badge variant="outline" className="text-orange-600 border-orange-600">
+                  Demo Data
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-1">
@@ -203,7 +220,7 @@ export const ActivityHeatmap = () => {
             </div>
           </CardTitle>
           <CardDescription>
-            Your listening activity over the past year based on Spotify data.
+            Your listening activity over the past year {hasRealData ? 'based on Spotify data' : 'with demo activity'}.
             {hasRealData && ` Showing data from ${recentlyPlayedData.length} recent tracks.`}
           </CardDescription>
         </CardHeader>

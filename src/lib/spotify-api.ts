@@ -1,3 +1,4 @@
+
 import { 
   dummySpotifyUser, 
   dummyCurrentPlayback 
@@ -78,6 +79,155 @@ export class SpotifyAPI {
       limit: limit.toString()
     });
     return this.makeRequest(`/me/top/artists?${params}`, accessToken);
+  }
+
+  // New method to fetch paginated top tracks (up to 500)
+  async getExtendedTopTracks(accessToken?: string, timeRange = 'medium_term', totalLimit = 500) {
+    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
+      // For dummy data, generate extended dataset
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const baseItems = extensiveTopTracks.items;
+      const extendedItems = [];
+      
+      // Generate up to totalLimit items by repeating and modifying the base set
+      for (let i = 0; i < Math.min(totalLimit, 500); i++) {
+        const baseIndex = i % baseItems.length;
+        const baseItem = baseItems[baseIndex];
+        extendedItems.push({
+          ...baseItem,
+          id: `${baseItem.id}_${i}`,
+          name: i < baseItems.length ? baseItem.name : `${baseItem.name} (Extended ${i})`,
+          popularity: Math.max(1, baseItem.popularity - Math.floor(i / 10)) // Gradually decrease popularity
+        });
+      }
+      
+      return {
+        items: extendedItems,
+        total: extendedItems.length,
+        limit: 50,
+        offset: 0,
+        next: null,
+        previous: null
+      };
+    }
+
+    // Real API calls with pagination
+    const allItems = [];
+    const maxLimit = 50; // Spotify API limit per request
+    let offset = 0;
+    
+    while (allItems.length < totalLimit && offset < 1000) { // Spotify limits to 1000 total
+      const currentLimit = Math.min(maxLimit, totalLimit - allItems.length);
+      const params = new URLSearchParams({
+        time_range: timeRange,
+        limit: currentLimit.toString(),
+        offset: offset.toString()
+      });
+      
+      try {
+        const response = await this.makeRequest(`/me/top/tracks?${params}`, accessToken);
+        
+        if (!response.items || response.items.length === 0) {
+          break; // No more items available
+        }
+        
+        allItems.push(...response.items);
+        offset += currentLimit;
+        
+        // Add delay between requests to respect rate limits
+        if (offset < totalLimit) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } catch (error) {
+        console.error(`Error fetching tracks at offset ${offset}:`, error);
+        break;
+      }
+    }
+    
+    return {
+      items: allItems,
+      total: allItems.length,
+      limit: maxLimit,
+      offset: 0,
+      next: null,
+      previous: null
+    };
+  }
+
+  // New method to fetch paginated top artists (up to 500)
+  async getExtendedTopArtists(accessToken?: string, timeRange = 'medium_term', totalLimit = 500) {
+    if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
+      // For dummy data, generate extended dataset
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const baseItems = extensiveTopArtists.items;
+      const extendedItems = [];
+      
+      // Generate up to totalLimit items by repeating and modifying the base set
+      for (let i = 0; i < Math.min(totalLimit, 500); i++) {
+        const baseIndex = i % baseItems.length;
+        const baseItem = baseItems[baseIndex];
+        extendedItems.push({
+          ...baseItem,
+          id: `${baseItem.id}_${i}`,
+          name: i < baseItems.length ? baseItem.name : `${baseItem.name} (Extended ${i})`,
+          popularity: Math.max(1, baseItem.popularity - Math.floor(i / 10)),
+          followers: {
+            total: Math.max(1000, baseItem.followers.total - (i * 1000))
+          }
+        });
+      }
+      
+      return {
+        items: extendedItems,
+        total: extendedItems.length,
+        limit: 50,
+        offset: 0,
+        next: null,
+        previous: null
+      };
+    }
+
+    // Real API calls with pagination
+    const allItems = [];
+    const maxLimit = 50; // Spotify API limit per request
+    let offset = 0;
+    
+    while (allItems.length < totalLimit && offset < 1000) { // Spotify limits to 1000 total
+      const currentLimit = Math.min(maxLimit, totalLimit - allItems.length);
+      const params = new URLSearchParams({
+        time_range: timeRange,
+        limit: currentLimit.toString(),
+        offset: offset.toString()
+      });
+      
+      try {
+        const response = await this.makeRequest(`/me/top/artists?${params}`, accessToken);
+        
+        if (!response.items || response.items.length === 0) {
+          break; // No more items available
+        }
+        
+        allItems.push(...response.items);
+        offset += currentLimit;
+        
+        // Add delay between requests to respect rate limits
+        if (offset < totalLimit) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } catch (error) {
+        console.error(`Error fetching artists at offset ${offset}:`, error);
+        break;
+      }
+    }
+    
+    return {
+      items: allItems,
+      total: allItems.length,
+      limit: maxLimit,
+      offset: 0,
+      next: null,
+      previous: null
+    };
   }
 
   async getRecentlyPlayed(accessToken?: string, limit = 50) {

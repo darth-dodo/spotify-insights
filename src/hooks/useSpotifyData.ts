@@ -27,6 +27,26 @@ export const useSpotifyData = () => {
     });
   };
 
+  // New hook for extended top tracks (up to 500)
+  const useExtendedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 500) => {
+    return useQuery({
+      queryKey: ['extended-top-tracks', timeRange, totalLimit],
+      queryFn: () => spotifyAPI.getExtendedTopTracks(getAccessToken(), timeRange, totalLimit),
+      staleTime: 1000 * 60 * 10, // 10 minutes (longer cache for larger datasets)
+      enabled: true,
+    });
+  };
+
+  // New hook for extended top artists (up to 500)
+  const useExtendedTopArtists = (timeRange: string = 'medium_term', totalLimit: number = 500) => {
+    return useQuery({
+      queryKey: ['extended-top-artists', timeRange, totalLimit],
+      queryFn: () => spotifyAPI.getExtendedTopArtists(getAccessToken(), timeRange, totalLimit),
+      staleTime: 1000 * 60 * 10, // 10 minutes (longer cache for larger datasets)
+      enabled: true,
+    });
+  };
+
   const useRecentlyPlayed = (limit: number = 50) => {
     return useQuery({
       queryKey: ['recently-played', limit],
@@ -49,6 +69,8 @@ export const useSpotifyData = () => {
   return {
     useTopTracks,
     useTopArtists,
+    useExtendedTopTracks,
+    useExtendedTopArtists,
     useRecentlyPlayed,
     useCurrentPlayback,
   };

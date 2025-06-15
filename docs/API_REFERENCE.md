@@ -6,8 +6,9 @@
 2. [Data Structures](#data-structures)
 3. [Internal APIs](#internal-apis)
 4. [Spotify API Integration](#spotify-api-integration)
-5. [Error Handling](#error-handling)
-6. [Rate Limiting](#rate-limiting)
+5. [Extended Data Fetching](#extended-data-fetching)
+6. [Error Handling](#error-handling)
+7. [Rate Limiting](#rate-limiting)
 
 ## Authentication
 
@@ -111,6 +112,7 @@ interface Track {
       height: number;
       width: number;
     }>;
+    release_date: string;
   };
   duration_ms: number;
   popularity: number;
@@ -136,112 +138,130 @@ interface Artist {
 }
 ```
 
+### Extended Response Format
+```typescript
+interface ExtendedResponse<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+  next: string | null;
+  previous: string | null;
+}
+```
+
 ## Internal APIs
 
-### SpotifyAuth Class
+### SpotifyAPI Class
 
-#### Methods
+#### Standard Methods
 
-##### `login(): Promise<void>`
-Initiates the OAuth flow by redirecting to Spotify's authorization server.
-
-```typescript
-await spotifyAuth.login();
-```
-
-**Throws:**
-- `Error` if CLIENT_ID is not configured
-
-##### `handleCallback(code: string, state: string): Promise<void>`
-Handles the OAuth callback and exchanges the authorization code for tokens.
+##### `getTopTracks(accessToken?: string, timeRange = 'medium_term', limit = 50): Promise<SpotifyResponse>`
+Fetches user's top tracks (standard API limit: 50).
 
 ```typescript
-await spotifyAuth.handleCallback(authCode, state);
+const tracks = await spotifyAPI.getTopTracks(accessToken, 'medium_term', 50);
 ```
+
+##### `getTopArtists(accessToken?: string, timeRange = 'medium_term', limit = 50): Promise<SpotifyResponse>`
+Fetches user's top artists (standard API limit: 50).
+
+```typescript
+const artists = await spotifyAPI.getTopArtists(accessToken, 'medium_term', 50);
+```
+
+#### Extended Methods (NEW)
+
+##### `getExtendedTopTracks(accessToken?: string, timeRange = 'medium_term', totalLimit = 500): Promise<ExtendedResponse<Track>>`
+Fetches extended top tracks dataset using pagination.
+
+```typescript
+const extendedTracks = await spotifyAPI.getExtendedTopTracks(accessToken, 'medium_term', 500);
+```
+
+**Features:**
+- Fetches up to 500 tracks (vs 50 standard limit)
+- Uses pagination with offset to gather data
+- Implements rate limiting between requests
+- Supports all standard time ranges
+- Returns unified response format
 
 **Parameters:**
-- `code` - Authorization code from Spotify
-- `state` - State parameter for CSRF protection
+- `accessToken` - Spotify access token
+- `timeRange` - 'short_term', 'medium_term', or 'long_term'
+- `totalLimit` - Maximum number of tracks to fetch (up to 500)
 
-**Throws:**
-- `Error` if state mismatch detected
-- `Error` if code verifier not found
-- `Error` if token exchange fails
-
-##### `refreshAccessToken(refreshToken: string): Promise<TokenResponse>`
-Refreshes the access token using the refresh token.
+##### `getExtendedTopArtists(accessToken?: string, timeRange = 'medium_term', totalLimit = 500): Promise<ExtendedResponse<Artist>>`
+Fetches extended top artists dataset using pagination.
 
 ```typescript
-const tokens = await spotifyAuth.refreshAccessToken(refreshToken);
+const extendedArtists = await spotifyAPI.getExtendedTopArtists(accessToken, 'medium_term', 500);
 ```
 
-**Returns:** New token response object
+**Features:**
+- Fetches up to 500 artists (vs 50 standard limit)
+- Uses pagination with offset to gather data
+- Implements rate limiting between requests
+- Supports all standard time ranges
+- Returns unified response format
+
+#### Other Methods
 
 ##### `getCurrentUser(accessToken: string): Promise<SpotifyUser>`
 Fetches the current user's profile from Spotify API.
 
-```typescript
-const user = await spotifyAuth.getCurrentUser(accessToken);
-```
+##### `getRecentlyPlayed(accessToken?: string, limit = 50): Promise<SpotifyResponse>`
+Fetches recently played tracks.
 
-**Returns:** User profile data from Spotify
+##### `getCurrentPlayback(accessToken?: string): Promise<PlaybackState>`
+Fetches current playback state.
 
 ### Data Utilities
 
 #### `hashData(data: string): Promise<string>`
 Hashes sensitive data using SHA-256.
 
-```typescript
-const hashedId = await hashData(userId);
-```
-
-**Parameters:**
-- `data` - String to hash
-
-**Returns:** SHA-256 hash as hex string
-
 #### `generateShortHash(data: string): string`
 Generates a shorter hash for display purposes.
 
-```typescript
-const shortHash = generateShortHash(userId);
-```
-
-**Parameters:**
-- `data` - String to hash
-
-**Returns:** Short hash as base-36 string
-
 #### `sanitizeUserData(userData: SpotifyUser): User`
 Sanitizes user data to minimal required fields.
-
-```typescript
-const sanitizedUser = sanitizeUserData(spotifyUserData);
-```
-
-**Parameters:**
-- `userData` - Raw Spotify user data
-
-**Returns:** Sanitized user object
 
 ### Authentication Hook
 
 #### `useAuth(): AuthContextType`
 React hook for authentication state and methods.
 
+### Data Hooks
+
+#### Standard Hooks
+
+##### `useTopTracks(timeRange?, limit?): QueryResult`
+Hook for fetching standard top tracks (up to 50).
+
+##### `useTopArtists(timeRange?, limit?): QueryResult`
+Hook for fetching standard top artists (up to 50).
+
+#### Extended Hooks (NEW)
+
+##### `useExtendedTopTracks(timeRange?, totalLimit?): QueryResult`
+Hook for fetching extended top tracks dataset.
+
 ```typescript
-const { user, isLoading, login, logout, refreshToken } = useAuth();
+const { data, isLoading, error } = useExtendedTopTracks('medium_term', 500);
 ```
 
-**Returns:**
+**Features:**
+- Fetches up to 500 tracks
+- Extended caching (10 minutes vs 5 minutes)
+- Optimized for large datasets
+- Includes loading states for pagination
+
+##### `useExtendedTopArtists(timeRange?, totalLimit?): QueryResult`
+Hook for fetching extended top artists dataset.
+
 ```typescript
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  login: () => Promise<void>;
-  logout: () => void;
-  refreshToken: () => Promise<void>;
-}
+const { data, isLoading, error } = useExtendedTopArtists('medium_term', 500);
 ```
 
 ## Spotify API Integration
@@ -256,31 +276,11 @@ https://api.spotify.com/v1
 Authorization: Bearer {access_token}
 ```
 
-### Endpoints Used
-
-#### Get Current User Profile
-```
-GET /me
-```
-
-**Scopes Required:** `user-read-private`, `user-read-email`
-
-**Response:**
-```json
-{
-  "id": "user_id",
-  "display_name": "User Name",
-  "email": "user@example.com",
-  "images": [...],
-  "country": "US",
-  "followers": { "total": 100 },
-  "product": "premium"
-}
-```
+### Standard Endpoints
 
 #### Get User's Top Tracks
 ```
-GET /me/top/tracks?limit=50&time_range=medium_term
+GET /me/top/tracks?limit=50&time_range=medium_term&offset=0
 ```
 
 **Scopes Required:** `user-top-read`
@@ -288,175 +288,181 @@ GET /me/top/tracks?limit=50&time_range=medium_term
 **Parameters:**
 - `limit` - Number of tracks (1-50)
 - `time_range` - `short_term`, `medium_term`, or `long_term`
-- `offset` - Index of first track to return
+- `offset` - Index of first track to return (for pagination)
 
 #### Get User's Top Artists
 ```
-GET /me/top/artists?limit=50&time_range=medium_term
+GET /me/top/artists?limit=50&time_range=medium_term&offset=0
 ```
 
 **Scopes Required:** `user-top-read`
 
-#### Get Recently Played Tracks
-```
-GET /me/player/recently-played?limit=50
+## Extended Data Fetching
+
+### Pagination Strategy
+
+The extended data fetching methods use a pagination approach to gather larger datasets:
+
+1. **Multiple Requests**: Makes sequential API calls with different offset values
+2. **Rate Limiting**: Implements 100ms delays between requests to respect API limits
+3. **Error Handling**: Gracefully handles failures and continues with partial data
+4. **Caching**: Uses longer cache times (10 minutes) for extended datasets
+
+### Implementation Example
+
+```typescript
+// Fetch up to 500 top tracks
+const fetchExtendedTracks = async () => {
+  const allTracks = [];
+  const maxLimit = 50; // Spotify API limit per request
+  let offset = 0;
+  const totalLimit = 500;
+  
+  while (allTracks.length < totalLimit && offset < 1000) {
+    const response = await fetch(`/me/top/tracks?limit=${maxLimit}&offset=${offset}`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    
+    const data = await response.json();
+    allTracks.push(...data.items);
+    offset += maxLimit;
+    
+    // Rate limiting
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
+  return { items: allTracks, total: allTracks.length };
+};
 ```
 
-**Scopes Required:** `user-read-recently-played`
+### Benefits of Extended Data
 
-#### Get Current Playback State
-```
-GET /me/player
-```
+1. **Deeper Insights**: More comprehensive genre analysis with 500+ artists
+2. **Better Statistics**: More accurate popularity and diversity metrics
+3. **Enhanced Discovery**: Find patterns not visible in top 50
+4. **Improved Accuracy**: Better representation of actual listening habits
 
-**Scopes Required:** `user-read-playback-state`
+### Performance Considerations
+
+- **Loading Time**: Extended fetching takes 5-15 seconds depending on data size
+- **Memory Usage**: Larger datasets require more browser memory
+- **Network Usage**: Multiple API calls increase bandwidth usage
+- **Rate Limits**: Respects Spotify's rate limits with built-in delays
 
 ## Error Handling
 
 ### Error Types
 
-#### Authentication Errors
+#### Extended Fetching Errors
 ```typescript
-interface AuthError {
-  error: string;
-  error_description: string;
+interface ExtendedFetchError {
+  type: 'rate_limit' | 'network' | 'auth' | 'partial_data';
+  message: string;
+  itemsFetched: number;
+  totalRequested: number;
 }
 ```
 
-Common auth errors:
-- `invalid_client` - Invalid client ID
-- `invalid_grant` - Invalid authorization code
-- `invalid_request` - Malformed request
-
-#### API Errors
+#### Rate Limiting for Extended Requests
 ```typescript
-interface SpotifyError {
-  error: {
-    status: number;
-    message: string;
-  };
-}
-```
-
-Common API errors:
-- `401` - Unauthorized (invalid/expired token)
-- `403` - Forbidden (insufficient scope)
-- `429` - Too Many Requests (rate limited)
-- `500` - Internal Server Error
-
-### Error Handling Pattern
-```typescript
-try {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+const handleExtendedRateLimit = async (requestCount: number) => {
+  if (requestCount > 5) {
+    // Increase delay for multiple requests
+    const delay = Math.min(200 + (requestCount * 50), 1000);
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
-  return await response.json();
-} catch (error) {
-  console.error('API Error:', error);
-  // Handle specific error cases
-  if (error.status === 401) {
-    // Token expired, attempt refresh
-    await refreshToken();
-  }
-  throw error;
-}
+};
 ```
+
+### Best Practices for Extended Data
+
+1. **Graceful Degradation**: Continue with partial data if some requests fail
+2. **Progress Indication**: Show loading progress for long-running requests
+3. **Caching Strategy**: Cache extended datasets longer to reduce API calls
+4. **User Communication**: Inform users about longer loading times
 
 ## Rate Limiting
 
-### Spotify API Limits
-- **Rate Limit:** 100 requests per minute per user
-- **Burst Limit:** 10 requests per second
-- **Headers:**
-  - `X-RateLimit-Limit` - Request limit per minute
-  - `X-RateLimit-Remaining` - Remaining requests
-  - `X-RateLimit-Reset` - Time when limit resets
+### Enhanced Rate Limiting for Extended Requests
 
-### Rate Limit Handling
+#### Spotify API Limits
+- **Standard Rate Limit:** 100 requests per minute per user
+- **Burst Limit:** 10 requests per second
+- **Extended Fetching:** Up to 10 requests for 500 items
+
+#### Advanced Rate Limit Handling
 ```typescript
-const handleRateLimit = async (response: Response) => {
-  if (response.status === 429) {
-    const retryAfter = response.headers.get('Retry-After');
-    const delay = retryAfter ? parseInt(retryAfter) * 1000 : 60000;
+class RateLimitManager {
+  private requestCount = 0;
+  private requestWindow = 60000; // 1 minute
+  private lastReset = Date.now();
+  
+  async throttleRequest(): Promise<void> {
+    if (Date.now() - this.lastReset > this.requestWindow) {
+      this.requestCount = 0;
+      this.lastReset = Date.now();
+    }
     
-    console.log(`Rate limited. Retrying after ${delay}ms`);
-    await new Promise(resolve => setTimeout(resolve, delay));
+    if (this.requestCount >= 90) { // Leave buffer
+      const waitTime = this.requestWindow - (Date.now() - this.lastReset);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
     
-    // Retry the request
-    return fetch(url, options);
+    this.requestCount++;
   }
-  return response;
-};
+}
 ```
 
-### Best Practices
-1. **Implement exponential backoff** for failed requests
-2. **Cache responses** to reduce API calls
-3. **Batch requests** when possible
-4. **Monitor rate limit headers** and adjust accordingly
-5. **Use appropriate time ranges** for data requests
+#### Progressive Backoff Strategy
+```typescript
+const progressiveDelay = (requestIndex: number): number => {
+  // Start with 100ms, increase gradually
+  return Math.min(100 + (requestIndex * 25), 500);
+};
+```
 
 ## Security Considerations
 
-### Token Security
-- Store tokens in `localStorage` with encryption
-- Implement automatic token refresh
-- Clear tokens on logout
-- Never expose tokens in logs or client-side code
+### Extended Data Protection
+- **Minimize Storage**: Don't store extended datasets in localStorage
+- **Memory Management**: Clear large datasets when not needed
+- **Rate Limit Compliance**: Respect API limits to maintain access
+- **Error Logging**: Log pagination errors without exposing tokens
 
-### Data Protection
-- Hash all sensitive user identifiers
-- Minimize data collection and storage
-- Implement proper data sanitization
-- Use HTTPS for all communications
-
-### PKCE Implementation
-```typescript
-// Generate code verifier and challenge
-const codeVerifier = generateRandomString(64);
-const codeChallenge = await sha256(codeVerifier);
-const codeChallengeBase64 = base64URLEncode(codeChallenge);
-
-// Store verifier for later use
-localStorage.setItem('code_verifier', codeVerifier);
-```
+### Privacy with Large Datasets
+- **Data Minimization**: Only fetch what's needed for current analysis
+- **Temporary Storage**: Keep extended data in memory only
+- **User Control**: Allow users to choose dataset size
+- **Clear Indicators**: Show when extended data is being used
 
 ## Testing
 
-### Unit Tests
+### Extended Data Tests
 ```typescript
-describe('SpotifyAuth', () => {
-  test('should generate valid PKCE challenge', async () => {
-    const auth = new SpotifyAuth();
-    const challenge = await auth.generateCodeChallenge();
-    expect(challenge).toMatch(/^[A-Za-z0-9_-]{43}$/);
+describe('Extended Data Fetching', () => {
+  test('should fetch up to 500 tracks', async () => {
+    const result = await spotifyAPI.getExtendedTopTracks(token, 'medium_term', 500);
+    expect(result.items.length).toBeLessThanOrEqual(500);
+    expect(result.items.length).toBeGreaterThan(50);
+  });
+  
+  test('should handle rate limiting gracefully', async () => {
+    const startTime = Date.now();
+    await spotifyAPI.getExtendedTopTracks(token, 'medium_term', 200);
+    const duration = Date.now() - startTime;
+    expect(duration).toBeGreaterThan(1000); // Should include delays
   });
 });
 ```
 
-### Integration Tests
+### Performance Tests
 ```typescript
-describe('Authentication Flow', () => {
-  test('should complete OAuth flow successfully', async () => {
-    const authCode = 'test_auth_code';
-    const state = 'test_state';
-    
-    await spotifyAuth.handleCallback(authCode, state);
-    
-    expect(localStorage.getItem('spotify_access_token')).toBeTruthy();
+describe('Performance Monitoring', () => {
+  test('should complete extended fetch within reasonable time', async () => {
+    const startTime = performance.now();
+    await spotifyAPI.getExtendedTopTracks(token, 'medium_term', 500);
+    const duration = performance.now() - startTime;
+    expect(duration).toBeLessThan(30000); // 30 seconds max
   });
 });
-```
-
-### API Mocking
-```typescript
-// Mock Spotify API responses for testing
-const mockSpotifyAPI = {
-  '/v1/me': {
-    id: 'test_user',
-    display_name: 'Test User',
-    country: 'US'
-  }
-};
 ```

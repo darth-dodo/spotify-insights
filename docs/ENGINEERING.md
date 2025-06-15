@@ -5,10 +5,11 @@
 1. [Architecture Overview](#architecture-overview)
 2. [System Architecture](#system-architecture)
 3. [Data Flow](#data-flow)
-4. [API Documentation](#api-documentation)
-5. [Security Implementation](#security-implementation)
-6. [Performance Optimization](#performance-optimization)
-7. [Deployment Guide](#deployment-guide)
+4. [Extended Data Architecture](#extended-data-architecture)
+5. [API Documentation](#api-documentation)
+6. [Security Implementation](#security-implementation)
+7. [Performance Optimization](#performance-optimization)
+8. [Deployment Guide](#deployment-guide)
 
 ## Architecture Overview
 
@@ -29,27 +30,19 @@
 src/
 ├── components/
 │   ├── auth/              # Authentication components
-│   │   ├── AuthGuard.tsx
-│   │   ├── LoginPage.tsx
-│   │   └── CallbackPage.tsx
 │   ├── dashboard/         # Dashboard components
-│   │   ├── DashboardOverview.tsx
-│   │   ├── ListeningTrends.tsx
-│   │   ├── GenreAnalysis.tsx
-│   │   └── PrivacyControls.tsx
+│   │   ├── LibraryHealth.tsx     # Enhanced with 500+ items
+│   │   ├── ImprovedListeningTrends.tsx
+│   │   └── ...
 │   ├── layout/            # Layout components
-│   │   ├── Header.tsx
-│   │   └── Sidebar.tsx
 │   ├── providers/         # Context providers
-│   │   ├── AuthProvider.tsx
-│   │   └── ThemeProvider.tsx
 │   └── ui/                # Reusable UI components
 ├── hooks/                 # Custom React hooks
 │   ├── useAuth.ts
-│   ├── useTheme.ts
-│   └── use-toast.ts
+│   ├── useSpotifyData.ts  # Enhanced with extended methods
+│   └── useTheme.ts
 ├── lib/                   # Utility libraries
-│   ├── spotify-auth.ts
+│   ├── spotify-api.ts     # Enhanced with pagination support
 │   ├── data-utils.ts
 │   └── utils.ts
 ├── pages/                 # Route components
@@ -58,314 +51,500 @@ src/
 
 ## System Architecture
 
-### High-Level Architecture Diagram
+### Enhanced Data Layer Architecture
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Browser Client                        │
 ├─────────────────────────────────────────────────────────┤
 │  React Application Layer                                 │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐ │
-│  │ Auth System │ │ Dashboard   │ │ Privacy Controls    │ │
-│  │             │ │ Components  │ │                     │ │
+│  │ Auth System │ │ Dashboard   │ │ Extended Analytics  │ │
+│  │             │ │ Components  │ │ (500+ items)        │ │
 │  └─────────────┘ └─────────────┘ └─────────────────────┘ │
 ├─────────────────────────────────────────────────────────┤
-│  State Management Layer                                  │
+│  Enhanced State Management Layer                         │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐ │
-│  │ React Query │ │ Auth Context│ │ Theme Context       │ │
-│  │ (API Cache) │ │ (User State)│ │ (UI State)          │ │
+│  │ React Query │ │ Standard    │ │ Extended Data       │ │
+│  │ (10min cache│ │ Data Cache  │ │ Cache (500+ items)  │ │
+│  │ extended)   │ │ (5min)      │ │                     │ │
 │  └─────────────┘ └─────────────┘ └─────────────────────┘ │
 ├─────────────────────────────────────────────────────────┤
-│  Data Layer                                              │
+│  Pagination & Rate Limiting Layer (NEW)                 │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐ │
-│  │ localStorage│ │ Session     │ │ Crypto API          │ │
-│  │ (Tokens)    │ │ Storage     │ │ (Hashing)           │ │
+│  │ Request     │ │ Rate Limit  │ │ Progress Tracking   │ │
+│  │ Sequencer   │ │ Manager     │ │ & Error Recovery    │ │
 │  └─────────────┘ └─────────────┘ └─────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
                              │
-                             │ HTTPS/OAuth 2.0
+                             │ HTTPS/OAuth 2.0 + Pagination
                              ▼
 ┌─────────────────────────────────────────────────────────┐
 │                  Spotify Web API                        │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐ │
-│  │ Auth        │ │ User        │ │ Playback           │ │
-│  │ Endpoints   │ │ Profile     │ │ Data               │ │
+│  │ Paginated   │ │ Standard    │ │ Rate Limited        │ │
+│  │ Endpoints   │ │ Endpoints   │ │ Responses           │ │
+│  │ (offset)    │ │ (limit 50)  │ │ (100/min)           │ │
 │  └─────────────┘ └─────────────┘ └─────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Component Architecture
-```
-App (Router, Providers)
-├── AuthProvider
-│   └── AuthGuard
-│       ├── LoginPage (unauthenticated)
-│       └── Dashboard (authenticated)
-│           ├── Header
-│           ├── Sidebar
-│           └── Main Content
-│               ├── DashboardOverview
-│               ├── ListeningTrends
-│               ├── GenreAnalysis
-│               └── PrivacyControls
-├── ThemeProvider
-├── QueryClientProvider
-└── TooltipProvider
-```
-
 ## Data Flow
 
-### Authentication Flow
-```mermaid
-sequenceDiagram
-    participant User
-    participant App
-    participant Spotify
-    participant Browser
-
-    User->>App: Click "Login with Spotify"
-    App->>App: Generate PKCE challenge
-    App->>Browser: Store code_verifier
-    App->>Spotify: Redirect with auth params
-    Spotify->>User: Show authorization dialog
-    User->>Spotify: Authorize app
-    Spotify->>App: Redirect with auth code
-    App->>Spotify: Exchange code for tokens
-    Spotify->>App: Return access & refresh tokens
-    App->>Browser: Store tokens (encrypted)
-    App->>Spotify: Fetch user profile
-    Spotify->>App: Return user data
-    App->>App: Sanitize & hash user data
-    App->>Browser: Store minimal user data
-    App->>User: Show dashboard
+### Standard Data Flow (50 items)
+```
+User Request → useTopTracks() → spotifyAPI.getTopTracks() → Single API Call → 50 items
 ```
 
-### Data Processing Pipeline
+### Extended Data Flow (500 items) - NEW
 ```
-Raw Spotify Data → Sanitization → Hashing → Storage → UI Display
-                     ↓              ↓         ↓         ↓
-                 Remove PII    SHA-256 IDs  localStorage  React State
-                 Truncate text  Short hash   Session only  Reactive UI
-                 Boolean flags  Salt & hash  <4KB total    Real-time
+User Request → useExtendedTopTracks() → spotifyAPI.getExtendedTopTracks()
+     ↓
+Pagination Loop:
+  ├─ Request 1: offset=0,  limit=50 → 50 items
+  ├─ Rate limit delay (100ms)
+  ├─ Request 2: offset=50, limit=50 → 50 items  
+  ├─ Rate limit delay (125ms)
+  ├─ ...
+  └─ Request 10: offset=450, limit=50 → 50 items
+     ↓
+Total: 500 items → Enhanced Analytics
 ```
 
-### State Management Flow
+### Enhanced Processing Pipeline
 ```
-API Call → React Query → Cache → Component State → UI Update
-    ↓           ↓           ↓         ↓              ↓
-Background   Optimistic  Offline   Reactive     Automatic
-Refresh      Updates     Support   Updates      Re-render
+Raw Extended Data → Sanitization → Analysis → Caching → UI Display
+      (500+ items)      ↓            ↓         ↓         ↓
+                   Remove PII    Deep Genre  Extended   Rich
+                   Validate data Analysis    Cache      Insights
+                   Error handle  Decade      (10min)    Visualizations
+                                Distribution
+```
+
+## Extended Data Architecture
+
+### Pagination Implementation
+
+#### Request Sequencing
+```typescript
+class ExtendedDataFetcher {
+  async fetchWithPagination(
+    endpoint: string, 
+    totalLimit: number,
+    accessToken: string
+  ): Promise<ExtendedResponse> {
+    const allItems = [];
+    const maxRequestLimit = 50; // Spotify API limit
+    let offset = 0;
+    let requestCount = 0;
+    
+    while (allItems.length < totalLimit && offset < 1000) {
+      const currentLimit = Math.min(maxRequestLimit, totalLimit - allItems.length);
+      
+      try {
+        // Make API request
+        const response = await this.makeRequest(
+          `${endpoint}?limit=${currentLimit}&offset=${offset}`,
+          accessToken
+        );
+        
+        if (!response.items?.length) break;
+        
+        allItems.push(...response.items);
+        offset += currentLimit;
+        requestCount++;
+        
+        // Progressive rate limiting
+        if (allItems.length < totalLimit) {
+          const delay = this.calculateDelay(requestCount);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+      } catch (error) {
+        console.error(`Request failed at offset ${offset}:`, error);
+        break; // Continue with partial data
+      }
+    }
+    
+    return {
+      items: allItems,
+      total: allItems.length,
+      limit: maxRequestLimit,
+      offset: 0,
+      next: null,
+      previous: null
+    };
+  }
+  
+  private calculateDelay(requestCount: number): number {
+    // Progressive backoff: 100ms + 25ms per request
+    return Math.min(100 + (requestCount * 25), 500);
+  }
+}
+```
+
+#### Memory Management
+```typescript
+class ExtendedDataManager {
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private maxCacheSize = 10; // Limit cached datasets
+  
+  cacheExtendedData(key: string, data: any): void {
+    // Clear old cache if at limit
+    if (this.cache.size >= this.maxCacheSize) {
+      const oldestKey = Array.from(this.cache.keys())[0];
+      this.cache.delete(oldestKey);
+    }
+    
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+  
+  getCachedData(key: string, maxAge: number = 600000): any | null {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+    
+    if (Date.now() - cached.timestamp > maxAge) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return cached.data;
+  }
+}
+```
+
+### Enhanced Analytics Capabilities
+
+#### Deep Genre Analysis (500+ Artists)
+```typescript
+interface EnhancedGenreAnalysis {
+  totalGenres: number;
+  genreDistribution: Array<{
+    genre: string;
+    artistCount: number;
+    percentage: number;
+    popularity: number;
+  }>;
+  genreEvolution: Array<{
+    decade: string;
+    genres: string[];
+    dominantGenre: string;
+  }>;
+  nicheFactor: number; // 0-100, how niche the taste is
+  discoveryScore: number; // 0-100, emerging artists ratio
+}
+```
+
+#### Advanced Artist Insights
+```typescript
+interface ArtistInsights {
+  totalArtists: number;
+  uniqueArtists: number;
+  popularityDistribution: {
+    emerging: number;    // 0-39 popularity
+    established: number; // 40-69 popularity  
+    mainstream: number;  // 70-100 popularity
+  };
+  followerAnalysis: {
+    averageFollowers: number;
+    medianFollowers: number;
+    undergroundRatio: number; // Artists with <100k followers
+  };
+  genreDiversity: {
+    averageGenresPerArtist: number;
+    mostVersatileArtists: Artist[];
+    genreConnections: Array<{
+      genre1: string;
+      genre2: string;
+      connectionStrength: number;
+    }>;
+  };
+}
 ```
 
 ## API Documentation
 
-### Spotify Web API Integration
+### Extended Spotify API Methods
 
-#### Authentication Endpoints
-| Endpoint | Method | Purpose | Request | Response |
-|---|---|---|---|---|
-| `/authorize` | GET | Initial auth | OAuth params | Auth code |
-| `/api/token` | POST | Token exchange | Auth code + PKCE | Access token |
-| `/api/token` | POST | Token refresh | Refresh token | New tokens |
+#### `getExtendedTopTracks(accessToken, timeRange, totalLimit)`
+**Purpose**: Fetch up to 500 top tracks using pagination
+**Returns**: `ExtendedResponse<Track>`
+**Features**:
+- Automatic pagination handling
+- Rate limiting between requests
+- Partial data recovery on errors
+- Progress tracking capabilities
 
-#### Data Endpoints
-| Endpoint | Method | Scope Required | Data Retrieved |
-|---|---|---|---|
-| `/v1/me` | GET | `user-read-private` | User profile |
-| `/v1/me/top/tracks` | GET | `user-top-read` | Top tracks |
-| `/v1/me/top/artists` | GET | `user-top-read` | Top artists |
-| `/v1/me/player/recently-played` | GET | `user-read-recently-played` | Recent tracks |
-| `/v1/me/player` | GET | `user-read-playback-state` | Current playback |
+#### `getExtendedTopArtists(accessToken, timeRange, totalLimit)`
+**Purpose**: Fetch up to 500 top artists using pagination
+**Returns**: `ExtendedResponse<Artist>`
+**Features**:
+- Enhanced genre analysis with larger dataset
+- Better statistical accuracy
+- Deeper discovery insights
 
-#### Request Examples
+### React Query Integration
+
+#### Extended Data Hooks
 ```typescript
-// Get user profile
-const response = await fetch('https://api.spotify.com/v1/me', {
-  headers: {
-    'Authorization': `Bearer ${accessToken}`,
-    'Content-Type': 'application/json'
-  }
-});
+// Standard hook (50 items, 5min cache)
+const { data: standardTracks } = useTopTracks('medium_term', 50);
 
-// Get top tracks
-const topTracks = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=medium_term', {
-  headers: {
-    'Authorization': `Bearer ${accessToken}`
-  }
+// Extended hook (500 items, 10min cache)
+const { data: extendedTracks } = useExtendedTopTracks('medium_term', 500);
+```
+
+#### Cache Configuration
+```typescript
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Standard data: 5 minutes
+      staleTime: 1000 * 60 * 5,
+      // Extended data: 10 minutes (configured per hook)
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+  },
 });
 ```
 
 ## Security Implementation
 
-### Data Protection Strategy
-| Security Layer | Implementation | Purpose |
-|---|---|---|
-| **Transport** | HTTPS only | Encrypt data in transit |
-| **Storage** | localStorage encryption | Secure token storage |
-| **Hashing** | SHA-256 + salt | Protect user identifiers |
-| **Scope Limiting** | Minimal OAuth scopes | Reduce data exposure |
-| **CSP** | Content Security Policy | Prevent XSS attacks |
+### Extended Data Security
 
-### Hashing Implementation
+#### Rate Limiting Compliance
 ```typescript
-// SHA-256 hashing for sensitive data
-export const hashData = async (data: string): Promise<string> => {
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-};
-
-// Short hash for display purposes
-export const generateShortHash = (data: string): string => {
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return Math.abs(hash).toString(36);
-};
-```
-
-### Token Management
-```typescript
-class SpotifyAuth {
-  // Secure token storage with encryption
-  private storeTokens(tokens: TokenResponse) {
-    localStorage.setItem('spotify_access_token', tokens.access_token);
-    localStorage.setItem('spotify_refresh_token', tokens.refresh_token);
-    localStorage.setItem('spotify_token_expiry', 
-      (Date.now() + tokens.expires_in * 1000).toString()
-    );
-  }
-
-  // Automatic token refresh
-  async refreshAccessToken(refreshToken: string) {
-    const response = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: CLIENT_ID,
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-      }),
-    });
-    return response.json();
+class RateLimitManager {
+  private requestLog: number[] = [];
+  private readonly windowMs = 60000; // 1 minute
+  private readonly maxRequests = 90; // Buffer under 100/min limit
+  
+  async enforceRateLimit(): Promise<void> {
+    const now = Date.now();
+    // Remove old requests outside window
+    this.requestLog = this.requestLog.filter(time => now - time < this.windowMs);
+    
+    if (this.requestLog.length >= this.maxRequests) {
+      const oldestRequest = Math.min(...this.requestLog);
+      const waitTime = this.windowMs - (now - oldestRequest);
+      await new Promise(resolve => setTimeout(resolve, waitTime + 100));
+    }
+    
+    this.requestLog.push(now);
   }
 }
 ```
 
+#### Memory Protection
+```typescript
+// Prevent memory leaks with large datasets
+const cleanupExtendedData = () => {
+  // Clear extended datasets after component unmount
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries(['extended-top-tracks']);
+      queryClient.removeQueries(['extended-top-artists']);
+    };
+  }, []);
+};
+```
+
 ## Performance Optimization
 
-### Bundle Optimization
-| Technique | Implementation | Impact |
-|---|---|---|
-| **Code Splitting** | React.lazy() for routes | Reduced initial bundle |
-| **Tree Shaking** | ES modules, selective imports | Smaller bundle size |
-| **Compression** | Gzip/Brotli compression | Faster downloads |
-| **CDN Caching** | Static asset caching | Improved load times |
+### Extended Data Optimizations
 
-### Runtime Optimization
-| Technique | Implementation | Impact |
-|---|---|---|
-| **Memoization** | React.memo, useMemo | Reduced re-renders |
-| **Virtual Scrolling** | For large lists | Better performance |
-| **Debouncing** | Search inputs | Reduced API calls |
-| **Caching** | React Query caching | Faster data access |
+#### Lazy Loading Strategy
+```typescript
+const LazyExtendedAnalytics = React.lazy(() => 
+  import('./components/dashboard/ExtendedAnalytics')
+);
+
+// Load extended data only when needed
+const [showExtended, setShowExtended] = useState(false);
+```
+
+#### Virtual Scrolling for Large Lists
+```typescript
+import { FixedSizeList as List } from 'react-window';
+
+const VirtualizedTrackList = ({ tracks }: { tracks: Track[] }) => (
+  <List
+    height={600}
+    itemCount={tracks.length}
+    itemSize={60}
+    itemData={tracks}
+  >
+    {TrackListItem}
+  </List>
+);
+```
+
+#### Progressive Enhancement
+```typescript
+// Start with standard data, upgrade to extended
+const useProgressiveData = (timeRange: string) => {
+  const [useExtended, setUseExtended] = useState(false);
+  
+  const standardData = useTopTracks(timeRange, 50);
+  const extendedData = useExtendedTopTracks(timeRange, 500, {
+    enabled: useExtended
+  });
+  
+  return {
+    data: useExtended ? extendedData : standardData,
+    upgradeToExtended: () => setUseExtended(true),
+    isExtended: useExtended
+  };
+};
+```
 
 ### Performance Metrics
+
+#### Extended Data Benchmarks
+| Metric | Standard (50 items) | Extended (500 items) | Target |
+|--------|--------------------|--------------------|---------|
+| **Load Time** | 200-500ms | 3-8 seconds | <10s |
+| **Memory Usage** | ~100KB | ~1MB | <5MB |
+| **API Calls** | 1 request | 10 requests | <15 |
+| **Cache Duration** | 5 minutes | 10 minutes | 10min+ |
+
+#### Performance Monitoring
 ```typescript
-// Performance monitoring
-const measurePerformance = () => {
-  // First Contentful Paint
-  const fcp = performance.getEntriesByType('paint')
-    .find(entry => entry.name === 'first-contentful-paint');
+const measureExtendedDataPerformance = () => {
+  const startTime = performance.now();
+  let apiCallCount = 0;
   
-  // Largest Contentful Paint
-  const observer = new PerformanceObserver((list) => {
-    const entries = list.getEntries();
-    const lastEntry = entries[entries.length - 1];
-    console.log('LCP:', lastEntry.startTime);
-  });
-  observer.observe({ entryTypes: ['largest-contentful-paint'] });
+  const originalFetch = window.fetch;
+  window.fetch = (...args) => {
+    if (args[0].toString().includes('spotify.com/v1')) {
+      apiCallCount++;
+    }
+    return originalFetch(...args);
+  };
+  
+  return {
+    getMetrics: () => ({
+      duration: performance.now() - startTime,
+      apiCalls: apiCallCount,
+      memoryUsage: performance.memory?.usedJSHeapSize || 0
+    })
+  };
 };
 ```
 
 ## Deployment Guide
 
-### Build Process
-```bash
-# Development
-npm run dev          # Start dev server
-npm run build        # Build for production
-npm run preview      # Preview production build
+### Build Optimization for Extended Data
 
-# Testing
-npm run test         # Run unit tests
-npm run test:e2e     # Run end-to-end tests
-npm run test:coverage # Generate coverage report
-```
-
-### Environment Configuration
-```bash
-# Required environment variables
-VITE_SPOTIFY_CLIENT_ID=your_spotify_client_id
-VITE_SPOTIFY_REDIRECT_URI=https://yourdomain.com/callback
-
-# Optional
-VITE_ENVIRONMENT=production
-VITE_API_BASE_URL=https://api.yourdomain.com
-```
-
-### Deployment Platforms
-| Platform | Configuration | Benefits |
-|---|---|---|
-| **Netlify** | Auto-deploy from Git | CDN, forms, serverless |
-| **Vercel** | Zero-config deployment | Edge functions, analytics |
-| **AWS S3** | Static site hosting | Scalable, cost-effective |
-| **Firebase** | Google Cloud hosting | Real-time features |
-
-### Production Checklist
-- [ ] Environment variables configured
-- [ ] HTTPS certificate installed
-- [ ] CSP headers configured
-- [ ] Error monitoring setup
-- [ ] Analytics configured
-- [ ] Performance monitoring active
-- [ ] Backup strategy implemented
-
-## Monitoring & Maintenance
-
-### Error Tracking
+#### Bundle Splitting
 ```typescript
-// Error boundary implementation
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
+// vite.config.ts
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'extended-analytics': [
+            'src/components/dashboard/LibraryHealth.tsx',
+            'src/components/dashboard/ImprovedListeningTrends.tsx'
+          ],
+          'standard-analytics': [
+            'src/components/dashboard/DashboardOverview.tsx'
+          ]
+        }
+      }
+    }
   }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-    // Send to error tracking service
-  }
-}
+});
 ```
 
-### Health Checks
-- **API Connectivity**: Monitor Spotify API status
-- **Authentication**: Track login success rates
-- **Performance**: Monitor Core Web Vitals
-- **Errors**: Track JavaScript errors and crashes
-- **User Experience**: Monitor user flow completion
+#### Production Environment Variables
+```bash
+# Extended data configuration
+VITE_EXTENDED_DATA_ENABLED=true
+VITE_MAX_EXTENDED_TRACKS=500
+VITE_MAX_EXTENDED_ARTISTS=500
+VITE_EXTENDED_CACHE_DURATION=600000  # 10 minutes
+```
 
-### Maintenance Tasks
-- **Weekly**: Review error logs and performance metrics
-- **Monthly**: Update dependencies and security patches
-- **Quarterly**: Performance audit and optimization
-- **Annually**: Security audit and compliance review
+### Monitoring Extended Data Usage
+
+#### Analytics Events
+```typescript
+// Track extended data usage
+const trackExtendedDataUsage = () => {
+  analytics.track('Extended Data Fetched', {
+    itemCount: data.items.length,
+    timeRange: timeRange,
+    loadTime: performance.now() - startTime,
+    success: data.items.length > 50
+  });
+};
+```
+
+#### Error Tracking
+```typescript
+// Monitor extended data errors
+const trackExtendedDataErrors = (error: Error, context: any) => {
+  errorTracking.captureException(error, {
+    tags: {
+      feature: 'extended-data-fetching',
+      timeRange: context.timeRange,
+      itemsRequested: context.totalLimit,
+      itemsFetched: context.itemsFetched
+    }
+  });
+};
+```
+
+## Maintenance & Monitoring
+
+### Extended Data Health Checks
+
+#### API Performance Monitoring
+```typescript
+const monitorExtendedDataHealth = () => {
+  // Track success rates
+  const successRate = successfulExtendedRequests / totalExtendedRequests;
+  
+  // Monitor average load times  
+  const avgLoadTime = totalExtendedLoadTime / completedExtendedRequests;
+  
+  // Check rate limit compliance
+  const rateLimitViolations = requestsRejectedByRateLimit;
+  
+  return {
+    healthScore: calculateHealthScore(successRate, avgLoadTime, rateLimitViolations),
+    metrics: { successRate, avgLoadTime, rateLimitViolations }
+  };
+};
+```
+
+#### Maintenance Tasks
+
+**Weekly**:
+- Review extended data fetch success rates
+- Monitor average load times for 500+ item datasets
+- Check rate limit compliance and adjust delays if needed
+
+**Monthly**:
+- Analyze extended data usage patterns
+- Optimize pagination strategy based on user behavior
+- Update cache durations based on data freshness needs
+
+**Quarterly**:
+- Performance audit of extended data components
+- Review memory usage patterns with large datasets
+- Optimize bundle splitting for extended analytics features
+
+### Future Enhancements
+
+#### Planned Extended Data Features
+1. **Smart Pagination**: Adaptive request sizes based on user's data volume
+2. **Background Sync**: Pre-fetch extended data in background
+3. **Incremental Updates**: Update only changed portions of extended datasets
+4. **Data Compression**: Compress large datasets for better performance
+5. **Offline Support**: Cache extended data for offline analysis

@@ -1,8 +1,7 @@
-
 import { spotifyAPI } from './spotify-api';
 import { spotifyPlaybackSDK } from './spotify-playback-sdk';
 import { SpotifyDataCache } from './spotify-data-cache';
-import { extensiveDummyData } from './extensive-dummy-data';
+import { extensiveTopTracks, extensiveTopArtists, extensiveRecentlyPlayed } from './extensive-dummy-data';
 import type { IntegratedTrackData, IntegratedArtistData, ListeningSession } from './spotify-data-types';
 
 class SpotifyDataIntegration {
@@ -37,7 +36,7 @@ class SpotifyDataIntegration {
     // Use dummy data if no authentication
     if (this.shouldUseDummyData()) {
       console.log('Using dummy data for recently played tracks');
-      return extensiveDummyData.recentlyPlayed.items
+      return extensiveRecentlyPlayed.items
         .slice(0, limit)
         .map(item => ({
           id: item.track.id,
@@ -125,7 +124,7 @@ class SpotifyDataIntegration {
     // Use dummy data if no authentication
     if (this.shouldUseDummyData()) {
       console.log('Using dummy data for top tracks');
-      return extensiveDummyData.topTracks.items
+      return extensiveTopTracks.items
         .slice(0, totalLimit)
         .map((track: any, index: number) => ({
           id: track.id,
@@ -182,7 +181,7 @@ class SpotifyDataIntegration {
     // Use dummy data if no authentication
     if (this.shouldUseDummyData()) {
       console.log('Using dummy data for top artists');
-      return extensiveDummyData.topArtists.items
+      return extensiveTopArtists.items
         .slice(0, totalLimit)
         .map((artist: any, index: number) => ({
           id: artist.id,

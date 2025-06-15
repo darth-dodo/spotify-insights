@@ -6,15 +6,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { 
   Shield, 
-  Database, 
-  Lock, 
-  CheckCircle, 
-  AlertTriangle,
-  Eye,
-  Server,
   FileText,
-  Globe
+  Globe,
+  Lock,
+  CheckCircle
 } from 'lucide-react';
+import { PrivacyPrinciplesSection } from './privacy/PrivacyPrinciplesSection';
+import { TechnicalArchitectureSection } from './privacy/TechnicalArchitectureSection';
+import { UserRightsSection } from './privacy/UserRightsSection';
 
 export const ComprehensivePrivacyDoc = () => {
   return (
@@ -32,118 +31,10 @@ export const ComprehensivePrivacyDoc = () => {
       </div>
 
       {/* Privacy Principles */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-6 w-6 text-green-600" />
-            Core Privacy Principles
-          </CardTitle>
-          <CardDescription>
-            Fundamental principles that guide every aspect of our application design
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-green-700 dark:text-green-400">✅ Privacy by Design</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span>Zero data collection architecture from ground up</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span>Client-side processing for all analytics</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span>Automatic data cleanup on logout</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span>No persistent storage of personal data</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span>Open-source transparency</span>
-                </li>
-              </ul>
-            </div>
-            
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-red-700 dark:text-red-400">❌ What We Never Do</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                  <span>Store personal information on servers</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                  <span>Track users across sessions</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                  <span>Share data with third parties</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                  <span>Use cookies for tracking</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                  <span>Implement analytics or monitoring</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <PrivacyPrinciplesSection />
 
       {/* Technical Architecture */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-6 w-6 text-blue-600" />
-            Technical Privacy Architecture
-          </CardTitle>
-          <CardDescription>
-            Detailed technical implementation of privacy-preserving features
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6">
-            <div className="p-4 border rounded-lg bg-blue-50/50 dark:bg-blue-900/10">
-              <h4 className="font-semibold mb-3 text-blue-700 dark:text-blue-400">Client-Side Processing</h4>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• All Spotify data processing happens in your browser</li>
-                <li>• JavaScript analytics calculations run locally</li>
-                <li>• No server-side data processing or storage</li>
-                <li>• Complete data isolation per user session</li>
-              </ul>
-            </div>
-            
-            <div className="p-4 border rounded-lg bg-green-50/50 dark:bg-green-900/10">
-              <h4 className="font-semibold mb-3 text-green-700 dark:text-green-400">Authentication Flow</h4>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• OAuth 2.0 flow directly with Spotify</li>
-                <li>• Temporary access tokens stored in browser memory only</li>
-                <li>• No token storage on our servers</li>
-                <li>• Automatic token cleanup on logout</li>
-              </ul>
-            </div>
-            
-            <div className="p-4 border rounded-lg bg-purple-50/50 dark:bg-purple-900/10">
-              <h4 className="font-semibold mb-3 text-purple-700 dark:text-purple-400">Data Encryption</h4>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• SHA-256 hashing for any stored identifiers</li>
-                <li>• HTTPS encryption for all API communications</li>
-                <li>• No plaintext storage of sensitive data</li>
-                <li>• Cryptographic data anonymization</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <TechnicalArchitectureSection />
 
       {/* Data Handling Details */}
       <Card>
@@ -270,65 +161,7 @@ export const ComprehensivePrivacyDoc = () => {
       </Card>
 
       {/* User Rights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="h-6 w-6 text-green-600" />
-            Your Privacy Rights & Controls
-          </CardTitle>
-          <CardDescription>
-            Complete overview of your privacy rights and how to exercise them
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4">
-            {[
-              {
-                right: 'Right to Access',
-                description: 'See what data we process about you',
-                action: 'Export function provides complete data overview',
-                timeframe: 'Instant'
-              },
-              {
-                right: 'Right to Deletion',
-                description: 'Remove all your data immediately',
-                action: 'Clear data button removes everything',
-                timeframe: 'Immediate'
-              },
-              {
-                right: 'Right to Portability',
-                description: 'Export your data in standard format',
-                action: 'JSON export of all session data',
-                timeframe: 'Instant download'
-              },
-              {
-                right: 'Right to Rectification',
-                description: 'Correct inaccurate data',
-                action: 'Re-authenticate with Spotify for fresh data',
-                timeframe: 'Real-time'
-              },
-              {
-                right: 'Right to Object',
-                description: 'Stop data processing',
-                action: 'Logout immediately stops all processing',
-                timeframe: 'Immediate'
-              }
-            ].map((item, index) => (
-              <div key={index} className="flex items-start gap-4 p-4 border rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <h4 className="font-medium mb-1">{item.right}</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs">
-                    <Badge variant="outline">{item.action}</Badge>
-                    <span className="text-muted-foreground">• {item.timeframe}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <UserRightsSection />
 
       {/* Security Measures */}
       <Card>

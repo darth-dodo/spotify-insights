@@ -1,19 +1,20 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Trophy, Star, Zap, Music, Headphones, Heart, Calendar, 
-  TrendingUp, Users, Clock, Target, Award, Crown, Gem,
-  Flame, Volume2, Disc, Radio, Shuffle, Repeat, Search, Globe
+  Trophy, Music, Globe, Flame, Target, TrendingUp, Calendar
 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { ComprehensiveAchievements } from './achievements/ComprehensiveAchievements';
 import { DailyChallenges } from './challenges/DailyChallenges';
 import { Leaderboards } from './leaderboards/Leaderboards';
 import { SeasonalEvents } from './seasons/SeasonalEvents';
+import { UserStatsCard } from './gamification/UserStatsCard';
+import { AchievementProgressCard } from './gamification/AchievementProgressCard';
+import { CategoryPreviewCards } from './gamification/CategoryPreviewCards';
 
 export const GamificationSystem = () => {
   const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
@@ -28,19 +29,19 @@ export const GamificationSystem = () => {
     totalTracks: topTracksData?.items?.length || 0,
     totalArtists: topArtistsData?.items?.length || 0,
     recentPlays: recentlyPlayedData?.items?.length || 0,
-    listeningTime: Math.floor(Math.random() * 10000) + 5000, // Mock listening time in minutes
+    listeningTime: Math.floor(Math.random() * 10000) + 5000,
     streak: Math.floor(Math.random() * 30) + 1,
     genresExplored: Math.floor(Math.random() * 20) + 10,
     uniqueGenres: [...new Set(topArtistsData?.items?.flatMap((artist: any) => artist.genres || []) || [])].length,
   };
 
-  // Calculate level and XP based on comprehensive achievement system
+  // Calculate level and XP
   const totalXP = userStats.totalTracks * 10 + userStats.totalArtists * 25 + userStats.listeningTime * 2;
   const level = Math.floor(totalXP / 1000) + 1;
   const currentLevelXP = totalXP % 1000;
   const nextLevelXP = 1000;
 
-  // Sample of recent achievements (would be calculated from full system)
+  // Sample achievements
   const recentAchievements = [
     {
       id: 'music_lover',
@@ -93,7 +94,6 @@ export const GamificationSystem = () => {
     }
   };
 
-  // Mock achievement statistics
   const achievementStats = {
     total: 105,
     unlocked: Math.floor(Math.random() * 30) + 15,
@@ -123,26 +123,12 @@ export const GamificationSystem = () => {
       </div>
 
       {/* Level and XP Progress */}
-      <Card className="bg-gradient-to-r from-accent/10 to-accent/5 border-accent/20">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center">
-                <Star className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">Level {level} Music Explorer</h3>
-                <p className="text-sm text-muted-foreground">{totalXP.toLocaleString()} total XP earned</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-accent">{currentLevelXP} / {nextLevelXP} XP</div>
-              <p className="text-xs text-muted-foreground">to next level</p>
-            </div>
-          </div>
-          <Progress value={(currentLevelXP / nextLevelXP) * 100} className="h-3" />
-        </CardContent>
-      </Card>
+      <UserStatsCard 
+        level={level}
+        totalXP={totalXP}
+        currentLevelXP={currentLevelXP}
+        nextLevelXP={nextLevelXP}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
@@ -156,54 +142,15 @@ export const GamificationSystem = () => {
         <TabsContent value="overview" className="space-y-6">
           {/* Achievement Progress Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
-                  Achievement Progress
-                </CardTitle>
-                <CardDescription>Your journey through 105+ unique achievements</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-accent">{achievementStats.unlocked}/{achievementStats.total}</span>
-                  <Badge variant="outline" className="text-accent">{completionRate}% Complete</Badge>
-                </div>
-                <Progress value={completionRate} className="h-3" />
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Common:</span>
-                      <span className="font-medium">{achievementStats.common}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-600">Rare:</span>
-                      <span className="font-medium">{achievementStats.rare}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-purple-600">Epic:</span>
-                      <span className="font-medium">{achievementStats.epic}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-yellow-600">Legendary:</span>
-                      <span className="font-medium">{achievementStats.legendary}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-red-600">Mythic:</span>
-                      <span className="font-medium">{achievementStats.mythic}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AchievementProgressCard 
+              achievementStats={achievementStats}
+              completionRate={completionRate}
+            />
 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
+                  <Music className="h-5 w-5" />
                   Your Music Stats
                 </CardTitle>
                 <CardDescription>Real data from your Spotify activity</CardDescription>
@@ -233,35 +180,19 @@ export const GamificationSystem = () => {
 
           {/* Quick Actions */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2"
-              onClick={() => setActiveTab('achievements')}
-            >
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => setActiveTab('achievements')}>
               <Trophy className="h-6 w-6" />
               <span>Browse All Achievements</span>
             </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2"
-              onClick={() => setActiveTab('challenges')}
-            >
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => setActiveTab('challenges')}>
               <Target className="h-6 w-6" />
               <span>Daily Challenges</span>
             </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2"
-              onClick={() => setActiveTab('leaderboards')}
-            >
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => setActiveTab('leaderboards')}>
               <TrendingUp className="h-6 w-6" />
               <span>Leaderboards</span>
             </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2"
-              onClick={() => setActiveTab('events')}
-            >
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => setActiveTab('events')}>
               <Calendar className="h-6 w-6" />
               <span>Seasonal Events</span>
             </Button>
@@ -296,25 +227,7 @@ export const GamificationSystem = () => {
           </Card>
 
           {/* Achievement Categories Preview */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {[
-              { name: 'Listening', count: 25, icon: <Headphones className="h-5 w-5" />, color: 'bg-blue-500' },
-              { name: 'Discovery', count: 30, icon: <Search className="h-5 w-5" />, color: 'bg-green-500' },
-              { name: 'Social', count: 20, icon: <Users className="h-5 w-5" />, color: 'bg-purple-500' },
-              { name: 'Streaks', count: 15, icon: <Flame className="h-5 w-5" />, color: 'bg-orange-500' },
-              { name: 'Special', count: 15, icon: <Star className="h-5 w-5" />, color: 'bg-yellow-500' },
-            ].map((category) => (
-              <Card key={category.name} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('achievements')}>
-                <CardContent className="p-4 text-center">
-                  <div className={`w-10 h-10 ${category.color} rounded-full flex items-center justify-center text-white mx-auto mb-2`}>
-                    {category.icon}
-                  </div>
-                  <h4 className="font-medium">{category.name}</h4>
-                  <p className="text-xs text-muted-foreground">{category.count} achievements</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <CategoryPreviewCards onCategoryClick={() => setActiveTab('achievements')} />
         </TabsContent>
 
         <TabsContent value="achievements">

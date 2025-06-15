@@ -1,187 +1,79 @@
-import { spotifyAPI } from './spotify-api';
-import { spotifyPlaybackSDK } from './spotify-playback-sdk';
+
 import { SpotifyDataCache } from './spotify-data-cache';
-import { extensiveTopTracks, extensiveTopArtists, extensiveRecentlyPlayed } from './extensive-dummy-data';
+import { spotifyPlaybackSDK } from './spotify-playback-sdk';
+import { 
+  fetchRecentlyPlayedData, 
+  fetchTopTracksData, 
+  fetchTopArtistsData 
+} from './data/spotify-data-fetcher';
+import { 
+  processRecentlyPlayedData,
+  processTopTracksData,
+  processTopArtistsData,
+  combineTrackData,
+  enhanceTracksWithSDKData,
+  calculateListeningStats
+} from './data/spotify-data-processor';
 import type { IntegratedTrackData, IntegratedArtistData, ListeningSession } from './spotify-data-types';
 
 class SpotifyDataIntegration {
   private cache = new SpotifyDataCache();
   private currentSession: ListeningSession | null = null;
 
-  // Helper to check if we should use dummy data - ONLY in sandbox mode
-  private shouldUseDummyData(): boolean {
-    return window.location.pathname === '/sandbox';
-  }
-
-  // Helper to ensure non-negative numbers
-  private ensurePositive(value: number): number {
-    const result = Math.max(0, value || 0);
-    if (value < 0) {
-      console.warn('Negative value detected and corrected:', value, '→', result);
-    }
-    return result;
-  }
-
-  // Helper to validate track data
-  private validateTrackData(track: any): boolean {
-    if (!track || !track.id || !track.name) {
-      console.warn('Invalid track data:', track);
-      return false;
-    }
-    return true;
-  }
-
   async getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]> {
-    // Use dummy data ONLY in sandbox mode
-    if (this.shouldUseDummyData()) {
-      console.log('Using dummy data for recently played tracks (sandbox mode)');
-      return extensiveRecentlyPlayed.items
-        .slice(0, limit)
-        .map(item => ({
-          id: item.track.id,
-          name: item.track.name,
-          artists: item.track.artists || [],
-          duration_ms: this.ensurePositive(item.track.duration_ms),
-          popularity: this.ensurePositive(item.track.popularity),
-          playedAt: item.played_at,
-          playCount: 1,
-          totalListeningTime: this.ensurePositive(item.track.duration_ms),
-          source: 'api' as const
-        }));
-    }
-
-    const token = localStorage.getItem('spotify_access_token');
-    if (!token) {
-      throw new Error('No access token available. Please authenticate with Spotify to view your listening data.');
-    }
-
     try {
-      // Fetch from API with pagination
-      let apiTracks: any[] = [];
-      let nextUrl = null;
-      let totalFetched = 0;
-
-      do {
-        const response = await spotifyAPI.getRecentlyPlayed(token, Math.min(50, limit - totalFetched));
-        if (response?.items) {
-          apiTracks.push(...response.items);
-          nextUrl = response.next;
-          totalFetched += response.items.length;
-        } else {
-          break;
-        }
-      } while (nextUrl && totalFetched < limit);
-
-      if (apiTracks.length === 0) {
-        throw new Error('No recently played tracks found. Start listening to music on Spotify to see your activity here.');
-      }
-
-      // Convert API data to integrated format with validation
-      const apiIntegratedTracks = apiTracks
-        .filter(item => this.validateTrackData(item?.track))
-        .map(item => ({
-          id: item.track.id,
-          name: item.track.name,
-          artists: item.track.artists || [],
-          duration_ms: this.ensurePositive(item.track.duration_ms),
-          popularity: this.ensurePositive(item.track.popularity),
-          playedAt: item.played_at,
-          playCount: 1,
-          totalListeningTime: this.ensurePositive(item.track.duration_ms),
-          source: 'api' as const
-        }));
+      const apiTracks = await fetchRecentlyPlayedData(limit);
+      const apiIntegratedTracks = processRecentlyPlayedData(apiTracks);
 
       console.log('API tracks processed:', apiIntegratedTracks.length);
 
-      // Get SDK session data
       const sdkData = spotifyPlaybackSDK.getSessionTracks();
       const sdkIntegratedTracks = sdkData
-        .filter(track => this.validateTrackData(track))
         .map(track => ({
           id: track.id,
           name: track.name,
           artists: track.artists || [],
-          duration_ms: this.ensurePositive(track.duration_ms),
-          popularity: this.ensurePositive(track.popularity || 50),
+          duration_ms: Math.max(0, track.duration_ms),
+          popularity: Math.max(0, track.popularity || 50),
           playedAt: track.playedAt,
-          playCount: this.ensurePositive(track.playCount),
-          totalListeningTime: this.ensurePositive(track.totalListeningTime),
+          playCount: Math.max(0, track.playCount),
+          totalListeningTime: Math.max(0, track.totalListeningTime),
           source: 'sdk' as const
         }));
 
       console.log('SDK tracks processed:', sdkIntegratedTracks.length);
 
-      // Combine and deduplicate
-      const combinedTracks = this.combineTrackData([...apiIntegratedTracks, ...sdkIntegratedTracks]);
-      
-      // Cache the result
+      const combinedTracks = combineTrackData([...apiIntegratedTracks, ...sdkIntegratedTracks]);
       this.cache.setCachedRecentlyPlayed(combinedTracks);
       
       return combinedTracks.slice(0, limit);
     } catch (error) {
       console.error('Error fetching enhanced recently played:', error);
       
-      // Try to return cached data if available
       const cached = this.cache.getCachedRecentlyPlayed();
       if (cached.length > 0) {
         console.log('Returning cached recently played data');
         return cached;
       }
       
-      // If no cached data and we're not in sandbox mode, throw the error
       throw new Error('Unable to load your listening data. Please check your internet connection and try again.');
     }
   }
 
   async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedTrackData[]> {
-    // Use dummy data ONLY in sandbox mode
-    if (this.shouldUseDummyData()) {
-      console.log('Using dummy data for top tracks (sandbox mode)');
-      return extensiveTopTracks.items
-        .slice(0, totalLimit)
-        .map((track: any, index: number) => ({
-          id: track.id,
-          name: track.name,
-          artists: track.artists || [],
-          duration_ms: this.ensurePositive(track.duration_ms),
-          popularity: this.ensurePositive(track.popularity),
-          playCount: this.ensurePositive(Math.max(100 - index, 1)),
-          totalListeningTime: this.ensurePositive((Math.max(100 - index, 1)) * track.duration_ms),
-          source: 'api' as const
-        }));
-    }
-
     const cacheKey = `${timeRange}_${totalLimit}`;
-    
     const cached = this.cache.getCachedTopTracks(cacheKey);
     if (cached) {
       return cached;
     }
 
-    const token = localStorage.getItem('spotify_access_token');
-    if (!token) {
-      throw new Error('No access token available. Please authenticate with Spotify to view your top tracks.');
-    }
-    
     try {
-      const response = await spotifyAPI.getExtendedTopTracks(token, timeRange, totalLimit);
+      const response = await fetchTopTracksData(timeRange, totalLimit);
       
       if (response?.items && response.items.length > 0) {
-        const integratedTracks = response.items
-          .filter(track => this.validateTrackData(track))
-          .map((track: any, index: number) => ({
-            id: track.id,
-            name: track.name,
-            artists: track.artists || [],
-            duration_ms: this.ensurePositive(track.duration_ms),
-            popularity: this.ensurePositive(track.popularity),
-            playCount: this.ensurePositive(Math.max(100 - index, 1)),
-            totalListeningTime: this.ensurePositive((Math.max(100 - index, 1)) * track.duration_ms),
-            source: 'api' as const
-          }));
-
+        const integratedTracks = processTopTracksData(response.items);
         const sdkData = spotifyPlaybackSDK.getSessionTracks();
-        const enhanced = this.enhanceTracksWithSDKData(integratedTracks, sdkData);
+        const enhanced = enhanceTracksWithSDKData(integratedTracks, sdkData);
         
         this.cache.setCachedTopTracks(cacheKey, enhanced);
         return enhanced;
@@ -191,7 +83,6 @@ class SpotifyDataIntegration {
     } catch (error) {
       console.error('Error fetching enhanced top tracks:', error);
       
-      // Try to return cached data if available
       const cached = this.cache.getCachedTopTracks(cacheKey);
       if (cached && cached.length > 0) {
         console.log('Returning cached top tracks data');
@@ -203,48 +94,17 @@ class SpotifyDataIntegration {
   }
 
   async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedArtistData[]> {
-    // Use dummy data ONLY in sandbox mode
-    if (this.shouldUseDummyData()) {
-      console.log('Using dummy data for top artists (sandbox mode)');
-      return extensiveTopArtists.items
-        .slice(0, totalLimit)
-        .map((artist: any, index: number) => ({
-          id: artist.id,
-          name: artist.name,
-          genres: artist.genres || [],
-          popularity: this.ensurePositive(artist.popularity),
-          playCount: this.ensurePositive(Math.max(50 - Math.floor(index / 2), 1)),
-          totalListeningTime: this.ensurePositive((Math.max(50 - Math.floor(index / 2), 1)) * 180000),
-          source: 'api' as const
-        }));
-    }
-
     const cacheKey = `${timeRange}_${totalLimit}`;
-    
     const cached = this.cache.getCachedTopArtists(cacheKey);
     if (cached) {
       return cached;
     }
 
-    const token = localStorage.getItem('spotify_access_token');
-    if (!token) {
-      throw new Error('No access token available. Please authenticate with Spotify to view your top artists.');
-    }
-    
     try {
-      const response = await spotifyAPI.getExtendedTopArtists(token, timeRange, totalLimit);
+      const response = await fetchTopArtistsData(timeRange, totalLimit);
       
       if (response?.items && response.items.length > 0) {
-        const integratedArtists = response.items.map((artist: any, index: number) => ({
-          id: artist.id,
-          name: artist.name,
-          genres: artist.genres || [],
-          popularity: this.ensurePositive(artist.popularity),
-          playCount: this.ensurePositive(Math.max(50 - Math.floor(index / 2), 1)),
-          totalListeningTime: this.ensurePositive((Math.max(50 - Math.floor(index / 2), 1)) * 180000),
-          source: 'api' as const
-        }));
-
+        const integratedArtists = processTopArtistsData(response.items);
         this.cache.setCachedTopArtists(cacheKey, integratedArtists);
         return integratedArtists;
       } else {
@@ -253,7 +113,6 @@ class SpotifyDataIntegration {
     } catch (error) {
       console.error('Error fetching enhanced top artists:', error);
       
-      // Try to return cached data if available
       const cached = this.cache.getCachedTopArtists(cacheKey);
       if (cached && cached.length > 0) {
         console.log('Returning cached top artists data');
@@ -265,30 +124,7 @@ class SpotifyDataIntegration {
   }
 
   calculateListeningStats(tracks: IntegratedTrackData[], timeRangeLabel: string) {
-    const totalPlayCount = this.ensurePositive(tracks.reduce((sum, track) => sum + this.ensurePositive(track.playCount), 0));
-    const totalMinutes = this.ensurePositive(Math.floor(tracks.reduce((sum, track) => sum + this.ensurePositive(track.totalListeningTime), 0) / 60000));
-    const totalHours = this.ensurePositive(Math.floor(totalMinutes / 60));
-    const uniqueArtists = new Set(tracks.flatMap(track => track.artists?.map(a => a.id) || [])).size;
-    
-    const days = timeRangeLabel.includes('Week') ? 7 :
-                 timeRangeLabel.includes('Month') ? 30 :
-                 timeRangeLabel.includes('6 Months') ? 180 :
-                 365;
-    
-    const avgDailyMinutes = this.ensurePositive(Math.floor(totalMinutes / days));
-
-    console.log('Calculated stats:', { totalPlayCount, totalMinutes, totalHours, uniqueArtists, avgDailyMinutes });
-
-    return {
-      totalPlayCount,
-      totalMinutes,
-      totalHours,
-      uniqueArtists,
-      avgDailyMinutes,
-      topTrack: tracks[0],
-      timeRangeLabel,
-      dataQuality: this.assessDataQuality(tracks)
-    };
+    return calculateListeningStats(tracks, timeRangeLabel);
   }
 
   startListeningSession(): void {
@@ -318,57 +154,6 @@ class SpotifyDataIntegration {
 
   getCurrentSession(): ListeningSession | null {
     return this.currentSession;
-  }
-
-  private combineTrackData(tracks: IntegratedTrackData[]): IntegratedTrackData[] {
-    const trackMap = new Map<string, IntegratedTrackData>();
-
-    tracks.forEach(track => {
-      const existing = trackMap.get(track.id);
-      if (existing) {
-        existing.playCount = this.ensurePositive(existing.playCount + track.playCount);
-        existing.totalListeningTime = this.ensurePositive(existing.totalListeningTime + track.totalListeningTime);
-        existing.source = 'combined';
-        if (track.playedAt && (!existing.playedAt || track.playedAt > existing.playedAt)) {
-          existing.playedAt = track.playedAt;
-        }
-      } else {
-        trackMap.set(track.id, { ...track });
-      }
-    });
-
-    return Array.from(trackMap.values()).sort((a, b) => {
-      if (a.playedAt && b.playedAt) {
-        return new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime();
-      }
-      return this.ensurePositive(b.playCount) - this.ensurePositive(a.playCount);
-    });
-  }
-
-  private enhanceTracksWithSDKData(apiTracks: IntegratedTrackData[], sdkTracks: any[]): IntegratedTrackData[] {
-    const sdkTrackMap = new Map(sdkTracks.map(track => [track.id, track]));
-
-    return apiTracks.map(track => {
-      const sdkData = sdkTrackMap.get(track.id);
-      if (sdkData) {
-        return {
-          ...track,
-          playCount: this.ensurePositive(track.playCount + this.ensurePositive(sdkData.playCount)),
-          totalListeningTime: this.ensurePositive(track.totalListeningTime + this.ensurePositive(sdkData.totalListeningTime)),
-          source: 'combined' as const
-        };
-      }
-      return track;
-    });
-  }
-
-  private assessDataQuality(tracks: IntegratedTrackData[]): 'high' | 'medium' | 'low' {
-    const combinedSources = tracks.filter(t => t.source === 'combined').length;
-    const apiSources = tracks.filter(t => t.source === 'api').length;
-    
-    if (combinedSources > tracks.length * 0.3) return 'high';
-    if (apiSources > tracks.length * 0.5) return 'medium';
-    return 'low';
   }
 
   clearCache(): void {

@@ -42,9 +42,9 @@ export const InfoButton = ({
           <Button
             variant="ghost"
             size="icon"
-            className={cn("h-4 w-4 text-muted-foreground hover:text-foreground", className)}
+            className={cn("h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-accent/20 transition-colors", className)}
           >
-            <Info className="h-3 w-3" />
+            <Info className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80" side="top">
@@ -61,9 +61,9 @@ export const InfoButton = ({
           <Button
             variant="ghost"
             size="icon"
-            className={cn("h-4 w-4 text-muted-foreground hover:text-foreground", className)}
+            className={cn("h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-accent/20 transition-colors", className)}
           >
-            <Info className="h-3 w-3" />
+            <Info className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent className="max-w-sm" side="top">

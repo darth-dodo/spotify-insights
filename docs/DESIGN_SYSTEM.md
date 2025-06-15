@@ -2,7 +2,7 @@
 # Spotify Analytics Dashboard - Design System
 
 ## Overview
-A comprehensive design system for the Spotify Analytics Dashboard that ensures consistency, accessibility, and scalability across all components and pages. The design is heavily inspired by Spotify's visual identity while maintaining excellent accessibility standards.
+A comprehensive design system for the Spotify Analytics Dashboard that ensures consistency, accessibility, and scalability across all components and pages. The design is heavily inspired by Spotify's visual identity while maintaining excellent accessibility standards and supporting real-time playback integration.
 
 ## Color System
 
@@ -65,30 +65,42 @@ The application supports 5 carefully chosen accent colors, all WCAG AA compliant
 }
 ```
 
-#### Vibrant Pink
+#### Vibrant Coral
 ```css
-[data-accent="pink"] {
-  --accent: 330 81% 60%;     /* #EC4899 */
+[data-accent="coral"] {
+  --accent: 14 90% 65%;      /* #F87171 */
   --accent-foreground: 210 40% 98%;
 }
 
-[data-accent="pink"].dark {
-  --accent: 330 81% 60%;     /* #EC4899 */
+[data-accent="coral"].dark {
+  --accent: 14 90% 65%;      /* #F87171 */
   --accent-foreground: 210 40% 98%;
 }
 ```
 
-#### Sunset Orange
+#### Warm Amber
 ```css
-[data-accent="orange"] {
-  --accent: 25 95% 53%;      /* #F59E0B */
+[data-accent="amber"] {
+  --accent: 43 96% 56%;      /* #FCD34D */
   --accent-foreground: 26 83% 14%;
 }
 
-[data-accent="orange"].dark {
+[data-accent="amber"].dark {
   --accent: 31 81% 56%;      /* #FB923C */
   --accent-foreground: 26 83% 14%;
 }
+```
+
+### Real-time Status Colors
+Additional colors for real-time playback status indicators:
+
+```css
+/* Playback Status Colors */
+--playing: 142 71% 45%;        /* Spotify Green - Currently playing */
+--paused: 43 74% 66%;          /* Amber - Paused state */
+--buffering: 217 91% 60%;      /* Blue - Loading/buffering */
+--offline: 0 0% 45%;           /* Gray - Offline/unavailable */
+--error: 0 84% 60%;            /* Red - Error state */
 ```
 
 ## How to Reproduce the Spotify Design
@@ -101,31 +113,35 @@ The Spotify-inspired theme is implemented through:
 - **Data Attributes**: Theme applied via `data-accent` attribute on document root
 - **Class Toggle**: Dark mode applied via `.dark` class on document element
 
-### 2. Color Application Process
+### 2. Real-time Integration Design
 ```typescript
-// Theme state management
-const [theme, setTheme] = useState<'light' | 'dark'>('light');
-const [accentColor, setAccentColor] = useState<'spotify' | 'blue' | 'purple' | 'pink' | 'orange'>('spotify');
+// Real-time playback state integration
+const [playbackState, setPlaybackState] = useState<'playing' | 'paused' | 'buffering' | 'offline'>('offline');
+const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
 
-// Apply to DOM
+// Apply real-time status colors
 useEffect(() => {
-  document.documentElement.classList.toggle('dark', theme === 'dark');
-  document.documentElement.setAttribute('data-accent', accentColor);
-}, [theme, accentColor]);
+  document.documentElement.style.setProperty('--current-status', 
+    playbackState === 'playing' ? 'var(--playing)' :
+    playbackState === 'paused' ? 'var(--paused)' :
+    playbackState === 'buffering' ? 'var(--buffering)' :
+    'var(--offline)'
+  );
+}, [playbackState]);
 ```
 
 ### 3. Component Integration
 All UI components use the CSS custom properties:
 ```css
-/* Example component styling */
-.button-primary {
-  background-color: hsl(var(--accent));
+/* Real-time status indicators */
+.playback-indicator {
+  background-color: hsl(var(--current-status));
   color: hsl(var(--accent-foreground));
 }
 
-.card {
-  background-color: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
+.live-badge {
+  background-color: hsl(var(--playing));
+  animation: pulse 2s infinite;
 }
 ```
 
@@ -155,300 +171,313 @@ All UI components use the CSS custom properties:
 .text-xs { font-size: 0.75rem; line-height: 1; }     /* Captions */
 ```
 
-## Spacing System
+## Real-time Component Specifications
 
-### Spotify-Inspired Spacing
-Based on 8px grid system for visual harmony:
-
+### Live Status Indicators
 ```css
-/* Base spacing units */
-.space-1 { margin/padding: 0.25rem; }  /* 4px */
-.space-2 { margin/padding: 0.5rem; }   /* 8px - Base unit */
-.space-3 { margin/padding: 0.75rem; }  /* 12px */
-.space-4 { margin/padding: 1rem; }     /* 16px - Standard */
-.space-6 { margin/padding: 1.5rem; }   /* 24px - Comfortable */
-.space-8 { margin/padding: 2rem; }     /* 32px - Spacious */
-.space-12 { margin/padding: 3rem; }    /* 48px - Section breaks */
-.space-16 { margin/padding: 4rem; }    /* 64px - Page sections */
-```
+/* Real-time playback indicator */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: hsl(var(--playing));
+  color: hsl(var(--accent-foreground));
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
 
-## Component Specifications
-
-### Cards (Spotify-Style)
-```css
-/* Standard Music Card */
-background: hsl(var(--card));
-border: 1px solid hsl(var(--border));
-border-radius: 0.5rem; /* 8px - Spotify standard */
-padding: 1.5rem; /* 24px */
-box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-transition: all 150ms ease;
-
-/* Hover state */
-hover:shadow-lg;
-hover:scale-[1.02];
-hover:border-color: hsl(var(--accent) / 0.3);
-```
-
-### Buttons (Music Player Style)
-```css
-/* Primary Play Button */
-background: hsl(var(--accent));
-color: hsl(var(--accent-foreground));
-padding: 0.75rem 1.5rem; /* 12px 24px */
-border-radius: 2rem; /* Full rounded - Spotify style */
-font-weight: 600;
-transition: all 150ms ease;
-
-/* Hover states */
-hover:scale-105;
-hover:shadow-lg;
-
-/* Icon buttons */
-.icon-button {
-  width: 2.5rem; /* 40px */
-  height: 2.5rem;
-  border-radius: 50%;
-  background: hsl(var(--accent));
+/* Session tracking badge */
+.session-badge {
+  background: hsl(var(--accent) / 0.1);
+  border: 1px solid hsl(var(--accent) / 0.3);
+  color: hsl(var(--accent));
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 150ms ease;
 }
 ```
 
-### Navigation (Spotify Sidebar Style)
+### Error State Components
 ```css
-/* Sidebar */
-background: hsl(var(--sidebar-background));
-width: 20rem; /* 320px */
-border-right: 1px solid hsl(var(--border));
-
-/* Navigation items */
-.nav-item {
-  padding: 0.75rem 1rem;
+/* API error states */
+.error-state {
+  background: hsl(var(--error) / 0.1);
+  border: 1px solid hsl(var(--error) / 0.3);
+  color: hsl(var(--error));
+  padding: 1rem;
   border-radius: 0.5rem;
-  margin: 0.25rem 0.5rem;
+}
+
+/* Offline mode indicator */
+.offline-mode {
+  background: hsl(var(--offline) / 0.1);
+  border: 1px solid hsl(var(--offline) / 0.3);
+  color: hsl(var(--offline));
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+/* Retry button styling */
+.retry-button {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
   transition: all 150ms ease;
 }
 
-.nav-item:hover {
-  background: hsl(var(--accent) / 0.1);
-}
-
-.nav-item.active {
-  background: hsl(var(--accent) / 0.15);
-  border-left: 3px solid hsl(var(--accent));
+.retry-button:hover {
+  background: hsl(var(--accent) / 0.9);
+  transform: scale(1.02);
 }
 ```
 
-## Layout System
+## Data Visualization Components
 
-### Spotify-Inspired Grid
+### Real-time Charts
 ```css
-/* Dashboard Layout */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem; /* 24px */
+/* Live data chart styling */
+.live-chart {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  position: relative;
 }
 
-/* Music Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem; /* 16px */
-}
-
-/* Player Layout */
-.player-layout {
-  display: grid;
-  grid-template-areas: 
-    "sidebar main"
-    "player player";
-  grid-template-columns: 320px 1fr;
-  grid-template-rows: 1fr auto;
-}
-```
-
-### Responsive Breakpoints
-```css
-/* Mobile-first breakpoints */
-sm: 640px;   /* Large phones */
-md: 768px;   /* Tablets */
-lg: 1024px;  /* Small desktops */
-xl: 1280px;  /* Desktops */
-2xl: 1536px; /* Large screens */
-
-/* Layout adaptations */
-@media (max-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .sidebar {
-    transform: translateX(-100%);
-    position: fixed;
-    z-index: 50;
-  }
-}
-```
-
-## Accessibility Standards
-
-### WCAG 2.1 AA Compliance
-- **Color Contrast**: All text has minimum 4.5:1 ratio
-- **Focus Indicators**: 2px solid accent color outline
-- **Touch Targets**: Minimum 44px for interactive elements
-- **Screen Readers**: Comprehensive ARIA labels and descriptions
-
-### Focus Management
-```css
-.focus-visible {
-  outline: 2px solid hsl(var(--accent));
-  outline-offset: 2px;
-  border-radius: 0.25rem;
-}
-
-/* Skip to content link */
-.skip-link {
+.live-chart::before {
+  content: "LIVE";
   position: absolute;
-  top: -40px;
-  left: 6px;
-  background: hsl(var(--accent));
+  top: 0.75rem;
+  right: 0.75rem;
+  background: hsl(var(--playing));
   color: hsl(var(--accent-foreground));
-  padding: 8px;
-  text-decoration: none;
-  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  animation: pulse 2s infinite;
 }
 
-.skip-link:focus {
-  top: 6px;
+/* Session progress bars */
+.session-progress {
+  height: 0.5rem;
+  background: hsl(var(--muted));
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.session-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--accent) / 0.7));
+  transition: width 300ms ease;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}
+```
+
+### Caching Status Indicators
+```css
+/* Cache status badges */
+.cache-fresh {
+  background: hsl(var(--playing) / 0.1);
+  color: hsl(var(--playing));
+  border: 1px solid hsl(var(--playing) / 0.3);
+}
+
+.cache-stale {
+  background: hsl(var(--paused) / 0.1);
+  color: hsl(var(--paused));
+  border: 1px solid hsl(var(--paused) / 0.3);
+}
+
+.cache-updating {
+  background: hsl(var(--buffering) / 0.1);
+  color: hsl(var(--buffering));
+  border: 1px solid hsl(var(--buffering) / 0.3);
+  animation: pulse 1.5s infinite;
 }
 ```
 
 ## Animation System
 
-### Spotify-Inspired Transitions
+### Real-time Animations
 ```css
-/* Smooth micro-interactions */
-* {
-  transition-property: color, background-color, border-color, transform, opacity, box-shadow;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+/* Live data streaming animation */
+@keyframes data-stream {
+  0% { opacity: 0; transform: translateY(10px); }
+  50% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
 }
 
-/* Music player animations */
-@keyframes pulse-beat {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.streaming-data {
+  animation: data-stream 2s ease-in-out infinite;
 }
 
-.playing-indicator {
-  animation: pulse-beat 0.8s ease-in-out infinite;
+/* Playback progress animation */
+@keyframes progress-update {
+  0% { width: var(--start-width); }
+  100% { width: var(--end-width); }
 }
 
-/* Hover effects */
-.card-hover {
-  transition: all 200ms ease;
+.playback-progress {
+  animation: progress-update var(--duration) linear;
 }
 
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgb(0 0 0 / 0.15);
+/* Connection status pulse */
+@keyframes connection-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.connection-indicator {
+  animation: connection-pulse 1.5s ease-in-out infinite;
 }
 ```
 
-## Icon System
+### Error State Animations
+```css
+/* Error shake animation */
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
 
-### Lucide React Integration
-- **Library**: Lucide React
-- **Style**: Outline icons for consistency
-- **Sizes**: 16px (default), 20px, 24px
-- **Stroke Width**: 1.5px for optimal clarity
+.error-animation {
+  animation: error-shake 0.5s ease-in-out;
+}
 
-```jsx
-// Standard usage
-<Music className="h-5 w-5 text-accent" />
+/* Retry loading animation */
+@keyframes retry-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
-// Interactive icons
-<Play className="h-6 w-6 text-accent hover:scale-110 transition-transform" />
+.retry-loading {
+  animation: retry-spin 1s linear infinite;
+}
+```
+
+## Performance & Accessibility
+
+### Real-time Performance Optimizations
+```css
+/* GPU acceleration for real-time updates */
+.real-time-component {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .live-indicator,
+  .session-progress-fill,
+  .streaming-data {
+    animation: none !important;
+  }
+  
+  * {
+    transition: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .live-indicator {
+    border: 2px solid currentColor;
+  }
+  
+  .error-state {
+    border-width: 2px;
+  }
+}
+```
+
+### Battery and Data Savings
+```css
+/* Reduced animations for battery saving */
+@media (prefers-reduced-data: reduce) {
+  .live-chart::before {
+    animation: none;
+    content: "●";
+  }
+  
+  .streaming-data {
+    animation-duration: 4s;
+  }
+}
 ```
 
 ## Implementation Guide
 
-### 1. Setting Up the Theme System
-```bash
-# Install required dependencies
-npm install class-variance-authority clsx tailwind-merge
-
-# Copy theme files
-cp src/hooks/useTheme.ts your-project/src/hooks/
-cp src/components/providers/ThemeProvider.tsx your-project/src/components/providers/
-cp src/index.css your-project/src/
-```
-
-### 2. Wrap Your App
-```jsx
-import { ThemeProvider } from '@/components/providers/ThemeProvider';
-
-function App() {
-  return (
-    <ThemeProvider>
-      <YourApp />
-    </ThemeProvider>
-  );
-}
-```
-
-### 3. Use Theme Context
-```jsx
-import { useTheme } from '@/hooks/useTheme';
-
-function Component() {
-  const { theme, accentColor, setAccentColor, toggleTheme } = useTheme();
+### 1. Real-time Integration Setup
+```typescript
+// Real-time theme integration
+const useRealtimeTheme = () => {
+  const { theme, accentColor } = useTheme();
+  const { playbackState } = useSpotifyPlayback();
   
-  return (
-    <button 
-      onClick={toggleTheme}
-      className="bg-accent text-accent-foreground"
-    >
-      Toggle Theme
-    </button>
-  );
-}
+  useEffect(() => {
+    document.documentElement.setAttribute('data-playback-state', playbackState);
+  }, [playbackState]);
+  
+  return { theme, accentColor, playbackState };
+};
 ```
 
-### 4. Add Theme Controls
-```jsx
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { AccentColorPicker } from '@/components/ui/AccentColorPicker';
+### 2. Error Handling UI Integration
+```typescript
+// Error state management
+const useErrorStates = () => {
+  const [apiStatus, setApiStatus] = useState<'online' | 'offline' | 'error'>('online');
+  const [cacheStatus, setCacheStatus] = useState<'fresh' | 'stale' | 'updating'>('fresh');
+  
+  return { apiStatus, cacheStatus, setApiStatus, setCacheStatus };
+};
+```
 
-function Header() {
-  return (
-    <div className="flex gap-2">
-      <ThemeToggle />
-      <AccentColorPicker />
-    </div>
-  );
-}
+### 3. Performance Monitoring
+```typescript
+// Performance-aware component rendering
+const usePerformanceAwareRendering = () => {
+  const [shouldReduceAnimations, setShouldReduceAnimations] = useState(false);
+  
+  useEffect(() => {
+    // Check for low-end devices or battery saver mode
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setShouldReduceAnimations(mediaQuery.matches);
+  }, []);
+  
+  return { shouldReduceAnimations };
+};
 ```
 
 ## Best Practices
 
-### Color Usage
-- Use `hsl(var(--accent))` for primary actions and highlights
-- Use `hsl(var(--muted-foreground))` for secondary text
-- Maintain consistent contrast ratios across all themes
-- Test color combinations with accessibility tools
+### Real-time Data Handling
+- Use debounced updates for high-frequency data changes
+- Implement virtual scrolling for large datasets
+- Cache rendered components for identical data states
+- Use CSS transforms for smooth real-time animations
 
-### Component Development
-- Always use CSS custom properties instead of hardcoded colors
-- Implement hover and focus states for all interactive elements
-- Test components in both light and dark modes
-- Ensure responsive behavior at all breakpoints
+### Error State Design
+- Provide clear error messages with actionable solutions
+- Use consistent error state styling across all components
+- Implement progressive enhancement for offline scenarios
+- Show loading states during retry operations
 
-### Performance
-- CSS custom properties update efficiently across themes
-- Minimize layout shifts during theme transitions
-- Use CSS transforms for animations instead of changing layout properties
-- Optimize images for different color schemes
+### Performance Optimization
+- Use CSS custom properties for theme changes
+- Implement lazy loading for non-critical real-time features
+- Optimize animation performance with GPU acceleration
+- Respect user preferences for reduced motion and data usage
 
-This design system ensures a cohesive, accessible, and maintainable Spotify-inspired interface that scales across the entire application.
+This enhanced design system ensures a cohesive, performant Spotify-inspired experience that handles real-time data, caching states, and error scenarios while maintaining excellent accessibility and user experience standards.

@@ -6,30 +6,44 @@
 2. [Design Philosophy](#design-philosophy)
 3. [User Stories](#user-stories)
 4. [Feature Specifications](#feature-specifications)
-5. [Spotify-Inspired UI/UX Design](#spotify-inspired-uiux-design)
-6. [Privacy & Security](#privacy--security)
-7. [User Flow Diagrams](#user-flow-diagrams)
+5. [Real-time Integration Features](#real-time-integration-features)
+6. [Data Management Architecture](#data-management-architecture)
+7. [Spotify-Inspired UI/UX Design](#spotify-inspired-uiux-design)
+8. [Privacy & Security](#privacy--security)
+9. [Error Handling & Resilience](#error-handling--resilience)
+10. [User Flow Diagrams](#user-flow-diagrams)
 
 ## Product Overview
 
 ### Vision Statement
-A privacy-first Spotify analytics dashboard that provides users with meaningful insights into their music listening habits while maintaining maximum data protection and minimal storage footprint. The design draws heavy inspiration from Spotify's visual identity to create a familiar and intuitive user experience.
+A privacy-first Spotify analytics dashboard that provides users with meaningful real-time insights into their music listening habits while maintaining maximum data protection and minimal storage footprint. The design draws heavy inspiration from Spotify's visual identity to create a familiar and intuitive user experience with advanced real-time playback tracking.
 
 ### Key Value Propositions
+- **Real-time Playback Tracking**: Live session monitoring with Web Playback SDK integration
 - **Spotify-Inspired Design**: Familiar interface using Spotify's green branding and modern aesthetics
-- **Privacy-First**: SHA-256 hashing, minimal data storage (<4KB total)
-- **Beautiful Analytics**: Rich visualizations of listening patterns with music-focused design
+- **Privacy-First**: SHA-256 hashing, minimal data storage (<4KB total), local-only processing
+- **Intelligent Caching**: Multi-layer caching with IndexedDB for offline capabilities
+- **Beautiful Analytics**: Rich visualizations of listening patterns with real-time updates
 - **Multi-Theme Support**: 5 carefully chosen accent colors with perfect light/dark mode integration
-- **Responsive Design**: Works seamlessly on all devices with touch-friendly interactions
+- **Resilient Architecture**: Graceful error handling and offline fallback modes
 - **Zero External Tracking**: No third-party analytics or tracking scripts
 
 ### Target Audience
-- Music enthusiasts who want to understand their listening habits
+- Music enthusiasts who want real-time listening insights
 - Privacy-conscious users who appreciate data transparency
-- Spotify Premium and Free users
-- Ages 16-45, tech-savvy individuals who value modern design
+- Spotify Premium users who want advanced playback tracking
+- Data visualization enthusiasts interested in their listening patterns
+- Ages 16-45, tech-savvy individuals who value modern design and real-time features
 
 ## Design Philosophy
+
+### Real-time First Approach
+The application prioritizes real-time data processing and immediate user feedback:
+
+- **Live Session Tracking**: Immediate updates as users listen to music
+- **Real-time Visualizations**: Charts and graphs that update with current playback
+- **Instant Feedback**: Visual indicators for connection status, data freshness, and errors
+- **Progressive Enhancement**: Graceful degradation when real-time features are unavailable
 
 ### Spotify-Inspired Aesthetic
 The design system is built around Spotify's core visual principles:
@@ -40,272 +54,298 @@ The design system is built around Spotify's core visual principles:
 - **Card-Based Layout**: Clean content cards with subtle shadows and rounded corners
 - **Smooth Animations**: 150ms transitions with cubic-bezier easing for premium feel
 
-### Color Psychology
-- **Green (Spotify)**: Growth, harmony, music discovery
-- **Blue**: Trust, analytics, data insights
-- **Purple**: Creativity, artistic expression
-- **Pink**: Energy, dynamic listening patterns
-- **Orange**: Enthusiasm, warm musical experiences
+### Error-Resilient Design
+- **Graceful Degradation**: Features continue working with partial data
+- **Clear Error States**: Informative error messages with recovery actions
+- **Offline Support**: Cached data available when connection is lost
+- **Progressive Recovery**: Automatic retry mechanisms with user feedback
 
 ## User Stories
 
-### Epic 1: Authentication & Onboarding
+### Epic 1: Authentication & Real-time Setup
 | ID | User Story | Acceptance Criteria | Priority |
 |---|---|---|---|
-| US-001 | As a user, I want to connect my Spotify account securely | - OAuth 2.0 with PKCE flow<br>- Spotify-inspired login design<br>- Clear permission explanation<br>- Secure token storage | High |
-| US-002 | As a user, I want to understand what data is collected | - Transparent data collection notice<br>- Privacy policy access<br>- Data usage explanation with visual elements | High |
-| US-003 | As a user, I want a familiar Spotify-like interface | - Green accent color by default<br>- Dark mode optimized<br>- Music-focused iconography<br>- Consistent with Spotify patterns | High |
+| US-001 | As a user, I want to connect my Spotify account with real-time tracking | - OAuth 2.0 with PKCE flow<br>- Web Playback SDK initialization<br>- Real-time permission explanation<br>- Live connection status indicator | High |
+| US-002 | As a user, I want to see live playback status | - Real-time track information display<br>- Play/pause state indicators<br>- Progress bar with live updates<br>- Device information display | High |
+| US-003 | As a user, I want immediate feedback on data freshness | - Cache status indicators<br>- Last update timestamps<br>- Live data streaming badges<br>- Offline mode notifications | High |
 
-### Epic 2: Dashboard & Analytics
+### Epic 2: Real-time Dashboard & Analytics
 | ID | User Story | Acceptance Criteria | Priority |
 |---|---|---|---|
-| US-004 | As a user, I want to see my listening overview | - Top tracks/artists display<br>- Recent listening activity<br>- Genre breakdown with visual charts<br>- Spotify-inspired card design | High |
-| US-005 | As a user, I want to see listening trends over time | - Time-based charts with Spotify colors<br>- Trend analysis with smooth animations<br>- Pattern recognition visualization<br>- Interactive hover states | Medium |
-| US-006 | As a user, I want to explore my genre preferences | - Genre distribution with accent colors<br>- Genre evolution over time<br>- Music discovery insights<br>- Beautiful data visualization | Medium |
+| US-004 | As a user, I want to see live listening session data | - Current session tracking<br>- Real-time listening time updates<br>- Live genre analysis<br>- Session statistics dashboard | High |
+| US-005 | As a user, I want real-time listening trends | - Live updating charts<br>- Real-time pattern recognition<br>- Session-based trend analysis<br>- Smooth data transitions | Medium |
+| US-006 | As a user, I want live genre and artist exploration | - Real-time genre distribution<br>- Live artist play counts<br>- Session-based discovery insights<br>- Interactive real-time filters | Medium |
 
-### Epic 3: Customization & Themes
+### Epic 3: Data Management & Caching
 | ID | User Story | Acceptance Criteria | Priority |
 |---|---|---|---|
-| US-007 | As a user, I want to customize the accent color | - 5 carefully chosen color options<br>- Real-time theme preview<br>- Persistent color selection<br>- Accessibility-compliant colors | Medium |
-| US-008 | As a user, I want seamless dark/light mode | - System preference detection<br>- Smooth theme transitions<br>- Optimized contrast ratios<br>- Spotify-inspired dark theme | High |
+| US-007 | As a user, I want reliable data even when offline | - IndexedDB caching implementation<br>- Offline mode indicator<br>- Cached data freshness display<br>- Background sync when online | High |
+| US-008 | As a user, I want to manage cached data | - Cache size indicator<br>- Manual cache clearing<br>- Cache optimization settings<br>- Storage usage breakdown | Medium |
 
-### Epic 4: Privacy & Data Control
+### Epic 4: Error Handling & Recovery
 | ID | User Story | Acceptance Criteria | Priority |
 |---|---|---|---|
-| US-009 | As a user, I want to control my data | - View stored data interface<br>- Export data functionality<br>- Delete data option<br>- Clear privacy controls | High |
-| US-010 | As a user, I want to understand data security | - Security feature explanation<br>- Data retention policies<br>- Privacy controls with clear UI | High |
+| US-009 | As a user, I want clear error communication | - Specific error message display<br>- Recovery action suggestions<br>- Retry mechanisms with feedback<br>- Error state styling consistent with design | High |
+| US-010 | As a user, I want automatic error recovery | - Background retry for API calls<br>- Graceful fallback to cached data<br>- Progressive enhancement approach<br>- Smart rate limit handling | High |
 
 ## Feature Specifications
 
-### Authentication System
-- **OAuth 2.0 with PKCE** for secure authentication
-- **Spotify-Inspired Login**: Green primary buttons, familiar layout patterns
-- **Minimal Scopes**: Only essential permissions requested
-- **Token Management**: Automatic refresh, secure storage with visual feedback
+### Real-time Playback Integration
+- **Web Playback SDK Integration**: Live track changes, play/pause events, volume monitoring
+- **Session Tracking**: Real-time session duration, accurate listening time calculation
+- **Device Information**: Current device detection, playback quality monitoring
+- **Progress Tracking**: Live playback position updates, track completion detection
 
-### Data Processing
-- **Client-Side Only**: All processing happens in browser
-- **Hashing**: SHA-256 for sensitive identifiers
-- **Minimal Storage**: <4KB total data footprint
-- **Session-Based**: Data cleared on logout with confirmation
+### Enhanced Data Management
+- **Multi-layer Caching**: Memory cache, localStorage, IndexedDB for different data types
+- **Background Sync**: Periodic data updates, smart refresh strategies
+- **Offline Support**: Comprehensive offline mode with cached visualizations
+- **Data Compression**: Efficient storage of historical listening data
 
-### Analytics Features
-- **Dashboard Overview**: Key metrics with music-focused design and recent activity
-- **Listening Trends**: Time-based analysis with interactive Spotify-colored charts
-- **Genre Analysis**: Music taste breakdown with beautiful visualizations
-- **Privacy Controls**: Data management with transparent, accessible interface
+### Advanced Analytics Features
+- **Live Session Analytics**: Real-time session statistics, listening pattern detection
+- **Historical Analysis**: Long-term trend analysis with cached historical data
+- **Genre Intelligence**: Real-time genre classification, listening mood detection
+- **Discovery Insights**: Track discovery patterns, replay behavior analysis
+
+## Real-time Integration Features
+
+### Web Playback SDK Features
+
+#### Live Playback Monitoring
+```typescript
+interface RealtimePlaybackState {
+  currentTrack: {
+    id: string;
+    name: string;
+    artists: Artist[];
+    duration_ms: number;
+    progress_ms: number;
+  };
+  playbackState: 'playing' | 'paused' | 'buffering';
+  volume: number;
+  device: {
+    id: string;
+    name: string;
+    type: 'computer' | 'smartphone' | 'tablet';
+  };
+  timestamp: number;
+}
+```
+
+#### Session Analytics
+- **Live Session Duration**: Real-time session length calculation
+- **Track Completion Rates**: Percentage of tracks played to completion
+- **Skip Patterns**: Real-time skip behavior analysis
+- **Volume Patterns**: Volume change tracking and habits
+
+#### Real-time Insights
+- **Listening Mood Detection**: Real-time genre and energy analysis
+- **Discovery Tracking**: New vs. familiar track identification
+- **Social Context**: Time of day and day of week listening patterns
+- **Quality Metrics**: Audio quality and connection stability tracking
+
+### Background Data Processing
+
+#### Intelligent Caching Strategy
+```typescript
+interface CacheStrategy {
+  memory: {
+    duration: '30_seconds';
+    types: ['current_playback', 'live_session'];
+  };
+  localStorage: {
+    duration: '5_minutes';
+    types: ['recent_tracks', 'session_summaries'];
+  };
+  indexedDB: {
+    duration: '30_days';
+    types: ['historical_data', 'offline_analytics'];
+    maxSize: '50MB';
+  };
+}
+```
+
+#### Background Sync Operations
+- **Smart Refresh**: Refresh data based on user activity patterns
+- **Batch Processing**: Efficient API call batching for rate limit optimization
+- **Incremental Updates**: Only fetch new data since last update
+- **Priority Queuing**: Critical updates processed first
+
+## Data Management Architecture
+
+### Storage Hierarchy
+
+#### Level 1: Real-time Memory Cache
+- **Duration**: 30 seconds
+- **Data**: Current playback state, live session data
+- **Size**: <1KB
+- **Purpose**: Immediate UI updates
+
+#### Level 2: Short-term localStorage
+- **Duration**: 5 minutes
+- **Data**: Recent tracks, session summaries, UI preferences
+- **Size**: <10KB
+- **Purpose**: Quick app restarts, theme persistence
+
+#### Level 3: Long-term IndexedDB
+- **Duration**: 30 days (user configurable)
+- **Data**: Historical listening data, offline analytics, cached API responses
+- **Size**: <50MB (with automatic cleanup)
+- **Purpose**: Offline support, trend analysis
+
+### Data Synchronization
+
+#### Online Mode
+```typescript
+interface OnlineDataFlow {
+  realtimeSDK: 'immediate_processing';
+  apiCalls: 'smart_batching';
+  cacheUpdates: 'background_sync';
+  uiUpdates: 'reactive_streaming';
+}
+```
+
+#### Offline Mode
+```typescript
+interface OfflineDataFlow {
+  cachedData: 'read_only_access';
+  sessionTracking: 'local_storage_only';
+  analytics: 'cached_computations';
+  sync: 'queue_for_online';
+}
+```
+
+## Error Handling & Resilience
+
+### Error Classification System
+
+#### API Errors
+- **Rate Limiting (429)**: Smart backoff with user notification
+- **Authentication (401)**: Token refresh with seamless re-authentication
+- **Network (503/504)**: Fallback to cached data with retry scheduling
+- **Not Found (404)**: Graceful handling with alternative suggestions
+
+#### SDK Errors
+- **Connection Failed**: Fallback to simulated data mode
+- **Playback Errors**: Continue with limited real-time features
+- **Device Conflicts**: Clear conflict resolution UI
+- **Permission Denied**: Alternative data source suggestions
+
+#### Storage Errors
+- **Quota Exceeded**: Automatic cache cleanup with user notification
+- **Corruption**: Rebuild cache from API with progress indicator
+- **Access Denied**: Fallback to memory-only storage
+- **Version Mismatch**: Migrate data to new schema
+
+### Recovery Strategies
+
+#### Progressive Enhancement
+```typescript
+interface FeatureAvailability {
+  core: 'always_available';        // Basic Spotify data display
+  enhanced: 'api_dependent';       // Extended data sets
+  realtime: 'sdk_dependent';       // Live playback tracking
+  offline: 'cache_dependent';      // Historical analysis
+}
+```
+
+#### Automatic Recovery
+- **Exponential Backoff**: Smart retry timing for failed requests
+- **Circuit Breaker**: Temporary disable of failing features
+- **Health Checks**: Periodic system health monitoring
+- **Graceful Degradation**: Reduce features rather than complete failure
 
 ## Spotify-Inspired UI/UX Design
 
-### Visual Design System
+### Real-time Visual Indicators
 
-#### Color Palette
+#### Live Status Elements
 ```css
-/* Primary Spotify Colors */
-Spotify Green: #1DB954 (HSL: 142 71% 45%)
-Dark Green: #1ED760 (HSL: 142 84% 47%)
-Dark Background: #0A0A0A (HSL: 222.2 84% 4.9%)
-Light Background: #FFFFFF (HSL: 0 0% 100%)
+/* Live playback indicator */
+.live-indicator {
+  background: linear-gradient(45deg, #1DB954, #1ED760);
+  animation: pulse 2s infinite;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-weight: 600;
+}
 
-/* Additional Accent Colors */
-Ocean Blue: #3B82F6 / #60A5FA
-Royal Purple: #8B5CF6 / #7C3AED  
-Vibrant Pink: #EC4899
-Sunset Orange: #F59E0B / #FB923C
+/* Connection status */
+.connection-status {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+}
+
+.status-online { background: #1DB954; }
+.status-offline { background: #6B7280; }
+.status-error { background: #EF4444; }
 ```
 
-#### Typography System
-- **Font Family**: Inter (matching Spotify's clean aesthetic)
-- **Weights**: 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
-- **Scale**: Harmonious type scale from 12px to 48px
-- **Line Heights**: Optimized for readability across all sizes
+#### Real-time Data Visualization
+- **Live Charts**: Smooth transitions for real-time data updates
+- **Progress Bars**: Live playback progress with smooth animations
+- **Activity Heatmaps**: Real-time activity updates with color transitions
+- **Session Timers**: Live session duration with visual countdown elements
 
-#### Layout Principles
-```
-┌─────────────────────────────────────────┐
-│ Header (User, Theme Controls)           │ 64px
-├─────────────┬───────────────────────────┤
-│ Sidebar     │ Main Content Area         │
-│ 320px       │ ┌─────────────────────────┐ │
-│ - Overview  │ │ Dashboard Cards         │ │
-│ - Trends    │ │ (Grid Layout)           │ │
-│ - Genres    │ └─────────────────────────┘ │
-│ - Artists   │ ┌─────────────────────────┐ │
-│ - Settings  │ │ Charts & Analytics      │ │
-│             │ │ (Interactive)           │ │
-│             │ └─────────────────────────┘ │
-└─────────────┴───────────────────────────┘
-```
+### Error State Design
 
-### Component Design Specifications
-
-#### Navigation Sidebar
-- **Width**: 320px (desktop), full-width overlay (mobile)
-- **Background**: Dark theme optimized with subtle transparency
-- **Icons**: Music-focused Lucide icons (Music, TrendingUp, Users, etc.)
-- **Active States**: Left border accent color, background highlight
-- **Categories**: Grouped navigation with section headers
-
-#### Dashboard Cards
-```css
-/* Card Styling */
-background: hsl(var(--card));
-border: 1px solid hsl(var(--border));
-border-radius: 12px; /* Spotify-like rounded corners */
-padding: 24px;
-box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
-
-/* Hover Effects */
-transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-hover:shadow-lg;
-hover:scale-[1.02];
+#### Error Message Hierarchy
+```typescript
+interface ErrorUIStates {
+  critical: {
+    message: 'Cannot connect to Spotify';
+    action: 'Retry Connection';
+    fallback: 'View Offline Data';
+  };
+  warning: {
+    message: 'Using cached data';
+    action: 'Refresh Now';
+    fallback: 'Continue Offline';
+  };
+  info: {
+    message: 'Background sync in progress';
+    action: 'View Progress';
+    fallback: null;
+  };
+}
 ```
 
-#### Buttons and Controls
-- **Primary Buttons**: Accent color background with rounded corners
-- **Icon Buttons**: Circular with subtle hover effects
-- **Theme Toggle**: Sun/Moon icons with smooth transitions
-- **Color Picker**: Palette icon with dropdown showing color swatches
-
-### Responsive Design Strategy
-
-#### Breakpoints
-- **Mobile**: < 768px (collapsed sidebar, single column cards)
-- **Tablet**: 768px - 1024px (sidebar overlay, 2-column cards)  
-- **Desktop**: > 1024px (persistent sidebar, 3-column cards)
-
-#### Mobile Optimizations
-- Touch-friendly 44px minimum target sizes
-- Sheet-style sidebar overlay
-- Swipe gestures for navigation
-- Optimized chart interactions
-
-### Animation & Interaction Design
-
-#### Micro-Interactions
-```css
-/* Theme Transitions */
-transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-
-/* Hover States */
-hover:scale-105; /* Buttons */
-hover:scale-[1.02]; /* Cards */
-
-/* Loading States */
-animate-pulse; /* Skeleton loading */
-animate-spin; /* Loading spinners */
-```
-
-#### Chart Animations
-- Smooth data entry animations
-- Interactive hover tooltips
-- Responsive touch interactions
-- Color transitions on theme change
-
-## Privacy & Security
-
-### Data Minimization Strategy
-| Data Type | Original | Stored | Protection |
-|---|---|---|---|
-| User ID | `spotify:user:12345` | `abc123xyz` | SHA-256 hash (shortened) |
-| Display Name | `John Doe Smith` | `John D` | Truncated to 20 chars |
-| Profile Image | `https://image.url` | `true/false` | Boolean flag only |
-| Country | `United States` | `US` | 2-letter code only |
-| Email | `user@email.com` | Not stored | Not collected |
-
-### Security Measures
-- **OAuth 2.0 + PKCE**: Industry standard authentication
-- **Token Encryption**: All tokens encrypted in storage
-- **No External Calls**: All processing client-side
-- **Content Security Policy**: XSS and injection protection
-- **HTTPS Only**: All communication encrypted
-
-### Privacy-by-Design UI
-- Clear data collection notices with visual hierarchy
-- One-click data export with JSON formatting
-- Immediate data deletion with confirmation
-- Transparent privacy controls with accessible design
-
-## User Flow Diagrams
-
-### Authentication Flow
-```
-Landing Page (Spotify-inspired)
-      ↓
-Login Button (Green CTA)
-      ↓
-Spotify OAuth (Familiar UI)
-      ↓
-Permission Explanation
-      ↓
-User Authorizes
-      ↓
-Callback Processing
-      ↓
-Data Fetching & Hashing
-      ↓
-Dashboard Redirect
-      ↓
-Welcome Animation
-```
-
-### Theme Customization Flow
-```
-User in Dashboard
-      ↓
-Clicks Theme Toggle (Sun/Moon)
-      ↓
-Smooth 150ms Transition
-      ↓
-New Theme Applied
-      ↓
-Settings Saved to localStorage
-      
-OR
-
-User Clicks Color Picker (Palette)
-      ↓
-Dropdown Shows Color Swatches
-      ↓
-User Selects New Color
-      ↓
-Real-time Color Transition
-      ↓
-Accent Color Updated Globally
-      ↓
-Preference Saved
-```
-
-### Data Privacy Flow
-```
-User Accesses Privacy Controls
-      ↓
-Dashboard Shows Current Data
-      ↓
-User Selects Action:
-├── Export Data → Generate JSON → Download
-├── Delete Data → Confirmation Modal → Clear & Logout
-└── View Details → Show Minimal Data Stored
-```
+#### Recovery UI Patterns
+- **Retry Buttons**: Prominent retry actions with loading states
+- **Progressive Recovery**: Step-by-step feature restoration
+- **Alternative Actions**: Fallback options when primary features fail
+- **Status Dashboards**: Clear system health overview
 
 ## Success Metrics
 
-### User Engagement
-- **Daily Active Users**: Target 1000+ DAU
-- **Session Duration**: Average 5+ minutes
-- **Feature Usage**: 80% users access all main sections
-- **Theme Adoption**: 60% users customize accent colors
+### Real-time Performance
+- **SDK Connection Success Rate**: >95% successful connections
+- **Real-time Update Latency**: <200ms for playback state changes
+- **Cache Hit Rate**: >80% for frequently accessed data
+- **Background Sync Success**: >90% successful background updates
 
-### Design Effectiveness  
-- **Theme Preference**: 70% dark mode usage
-- **Mobile Usage**: 40% mobile traffic
-- **Accessibility Score**: 95%+ Lighthouse score
-- **Performance**: <2 second load time
+### User Engagement
+- **Live Session Tracking Usage**: 70% of users enable real-time tracking
+- **Real-time Feature Adoption**: 60% actively use live features
+- **Error Recovery Success**: 85% successful error recovery
+- **Offline Mode Usage**: 30% users access app while offline
+
+### Technical Performance
+- **App Load Time**: <3 seconds including SDK initialization
+- **Memory Usage**: <100MB including IndexedDB cache
+- **Battery Impact**: Minimal impact on device battery life
+- **Data Usage**: Efficient API usage within Spotify rate limits
 
 ### Privacy & Security
-- **Data Footprint**: <4KB per user maintained
-- **Security Incidents**: Zero tolerance
-- **Compliance**: 100% GDPR/CCPA compliance
-- **User Trust**: High privacy control usage
+- **Data Minimization**: <4KB permanent storage per user maintained
+- **Cache Efficiency**: Smart cache management with automatic cleanup
+- **Error Information**: No sensitive data exposed in error messages
+- **Offline Security**: Secure offline data handling
 
-This product design ensures a cohesive Spotify-inspired experience that prioritizes user privacy while delivering beautiful, functional music analytics.
+This enhanced product design ensures a comprehensive real-time Spotify analytics experience that gracefully handles errors, provides extensive offline capabilities, and maintains the highest standards of user privacy and data protection while delivering cutting-edge real-time insights.

@@ -62,10 +62,10 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     return dashboardComponent || children;
   }
 
-  // For root path without authentication, show demo dashboard
+  // For root path without authentication, show landing page (not dashboard)
   if (window.location.pathname === '/' && !user) {
-    console.log('No authentication on root path, showing dashboard with demo data');
-    return dashboardComponent || children;
+    console.log('No authentication on root path, showing landing page');
+    return <LandingPage />;
   }
 
   // For other paths or explicit login, show landing page

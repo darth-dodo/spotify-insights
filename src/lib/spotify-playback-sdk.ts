@@ -1,5 +1,19 @@
+
 // Spotify Web Playback SDK integration for local-only processing
 // All data is processed in real-time and never stored permanently
+
+// Add Spotify Web Playback SDK types to window
+declare global {
+  interface Window {
+    Spotify: {
+      Player: new (options: {
+        name: string;
+        getOAuthToken: (cb: (token: string) => void) => void;
+        volume?: number;
+      }) => any;
+    };
+  }
+}
 
 export interface PlaybackState {
   track_window: {
@@ -22,6 +36,14 @@ export interface LocalPlaybackSession {
   duration: number;
   progress: number;
   deviceType: 'web' | 'mobile' | 'desktop';
+}
+
+export interface HeatmapDay {
+  date: string;
+  plays: number;
+  level: number;
+  dayOfWeek: number;
+  weekOfYear: number;
 }
 
 export class SpotifyPlaybackSDK {
@@ -162,22 +184,10 @@ export class SpotifyPlaybackSDK {
   }
 
   // Generate heatmap data from current session (temporary data only)
-  public generateLocalHeatmapData(): Array<{
-    date: string;
-    plays: number;
-    level: number;
-    dayOfWeek: number;
-    weekOfYear: number;
-  }> {
+  public generateLocalHeatmapData(): HeatmapDay[] {
     // Process only current session data (no permanent storage)
     const now = new Date();
-    const data: Array<{
-      date: string;
-      plays: number;
-      level: number;
-      dayOfWeek: number;
-      weekOfYear: number;
-    }> = [];
+    const data: HeatmapDay[] = [];
 
     // Generate data for last 7 days using session data + simulation
     for (let i = 6; i >= 0; i--) {

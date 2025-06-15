@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,14 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Calendar, Trophy, Flame, Star, Shield, Play, Pause, Wifi, WifiOff } from 'lucide-react';
 import { useSpotifyPlayback } from '@/hooks/useSpotifyPlayback';
 import { InfoButton } from '@/components/ui/InfoButton';
-
-interface HeatmapDay {
-  date: string;
-  plays: number;
-  level: number;
-  dayOfWeek: number;
-  weekOfYear: number;
-}
+import type { HeatmapDay } from '@/lib/spotify-playback-sdk';
 
 export const EnhancedActivityHeatmap = () => {
   const [selectedDay, setSelectedDay] = useState<HeatmapDay | null>(null);

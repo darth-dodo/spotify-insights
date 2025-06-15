@@ -20,7 +20,7 @@ class SpotifyDataIntegration {
   private cache = new SpotifyDataCache();
   private currentSession: ListeningSession | null = null;
 
-  async getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]> => {
+  async getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]> {
     try {
       const apiTracks = await fetchRecentlyPlayedData(limit);
       const apiIntegratedTracks = processRecentlyPlayedData(apiTracks);
@@ -60,7 +60,7 @@ class SpotifyDataIntegration {
     }
   }
 
-  async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 2000): Promise<IntegratedTrackData[]> => {
+  async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 2000): Promise<IntegratedTrackData[]> {
     // Cap at 2000 for performance optimization
     const performanceLimit = Math.min(totalLimit, 2000);
     const cacheKey = `${timeRange}_${performanceLimit}`;
@@ -95,7 +95,7 @@ class SpotifyDataIntegration {
     }
   }
 
-  async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 2000): Promise<IntegratedArtistData[]> => {
+  async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 2000): Promise<IntegratedArtistData[]> {
     // Cap at 2000 for performance optimization
     const performanceLimit = Math.min(totalLimit, 2000);
     const cacheKey = `${timeRange}_${performanceLimit}`;

@@ -19,7 +19,11 @@ export const useAuthActions = (
       console.log('Starting login process...');
       await spotifyAuth.login();
       
-      if (USE_DUMMY_DATA || window.location.pathname === '/sandbox') {
+      // Check if we're in demo mode dynamically
+      const isDemoMode = window.location.pathname === '/sandbox' || 
+        (window.location.pathname === '/' && localStorage.getItem('spotify_access_token') === 'demo_access_token');
+      
+      if (isDemoMode) {
         // For dummy data, manually set the user after fake login
         const token = localStorage.getItem('spotify_access_token');
         if (token) {
@@ -49,14 +53,28 @@ export const useAuthActions = (
       console.log('Logging out user...');
       setUser(null);
       setError(null);
+      
+      // Use the enhanced logout from spotifyAuth
+      await spotifyAuth.logout();
       clearAllUserData();
+      
       console.log('Logout completed successfully');
+      
+      // Force a page refresh to reset all state properly
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     } catch (error) {
       console.error('Logout error:', error);
       // Still clear local state even if there's an error
       setUser(null);
       setError(null);
       clearAllUserData();
+      
+      // Force refresh even on error to ensure clean state
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     }
   };
 

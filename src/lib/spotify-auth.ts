@@ -1,11 +1,8 @@
+
 import { spotifyAPI } from './spotify-api';
 
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || `${window.location.origin}/callback`;
-
-// Use sandbox mode when explicitly on /sandbox route OR when on root without auth
-const USE_DUMMY_DATA = window.location.pathname === '/sandbox' || 
-  (window.location.pathname === '/' && !localStorage.getItem('spotify_access_token'));
 
 const SCOPES = [
   'user-read-private',
@@ -15,6 +12,12 @@ const SCOPES = [
 ].join(' ');
 
 class SpotifyAuth {
+  private isDemoMode(): boolean {
+    // Dynamic check for demo mode instead of static calculation
+    return window.location.pathname === '/sandbox' || 
+      (window.location.pathname === '/' && !localStorage.getItem('spotify_access_token'));
+  }
+
   private generateRandomString(length: number): string {
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const values = crypto.getRandomValues(new Uint8Array(length));
@@ -42,7 +45,7 @@ class SpotifyAuth {
 
   async login(): Promise<void> {
     // Use dummy data in sandbox mode or demo mode
-    if (USE_DUMMY_DATA) {
+    if (this.isDemoMode()) {
       console.log('Using dummy data for demo/sandbox authentication');
       localStorage.setItem('spotify_access_token', 'demo_access_token');
       localStorage.setItem('spotify_refresh_token', 'demo_refresh_token');
@@ -80,7 +83,7 @@ class SpotifyAuth {
   }
 
   async handleCallback(code: string, state: string): Promise<void> {
-    if (USE_DUMMY_DATA) {
+    if (this.isDemoMode()) {
       throw new Error('Callback should not be called in demo/sandbox mode');
     }
 
@@ -127,7 +130,7 @@ class SpotifyAuth {
   }
 
   async refreshAccessToken(refreshToken: string): Promise<any> {
-    if (USE_DUMMY_DATA) {
+    if (this.isDemoMode()) {
       return {
         access_token: 'demo_access_token_refreshed',
         token_type: 'Bearer',
@@ -159,9 +162,16 @@ class SpotifyAuth {
   }
 
   async logout(): Promise<void> {
+    // Clear all authentication data
     localStorage.removeItem('spotify_access_token');
     localStorage.removeItem('spotify_refresh_token');
     localStorage.removeItem('spotify_token_expiry');
+    localStorage.removeItem('user_profile');
+    localStorage.removeItem('user_profile_image');
+    localStorage.removeItem('code_verifier');
+    localStorage.removeItem('auth_state');
+    
+    console.log('All authentication data cleared from logout');
   }
 
   async getCurrentUser(): Promise<any> {
@@ -192,10 +202,6 @@ class SpotifyAuth {
     }
     
     return token;
-  }
-
-  isDemoMode(): boolean {
-    return USE_DUMMY_DATA;
   }
 }
 

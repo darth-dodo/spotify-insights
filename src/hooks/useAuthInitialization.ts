@@ -23,23 +23,50 @@ export const useAuthInitialization = (
         setError(null);
         hasInitialized.current = true;
 
-        // Check if we're on root path without authentication - this is demo mode
-        if (window.location.pathname === '/') {
-          const token = localStorage.getItem('spotify_access_token');
-          console.log('Root path auth check - token exists:', !!token);
+        // Get current token state
+        const token = localStorage.getItem('spotify_access_token');
+        const isDemoToken = token === 'demo_access_token';
+        const isOnSandboxPath = window.location.pathname === '/sandbox';
+        const isOnRootPath = window.location.pathname === '/';
 
-          if (!token) {
-            console.log('No token found on root path, entering demo mode');
-            setIsLoading(false);
-            return;
-          }
+        console.log('Auth initialization:', { 
+          token: !!token, 
+          isDemoToken, 
+          isOnSandboxPath, 
+          isOnRootPath 
+        });
 
-          // Check if token is expired
+        // If we're on root path without any token, enter demo mode
+        if (isOnRootPath && !token) {
+          console.log('No token found on root path, entering demo mode');
+          setIsLoading(false);
+          return;
+        }
+
+        // If we have a demo token but we're not on sandbox path, clear it
+        if (isDemoToken && !isOnSandboxPath) {
+          console.log('Demo token found outside sandbox, clearing auth data');
+          clearAllUserData();
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
+        // If we're on sandbox but don't have demo token, we're coming from normal mode
+        if (isOnSandboxPath && token && !isDemoToken) {
+          console.log('Real token found on sandbox path, this should not happen');
+          // Don't clear the token, let sandbox mode handle it
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if token is expired for real tokens
+        if (token && !isDemoToken) {
           const tokenExpiry = localStorage.getItem('spotify_token_expiry');
           if (tokenExpiry) {
             const isExpired = Date.now() > parseInt(tokenExpiry);
-            if (isExpired && !USE_DUMMY_DATA) {
-              console.log('Token expired on root path, entering demo mode');
+            if (isExpired) {
+              console.log('Real token expired, clearing auth data');
               clearAllUserData();
               setUser(null);
               setIsLoading(false);
@@ -48,46 +75,29 @@ export const useAuthInitialization = (
           }
         }
 
-        // Regular auth flow for other paths or when token exists
-        const token = localStorage.getItem('spotify_access_token');
-        console.log('Regular auth initialization - token exists:', !!token);
+        // If we have a valid token, try to get user data
+        if (token) {
+          // Try to get cached user data first
+          const cachedUser = localStorage.getItem('user_profile');
+          if (cachedUser) {
+            try {
+              const parsedUser = JSON.parse(cachedUser);
+              console.log('Using cached user data');
+              setUser(parsedUser);
+              setIsLoading(false);
+              return;
+            } catch (parseError) {
+              console.error('Error parsing cached user data:', parseError);
+              localStorage.removeItem('user_profile');
+            }
+          }
 
-        if (!token) {
+          // No cached user data, fetch fresh data
+          await fetchAndSetUser();
+        } else {
           console.log('No token found, user not authenticated');
           setIsLoading(false);
-          return;
         }
-
-        // Check if token is expired
-        const tokenExpiry = localStorage.getItem('spotify_token_expiry');
-        if (tokenExpiry) {
-          const isExpired = Date.now() > parseInt(tokenExpiry);
-          if (isExpired && !USE_DUMMY_DATA) {
-            console.log('Token expired, clearing auth data');
-            clearAllUserData();
-            setUser(null);
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // Try to get cached user data first
-        const cachedUser = localStorage.getItem('user_profile');
-        if (cachedUser) {
-          try {
-            const parsedUser = JSON.parse(cachedUser);
-            console.log('Using cached user data');
-            setUser(parsedUser);
-            setIsLoading(false);
-            return;
-          } catch (parseError) {
-            console.error('Error parsing cached user data:', parseError);
-            localStorage.removeItem('user_profile');
-          }
-        }
-
-        // No cached user data, fetch fresh data
-        await fetchAndSetUser();
         
       } catch (error: any) {
         console.error('Auth initialization error:', error);

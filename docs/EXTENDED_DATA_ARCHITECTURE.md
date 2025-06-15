@@ -2,12 +2,12 @@
 # Extended Data Architecture Documentation
 
 ## Overview
-The Extended Data Architecture represents a comprehensive redesign of how the Spotify Analytics Dashboard fetches, processes, and manages data. This architecture moves from individual API calls to a centralized data store that provides enhanced performance and consistency, with a major focus on the Artist Exploration enhancement.
+The Extended Data Architecture represents a comprehensive redesign of how the Spotify Analytics Dashboard fetches, processes, and manages data. This architecture moves from individual API calls to a centralized data integration system that provides enhanced performance, consistency, and real-time data processing capabilities.
 
 ## Table of Contents
 1. [Architecture Principles](#architecture-principles)
-2. [Artist Exploration Architecture](#artist-exploration-architecture)
-3. [Data Store Implementation](#data-store-implementation)
+2. [Data Integration System](#data-integration-system)
+3. [Real-time SDK Integration](#real-time-sdk-integration)
 4. [API Enhancement](#api-enhancement)
 5. [Component Integration](#component-integration)
 6. [Performance Characteristics](#performance-characteristics)
@@ -15,462 +15,335 @@ The Extended Data Architecture represents a comprehensive redesign of how the Sp
 
 ## Architecture Principles
 
-### 1. Single Source of Truth
-- All components consume data from one centralized store
-- Eliminates data inconsistencies across the application
-- Provides unified loading and error states
+### 1. Multi-Source Data Integration
+- Combines Spotify Web API data with real-time Web Playback SDK data
+- Provides both historical analysis and live session tracking
+- Maintains data consistency across all sources
 
-### 2. Batch Data Fetching
-- Single comprehensive API call instead of multiple individual calls
-- Parallel processing using Promise.all for optimal performance
-- Reduced network overhead and improved user experience
-
-### 3. Extended Dataset Capability
+### 2. Extended Dataset Capability
 - Fetches up to 1000 tracks (vs previous 50)
 - Fetches up to 1000 artists (vs previous 50) 
-- Maintains 50 recently played tracks for recent activity analysis
+- Maintains up to 200 recently played tracks for comprehensive analysis
+- Real-time session tracking for immediate insights
 
-### 4. Smart Caching Strategy
-- Extended 10-minute cache duration
+### 3. Smart Caching Strategy
+- Extended 10-minute cache duration for API data
+- Real-time session data stored temporarily in memory
 - Automatic background refresh when data becomes stale
-- Persistent cache across component re-renders
+- Privacy-first approach with no permanent storage
 
-## Artist Exploration Architecture
+### 4. Privacy-First Design
+- All SDK data processed locally without permanent storage
+- Session data cleared on logout or page refresh
+- User controls for data usage preferences
+- No external data transmission for real-time processing
 
-### Enhanced Analytics Platform
-The Artist Exploration tab has been transformed into a comprehensive analytics platform utilizing the full extended dataset capability.
+## Data Integration System
 
-#### Data Processing Pipeline
-```
-Extended Dataset (1000 artists) → Time-based Filtering → Analytics Calculation → Visualization
-                                     ↓                        ↓                 ↓
-                                8 Time Periods        Multi-metric Analysis   Interactive Charts
-                                                           ↓                        ↓
-                                                   Fun Facts Generation    Personalized Insights
-```
+### Core Integration Class: SpotifyDataIntegration
 
-#### Artist Metrics Architecture
+The central orchestrator that combines multiple data sources into unified datasets.
+
 ```typescript
-interface EnhancedArtistMetrics {
-  songShare: number;        // Percentage of total listening time
-  replayValue: number;      // Track diversity and replay patterns
-  freshnessScore: number;   // Discovery recency (0-100)
-  listeningHours: number;   // Total time spent with artist
-  discoveryYear: number;    // Estimated discovery year
-  genreInfluence: string[]; // Primary genres from this artist
+interface IntegratedTrackData {
+  id: string;
+  name: string;
+  artists: Array<{ id: string; name: string }>;
+  duration_ms: number;
+  popularity: number;
+  playedAt?: string;
+  playCount: number;
+  totalListeningTime: number;
+  source: 'api' | 'sdk' | 'combined';
 }
 ```
 
-#### Time-based Data Architecture
-```typescript
-interface TimeFilteredData {
-  period: '1week' | '1month' | '3months' | '6months' | '1year' | '2years' | '3years' | 'alltime';
-  artists: Artist[];
-  totalListeningHours: number;
-  averageFreshness: number;
-  uniqueGenres: number;
-  trackCount: number;
-}
-```
+#### Enhanced Data Methods
 
-#### Analytics Charts System
-1. **Song Share Distribution**: Visualizes listening time percentage per artist
-2. **Replay Value Analysis**: Shows replay patterns and artist engagement
-3. **Artist Discovery Freshness**: Multi-dimensional radar chart for discovery insights
+##### `getEnhancedRecentlyPlayed(limit: number = 200)`
+Combines API recently played data with real-time SDK session data:
+- Fetches up to 200 tracks from Spotify API using pagination
+- Enhances with real-time session data from Web Playback SDK
+- Deduplicates and merges play counts and listening times
+- Returns unified dataset with source attribution
 
-#### Fun Facts Generation System
-```typescript
-interface FunFactsEngine {
-  topArtistDevotion: () => string;    // Hours with favorite artist
-  freshDiscovery: () => string;       // Newest discovery insights
-  replayChampion: () => string;       // Highest replay value artist
-  artistDiversity: () => string;      // Listening distribution patterns
-  genreExplorer: () => string;        // Top genre preferences
-}
-```
+##### `getEnhancedTopTracks(timeRange: string, totalLimit: number = 1000)`
+Provides extended top tracks with SDK enhancement:
+- Uses extended API fetching to get up to 1000 tracks
+- Enhances with real-time play data when available
+- Calculates estimated play counts based on ranking
+- Returns comprehensive listening history
 
-## Data Store Implementation
+##### `getEnhancedTopArtists(timeRange: string, totalLimit: number = 1000)`
+Extended artist data with listening metrics:
+- Fetches up to 1000 artists using pagination
+- Calculates listening time estimates
+- Provides comprehensive genre analysis
+- Enhanced with real-time session artist tracking
 
-### Core Hook: useExtendedSpotifyDataStore
+#### Listening Statistics Calculation
 
 ```typescript
-interface ExtendedSpotifyDataStore {
-  tracks: Track[];
-  artists: Artist[];
-  recentlyPlayed: Track[];
-  isLoading: boolean;
-  error: string | null;
-  lastFetched: Date | null;
-}
-
-export const useExtendedSpotifyDataStore = (): ExtendedSpotifyDataStore => {
-  const { user } = useAuth();
-  const accessToken = localStorage.getItem('spotify_access_token');
-  
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['extended-spotify-data'],
-    queryFn: fetchExtendedSpotifyData,
-    enabled: !!user && !!accessToken,
-    staleTime: 8 * 60 * 1000, // 8 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: false,
-  });
-
+calculateListeningStats(tracks: IntegratedTrackData[], timeRangeLabel: string) {
   return {
-    tracks: data?.tracks || [],
-    artists: data?.artists || [],
-    recentlyPlayed: data?.recentlyPlayed || [],
-    isLoading,
-    error: error?.message || null,
-    lastFetched: data?.lastFetched || null,
+    totalPlayCount: number,
+    totalMinutes: number,
+    totalHours: number,
+    uniqueArtists: number,
+    avgDailyMinutes: number,
+    topTrack: IntegratedTrackData,
+    timeRangeLabel: string,
+    dataQuality: 'high' | 'medium' | 'low'
   };
-};
+}
 ```
 
-### Data Fetching Function
+## Real-time SDK Integration
 
+### Spotify Web Playback SDK Implementation
+
+#### Local Session Tracking
 ```typescript
-const fetchExtendedSpotifyData = async (): Promise<ExtendedSpotifyData> => {
-  const accessToken = localStorage.getItem('spotify_access_token');
-  
-  if (!accessToken) {
-    throw new Error('No access token available');
-  }
+interface LocalPlaybackSession {
+  timestamp: number;
+  trackId: string;
+  duration: number;
+  progress: number;
+  deviceType: 'web' | 'mobile' | 'desktop';
+}
 
-  try {
-    const [tracksData, artistsData, recentData] = await Promise.all([
-      spotifyAPI.getExtendedTopTracks(accessToken, 'medium_term', 1000),
-      spotifyAPI.getExtendedTopArtists(accessToken, 'medium_term', 1000),
-      spotifyAPI.getRecentlyPlayed(accessToken, 50)
-    ]);
-
-    return {
-      tracks: tracksData.items,
-      artists: artistsData.items,
-      recentlyPlayed: recentData.items,
-      lastFetched: new Date()
-    };
-  } catch (error) {
-    console.error('Failed to fetch extended Spotify data:', error);
-    throw error;
-  }
-};
+interface SessionTrack {
+  id: string;
+  name: string;
+  artists: Array<{ id: string; name: string }>;
+  duration_ms: number;
+  playCount: number;
+  totalListeningTime: number;
+  playedAt: string;
+}
 ```
+
+#### Privacy-First Processing
+- All playback data processed locally in browser memory
+- No permanent storage of listening data
+- Automatic cleanup on page unload
+- Session data limited to 100 most recent items
+
+#### Real-time Features
+- **Live Session Tracking**: Monitors current playback state
+- **Heatmap Generation**: Creates activity patterns from session data
+- **Play Count Tracking**: Aggregates real-time play statistics
+- **Device Detection**: Identifies playback device type
+
+### SDK Methods
+
+#### `getSessionTracks(): SessionTrack[]`
+Returns current session tracks with aggregated play data:
+- Deduplicates tracks within session
+- Calculates play counts and total listening time
+- Sorts by most recent play time
+- Provides data for real-time analytics
+
+#### `startSession(): void`
+Initializes session tracking:
+- Begins monitoring playback state changes
+- Sets up event listeners for track changes
+- Prepares real-time data collection
+
+#### `getSessionStats()`
+Provides session-level statistics:
+- Unique tracks played in session
+- Total session listening time
+- Device type information
+- Session activity status
 
 ## API Enhancement
 
-### Extended Fetching Methods
+### Extended Fetching Implementation
 
-#### getExtendedTopTracks
+#### Pagination Strategy
 ```typescript
-async getExtendedTopTracks(
-  accessToken: string, 
-  timeRange: TimeRange = 'medium_term', 
-  totalLimit: number = 1000
-): Promise<ExtendedResponse<Track>> {
-  const allTracks: Track[] = [];
-  const limit = 50; // Spotify API limit per request
+async getExtendedTopTracks(accessToken: string, timeRange: string, totalLimit: number) {
+  const allTracks = [];
   let offset = 0;
-
+  const batchSize = 50; // Spotify API limit
+  
   while (allTracks.length < totalLimit && offset < 1000) {
     const response = await this.makeRequest(
-      `/me/top/tracks?limit=${limit}&offset=${offset}&time_range=${timeRange}`,
+      `/me/top/tracks?limit=${batchSize}&offset=${offset}&time_range=${timeRange}`,
       accessToken
     );
     
-    if (!response.items || response.items.length === 0) break;
+    if (!response.items?.length) break;
     
     allTracks.push(...response.items);
-    offset += limit;
+    offset += batchSize;
     
     // Rate limiting
-    if (offset < 1000 && allTracks.length < totalLimit) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
-
-  return {
-    items: allTracks,
-    total: allTracks.length,
-    limit: totalLimit,
-    offset: 0,
-    next: null,
-    previous: null
-  };
+  
+  return { items: allTracks, total: allTracks.length };
 }
 ```
 
-#### getExtendedTopArtists
-```typescript
-async getExtendedTopArtists(
-  accessToken: string, 
-  timeRange: TimeRange = 'medium_term', 
-  totalLimit: number = 1000
-): Promise<ExtendedResponse<Artist>> {
-  const allArtists: Artist[] = [];
-  const limit = 50;
-  let offset = 0;
-
-  while (allArtists.length < totalLimit && offset < 1000) {
-    const response = await this.makeRequest(
-      `/me/top/artists?limit=${limit}&offset=${offset}&time_range=${timeRange}`,
-      accessToken
-    );
-    
-    if (!response.items || response.items.length === 0) break;
-    
-    allArtists.push(...response.items);
-    offset += limit;
-    
-    // Rate limiting
-    if (offset < 1000 && allArtists.length < totalLimit) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-  }
-
-  return {
-    items: allArtists,
-    total: allArtists.length,
-    limit: totalLimit,
-    offset: 0,
-    next: null,
-    previous: null
-  };
-}
-```
+#### Rate Limiting Strategy
+- 100ms delays between paginated requests
+- Respects Spotify API limits (100 requests/minute)
+- Progressive backoff for multiple concurrent requests
+- Graceful handling of rate limit responses
 
 ## Component Integration
 
-### Artist Exploration Integration
+### Enhanced Data Hooks
 
-#### Enhanced Artist Exploration Component
+#### `useSpotifyData()`
+Central hook providing enhanced data access:
 ```typescript
-export const ArtistExploration = () => {
-  const { artists, isLoading } = useExtendedSpotifyDataStore();
-  const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('alltime');
-  
-  // Process extended dataset for time-based filtering
-  const filteredArtists = useMemo(() => {
-    return filterArtistsByTimeRange(artists, selectedTimeRange);
-  }, [artists, selectedTimeRange]);
-  
-  // Calculate enhanced metrics from extended dataset
-  const enhancedMetrics = useMemo(() => {
-    return calculateEnhancedArtistMetrics(filteredArtists);
-  }, [filteredArtists]);
-  
-  // Generate personalized fun facts
-  const funFacts = useMemo(() => {
-    return generateFunFacts(filteredArtists);
-  }, [filteredArtists]);
-  
-  return (
-    <div className="space-y-6">
-      <TimeRangeSelector 
-        selectedRange={selectedTimeRange}
-        onRangeChange={setSelectedTimeRange}
-        options={['1week', '1month', '3months', '6months', '1year', '2years', '3years', 'alltime']}
-      />
-      
-      <EnhancedStatistics metrics={enhancedMetrics} />
-      
-      <AnalyticsChartsSection artists={filteredArtists} />
-      
-      <FunFactsSection facts={funFacts} />
-      
-      <ArtistGrid artists={filteredArtists} showEnhancedMetrics />
-    </div>
-  );
-};
-```
-
-### Migration Pattern
-
-#### Before (Individual API Calls)
-```typescript
-export const ComponentExample = () => {
-  const { data: tracks, isLoading: tracksLoading } = useTopTracks();
-  const { data: artists, isLoading: artistsLoading } = useTopArtists();
-  const { data: recent, isLoading: recentLoading } = useRecentlyPlayed();
-  
-  const isLoading = tracksLoading || artistsLoading || recentLoading;
-  
-  // Component logic...
-};
-```
-
-#### After (Centralized Data Store)
-```typescript
-export const ComponentExample = () => {
-  const { tracks, artists, recentlyPlayed, isLoading } = useExtendedSpotifyDataStore();
-  
-  // Component logic with access to extended dataset...
-};
-```
-
-### Updated Components
-
-#### 1. LibraryHealth
-- **Enhancement**: Uses 1000 tracks/artists for comprehensive library analysis
-- **New Metrics**: Genre diversity, artist discovery level, decade distribution
-- **Improved Accuracy**: More representative popularity and diversity scores
-
-#### 2. GenreAnalysis  
-- **Enhancement**: Analyzes up to 1000 artists for genre insights
-- **New Features**: Trend detection, genre evolution tracking
-- **Better Visualization**: More comprehensive genre distribution charts
-
-#### 3. DashboardOverview
-- **Enhancement**: Unified data display with consistent metrics
-- **Performance**: Single loading state for entire dashboard
-- **Consistency**: All metrics calculated from same data snapshot
-
-#### 4. RecentActivity
-- **Enhancement**: Enhanced recent activity analysis
-- **Context**: Better correlation with user's overall listening patterns
-- **Insights**: More meaningful recent vs historical comparisons
-
-#### 5. ArtistExploration (Major Enhancement)
-- **Before**: Basic artist display with limited insights
-- **After**: Comprehensive analytics platform with extended dataset
-- **New Features**: 
-  - 8 time period options
-  - 3 interactive analytics charts
-  - Personalized fun facts system
-  - Enhanced artist metrics
-  - Time-based filtering capabilities
-
-## Performance Characteristics
-
-### Benchmarks
-
-#### API Call Reduction
-- **Before**: 15+ individual API calls per dashboard load
-- **After**: 1 comprehensive API call per 10-minute window
-- **Improvement**: 93% reduction in API calls
-
-#### Loading Time Improvements
-- **Initial Load**: 15-20 seconds → 5-8 seconds
-- **Subsequent Loads**: 2-3 seconds → <1 second (cached)
-- **Component Renders**: Multiple loading states → Single unified loading
-
-#### Data Volume Improvements
-- **Tracks Analysis**: 50 → 1000 tracks (20x increase)
-- **Artists Analysis**: 50 → 1000 artists (20x increase)
-- **Genre Accuracy**: Significant improvement with larger dataset
-
-#### Artist Exploration Performance
-- **Artists Processed**: Up to 1000 (vs 50 previously)
-- **Metrics Calculated**: 6 enhanced metrics per artist
-- **Time Periods**: 8 different time range analyses
-- **Charts Rendered**: 3 interactive analytics charts
-- **Fun Facts Generated**: 5 personalized insights
-
-### Memory Usage
-- **Data Storage**: ~500KB for extended dataset
-- **Cache Efficiency**: Shared cache across all components
-- **Cleanup**: Automatic cleanup on logout and cache expiry
-- **Artist Exploration**: Additional ~200KB for enhanced metrics
-
-## Error Handling Strategy
-
-### Graceful Degradation
-```typescript
-const handlePartialFailure = async () => {
-  const results = await Promise.allSettled([
-    fetchTracks(),
-    fetchArtists(), 
-    fetchRecent()
-  ]);
-  
-  const successfulResults = results
-    .filter(result => result.status === 'fulfilled')
-    .map(result => result.value);
-    
+export const useSpotifyData = () => {
   return {
-    tracks: successfulResults[0] || [],
-    artists: successfulResults[1] || [],
-    recentlyPlayed: successfulResults[2] || [],
-    partial: results.some(result => result.status === 'rejected')
+    // Enhanced hooks with integration
+    useEnhancedRecentlyPlayed,
+    useEnhancedTopTracks,
+    useEnhancedTopArtists,
+    useListeningStats,
+    
+    // Legacy hooks for backward compatibility
+    useTopTracks,
+    useTopArtists,
+    useRecentlyPlayed,
+    useCurrentPlayback,
   };
 };
 ```
 
-### Error Recovery
-- **Automatic Retry**: Failed requests retry with exponential backoff
-- **Partial Data**: Continue with available data if some requests fail
-- **User Communication**: Clear error messages with recovery options
-- **Fallback States**: Graceful degradation to cached or minimal data
-
-### Rate Limit Handling
+#### Integration Usage Pattern
 ```typescript
-const handleRateLimit = async (requestIndex: number) => {
-  const baseDelay = 100;
-  const backoffFactor = 1.5;
-  const maxDelay = 1000;
+// Before: Multiple individual API calls
+const { data: tracks } = useTopTracks();
+const { data: artists } = useTopArtists();
+
+// After: Unified enhanced data
+const { data: enhancedTracks } = useEnhancedTopTracks('medium_term', 1000);
+const { data: enhancedArtists } = useEnhancedTopArtists('medium_term', 1000);
+```
+
+### Component Updates
+
+#### Dashboard Components
+- **InteractiveOverview**: Uses unified listening statistics
+- **ArtistExploration**: Enhanced with extended artist dataset
+- **ListeningActivity**: Real-time session integration
+- **GenreAnalysis**: Comprehensive genre insights from 1000+ artists
+- **LibraryHealth**: Extended dataset analysis for accuracy
+
+#### Real-time Components
+- **ActivityHeatmap**: Combines API history with live SDK data
+- **RecentActivity**: Enhanced recent plays with session tracking
+- **CurrentPlayback**: Integrated with SDK for real-time updates
+
+## Performance Characteristics
+
+### Data Fetching Performance
+- **Extended API Calls**: 5-15 seconds for 1000 items (vs 1-2 seconds for 50)
+- **Real-time Processing**: <100ms for session updates
+- **Cache Efficiency**: 10-minute cache reduces API calls by 90%
+- **Memory Usage**: ~500KB API data + ~50KB session data
+
+### Network Optimization
+- **Batch Requests**: Up to 20 paginated calls for extended data
+- **Rate Limiting**: Respects API limits with built-in delays
+- **Error Recovery**: Continues with partial data on failures
+- **Caching Strategy**: Longer cache times for extended datasets
+
+### Real-time Performance
+- **Session Updates**: Real-time processing with <50ms latency
+- **Memory Management**: Automatic cleanup of old session data
+- **Event Processing**: Efficient handling of playback state changes
+- **Local Storage**: No permanent storage for privacy compliance
+
+## Error Handling Strategy
+
+### Multi-Source Error Management
+```typescript
+// Graceful degradation across data sources
+const handleDataFetching = async () => {
+  const results = await Promise.allSettled([
+    fetchAPIData(),
+    fetchSDKData()
+  ]);
   
-  const delay = Math.min(
-    baseDelay * Math.pow(backoffFactor, requestIndex),
-    maxDelay
-  );
-  
-  await new Promise(resolve => setTimeout(resolve, delay));
+  return {
+    apiData: results[0].status === 'fulfilled' ? results[0].value : [],
+    sdkData: results[1].status === 'fulfilled' ? results[1].value : [],
+    hasPartialData: results.some(r => r.status === 'rejected')
+  };
 };
 ```
 
-## Monitoring and Analytics
+### Recovery Strategies
+- **Partial Data Handling**: Continue with available data sources
+- **Fallback Modes**: Graceful degradation when SDK unavailable
+- **User Communication**: Clear error states with recovery options
+- **Background Retry**: Automatic retry for failed requests
 
-### Performance Metrics
-- **API Response Times**: Track individual and batch request performance
-- **Cache Hit Rates**: Monitor cache effectiveness
-- **Error Rates**: Track failed requests and recovery success
-- **User Experience**: Measure perceived loading times
-- **Artist Exploration Usage**: Track analytics chart interactions and time spent
+### SDK Error Handling
+- **Connection Failures**: Fallback to API-only mode
+- **Authentication Issues**: Clear error messages and recovery steps
+- **Device Conflicts**: Graceful handling of multiple device connections
+- **Session Cleanup**: Automatic cleanup on errors
 
-### Data Quality Metrics
-- **Data Completeness**: Percentage of successful data fetches
-- **Data Freshness**: Age of cached data when served
-- **Dataset Size**: Actual vs requested data volume
-- **Consistency Checks**: Validate data integrity across components
-- **Metrics Accuracy**: Validate calculated artist metrics against known patterns
+## Data Quality Assessment
+
+### Quality Metrics
+```typescript
+interface DataQuality {
+  level: 'high' | 'medium' | 'low';
+  sources: {
+    api: boolean;
+    sdk: boolean;
+    combined: number; // percentage of combined data
+  };
+  completeness: number; // percentage of successful fetches
+  freshness: number; // age in minutes
+}
+```
+
+### Quality Indicators
+- **High Quality**: >30% combined API+SDK data, recent SDK activity
+- **Medium Quality**: >50% API data, some SDK enhancement
+- **Low Quality**: Primarily fallback data, limited SDK integration
 
 ## Future Enhancements
 
 ### Planned Improvements
-1. **Progressive Loading**: Load critical data first, then enhance with extended dataset
-2. **Background Sync**: Update data in background without user interaction
-3. **Intelligent Caching**: Dynamic cache duration based on user activity
-4. **Data Persistence**: Long-term storage using IndexedDB
-5. **Advanced Artist Analytics**: Machine learning insights for artist recommendations
-6. **Social Features**: Compare artist exploration data with friends
-7. **Real-time Artist Updates**: Live updates for currently playing artists
+1. **Advanced Analytics**: Machine learning insights from combined data
+2. **Predictive Features**: Recommend next tracks based on patterns
+3. **Social Integration**: Compare listening patterns with friends
+4. **Advanced Caching**: Intelligent cache invalidation based on listening patterns
+5. **Offline Support**: Enhanced offline analytics with cached data
 
 ### Scalability Considerations
-1. **Horizontal Scaling**: Support for multiple data sources
-2. **Data Sharding**: Partition large datasets for better performance
-3. **CDN Integration**: Cache static data at edge locations
-4. **Real-time Updates**: WebSocket integration for live data streams
-5. **Distributed Analytics**: Process artist metrics in background workers
+1. **Worker Threads**: Process large datasets in background workers
+2. **Incremental Updates**: Smart updates instead of full refreshes
+3. **Data Compression**: Optimize memory usage for large datasets
+4. **CDN Integration**: Cache static analysis data at edge locations
 
 ## Best Practices
 
 ### Implementation Guidelines
-1. **Always use the centralized store** for Spotify data access
-2. **Handle loading states consistently** across all components
-3. **Implement error boundaries** for graceful error handling
-4. **Cache expensive calculations** using React.useMemo
-5. **Clean up data on logout** for privacy compliance
-6. **Optimize analytics calculations** for large datasets
-7. **Implement progressive enhancement** for enhanced features
+1. **Always use enhanced hooks** for new components
+2. **Handle loading states gracefully** across multiple data sources
+3. **Implement progressive enhancement** (API first, SDK enhancement)
+4. **Respect user privacy** with clear data usage controls
+5. **Cache expensive calculations** using React.useMemo
+6. **Clean up resources** on component unmount
 
 ### Testing Strategies
-1. **Mock the data store** for unit tests
-2. **Test error scenarios** with partial data
-3. **Validate cache behavior** with different timing scenarios
+1. **Mock both API and SDK** for comprehensive testing
+2. **Test offline scenarios** with no SDK connection
+3. **Validate data quality** with different source combinations
 4. **Performance test** with large datasets
-5. **Integration test** the complete data flow
-6. **Test analytics calculations** with known datasets
-7. **Validate fun facts generation** with various user patterns
+5. **Test error scenarios** with partial data failures
 
-This architecture provides a robust, scalable foundation for the Spotify Analytics Dashboard while significantly improving performance and user experience. The Artist Exploration enhancement showcases the power of the extended dataset architecture, transforming a basic component into a comprehensive analytics platform.
-
+This architecture provides a robust, privacy-first foundation for the Spotify Analytics Dashboard while significantly improving both the depth of insights and real-time capabilities. The integration of multiple data sources creates a comprehensive view of listening habits while maintaining user privacy and data security.

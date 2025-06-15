@@ -1,13 +1,14 @@
+
 # API Reference Documentation
 
 ## Table of Contents
 1. [Authentication](#authentication)
 2. [Data Structures](#data-structures)
-3. [Internal APIs](#internal-apis)
+3. [Data Integration APIs](#data-integration-apis)
 4. [Spotify API Integration](#spotify-api-integration)
-5. [Extended Data Fetching](#extended-data-fetching)
-6. [Error Handling](#error-handling)
-7. [Rate Limiting](#rate-limiting)
+5. [Real-time SDK Integration](#real-time-sdk-integration)
+6. [Extended Data Fetching](#extended-data-fetching)
+7. [Error Handling](#error-handling)
 8. [Security & Privacy](#security--privacy)
 
 ## Authentication
@@ -43,17 +44,75 @@ Body:
 - code_verifier: string
 ```
 
-#### 3. Token Refresh
-```
-POST https://accounts.spotify.com/api/token
-
-Body:
-- client_id: string
-- grant_type: "refresh_token"
-- refresh_token: string
-```
-
 ## Data Structures
+
+### Integrated Data Types
+
+#### IntegratedTrackData
+```typescript
+interface IntegratedTrackData {
+  id: string;
+  name: string;
+  artists: Array<{ id: string; name: string }>;
+  duration_ms: number;
+  popularity: number;
+  playedAt?: string;
+  playCount: number;
+  totalListeningTime: number;
+  source: 'api' | 'sdk' | 'combined';
+}
+```
+
+#### IntegratedArtistData
+```typescript
+interface IntegratedArtistData {
+  id: string;
+  name: string;
+  genres: string[];
+  popularity: number;
+  playCount: number;
+  totalListeningTime: number;
+  source: 'api' | 'sdk' | 'combined';
+}
+```
+
+#### ListeningSession
+```typescript
+interface ListeningSession {
+  startTime: Date;
+  endTime?: Date;
+  tracks: IntegratedTrackData[];
+  totalTime: number;
+  isActive: boolean;
+}
+```
+
+### Real-time SDK Types
+
+#### SessionTrack
+```typescript
+interface SessionTrack {
+  id: string;
+  name: string;
+  artists: Array<{ id: string; name: string }>;
+  duration_ms: number;
+  popularity?: number;
+  playedAt: string;
+  playCount: number;
+  totalListeningTime: number;
+}
+```
+
+#### LocalPlaybackSession
+```typescript
+interface LocalPlaybackSession {
+  timestamp: number;
+  trackId: string;
+  duration: number;
+  progress: number;
+  deviceType: 'web' | 'mobile' | 'desktop';
+}
+```
 
 ### User Profile (Sanitized & Secure)
 ```typescript
@@ -70,211 +129,91 @@ interface User {
 }
 ```
 
-**Profile Image Security:**
-- Profile images are stored in `localStorage` under the key `user_profile_image`
-- Images are only stored when explicitly available from Spotify API
-- Image URLs are validated and sanitized before storage
-- Images are automatically cleared on logout for privacy
-- Fallback avatars use user initials when images are unavailable
+## Data Integration APIs
 
-### Original Spotify User Response
-```typescript
-interface SpotifyUser {
-  id: string;
-  display_name: string;
-  email: string;
-  images: Array<{
-    url: string;
-    height: number;
-    width: number;
-  }>;
-  country: string;
-  followers: {
-    total: number;
-  };
-  product: string;
-}
-```
+### SpotifyDataIntegration Class
 
-### Token Response
-```typescript
-interface TokenResponse {
-  access_token: string;
-  token_type: "Bearer";
-  expires_in: number;
-  refresh_token: string;
-  scope: string;
-}
-```
+The central data integration service that combines multiple data sources.
 
-### Track Data
-```typescript
-interface Track {
-  id: string;
-  name: string;
-  artists: Array<{
-    id: string;
-    name: string;
-  }>;
-  album: {
-    id: string;
-    name: string;
-    images: Array<{
-      url: string;
-      height: number;
-      width: number;
-    }>;
-    release_date: string;
-  };
-  duration_ms: number;
-  popularity: number;
-  preview_url: string | null;
-}
-```
+#### Enhanced Data Methods
 
-### Artist Data
-```typescript
-interface Artist {
-  id: string;
-  name: string;
-  genres: string[];
-  images: Array<{
-    url: string;
-    height: number;
-    width: number;
-  }>;
-  popularity: number;
-  followers: {
-    total: number;
-  };
-}
-```
-
-### Extended Response Format
-```typescript
-interface ExtendedResponse<T> {
-  items: T[];
-  total: number;
-  limit: number;
-  offset: number;
-  next: string | null;
-  previous: string | null;
-}
-```
-
-## Internal APIs
-
-### SpotifyAPI Class
-
-#### Standard Methods
-
-##### `getTopTracks(accessToken?: string, timeRange = 'medium_term', limit = 50): Promise<SpotifyResponse>`
-Fetches user's top tracks (standard API limit: 50).
+##### `getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]>`
+Fetches enhanced recently played tracks combining API data with real-time SDK data.
 
 ```typescript
-const tracks = await spotifyAPI.getTopTracks(accessToken, 'medium_term', 50);
-```
-
-##### `getTopArtists(accessToken?: string, timeRange = 'medium_term', limit = 50): Promise<SpotifyResponse>`
-Fetches user's top artists (standard API limit: 50).
-
-```typescript
-const artists = await spotifyAPI.getTopArtists(accessToken, 'medium_term', 50);
-```
-
-#### Extended Methods (NEW)
-
-##### `getExtendedTopTracks(accessToken?: string, timeRange = 'medium_term', totalLimit = 500): Promise<ExtendedResponse<Track>>`
-Fetches extended top tracks dataset using pagination.
-
-```typescript
-const extendedTracks = await spotifyAPI.getExtendedTopTracks(accessToken, 'medium_term', 500);
+const recentTracks = await spotifyDataIntegration.getEnhancedRecentlyPlayed(200);
 ```
 
 **Features:**
-- Fetches up to 500 tracks (vs 50 standard limit)
-- Uses pagination with offset to gather data
-- Implements rate limiting between requests
-- Supports all standard time ranges
-- Returns unified response format
+- Fetches up to 200 tracks using API pagination
+- Enhances with real-time SDK session data
+- Deduplicates and combines play counts
+- Returns unified dataset with source attribution
 
-**Parameters:**
-- `accessToken` - Spotify access token
-- `timeRange` - 'short_term', 'medium_term', or 'long_term'
-- `totalLimit` - Maximum number of tracks to fetch (up to 500)
+**Data Sources:**
+- Spotify Web API: Recently played tracks (paginated)
+- Web Playback SDK: Current session tracks
+- Combined: Merged and deduplicated results
 
-##### `getExtendedTopArtists(accessToken?: string, timeRange = 'medium_term', totalLimit = 500): Promise<ExtendedResponse<Artist>>`
-Fetches extended top artists dataset using pagination.
+##### `getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedTrackData[]>`
+Fetches extended top tracks dataset with SDK enhancement.
 
 ```typescript
-const extendedArtists = await spotifyAPI.getExtendedTopArtists(accessToken, 'medium_term', 500);
+const topTracks = await spotifyDataIntegration.getEnhancedTopTracks('medium_term', 1000);
 ```
 
 **Features:**
-- Fetches up to 500 artists (vs 50 standard limit)
-- Uses pagination with offset to gather data
-- Implements rate limiting between requests
-- Supports all standard time ranges
-- Returns unified response format
+- Extended dataset up to 1000 tracks
+- Enhanced with real-time session data
+- Estimated play counts based on ranking
+- Comprehensive listening history analysis
 
-#### Other Methods
-
-##### `getCurrentUser(accessToken: string): Promise<SpotifyUser>`
-Fetches the current user's profile from Spotify API.
-
-##### `getRecentlyPlayed(accessToken?: string, limit = 50): Promise<SpotifyResponse>`
-Fetches recently played tracks.
-
-##### `getCurrentPlayback(accessToken?: string): Promise<PlaybackState>`
-Fetches current playback state.
-
-### Data Utilities
-
-#### `hashData(data: string): Promise<string>`
-Hashes sensitive data using SHA-256.
-
-#### `generateShortHash(data: string): string`
-Generates a shorter hash for display purposes.
-
-#### `sanitizeUserData(userData: SpotifyUser): User`
-Sanitizes user data to minimal required fields.
-
-### Authentication Hook
-
-#### `useAuth(): AuthContextType`
-React hook for authentication state and methods.
-
-### Data Hooks
-
-#### Standard Hooks
-
-##### `useTopTracks(timeRange?, limit?): QueryResult`
-Hook for fetching standard top tracks (up to 50).
-
-##### `useTopArtists(timeRange?, limit?): QueryResult`
-Hook for fetching standard top artists (up to 50).
-
-#### Extended Hooks (NEW)
-
-##### `useExtendedTopTracks(timeRange?, totalLimit?): QueryResult`
-Hook for fetching extended top tracks dataset.
+##### `getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedArtistData[]>`
+Fetches extended top artists dataset with listening metrics.
 
 ```typescript
-const { data, isLoading, error } = useExtendedTopTracks('medium_term', 500);
+const topArtists = await spotifyDataIntegration.getEnhancedTopArtists('medium_term', 1000);
 ```
 
 **Features:**
-- Fetches up to 500 tracks
-- Extended caching (10 minutes vs 5 minutes)
-- Optimized for large datasets
-- Includes loading states for pagination
+- Extended dataset up to 1000 artists
+- Estimated listening time calculations
+- Genre analysis from extended dataset
+- Play count estimation algorithms
 
-##### `useExtendedTopArtists(timeRange?, totalLimit?): QueryResult`
-Hook for fetching extended top artists dataset.
+#### Listening Statistics
+
+##### `calculateListeningStats(tracks: IntegratedTrackData[], timeRangeLabel: string)`
+Calculates comprehensive listening statistics from integrated track data.
 
 ```typescript
-const { data, isLoading, error } = useExtendedTopArtists('medium_term', 500);
+const stats = spotifyDataIntegration.calculateListeningStats(tracks, 'Last 6 Months');
 ```
+
+**Returns:**
+```typescript
+{
+  totalPlayCount: number;
+  totalMinutes: number;
+  totalHours: number;
+  uniqueArtists: number;
+  avgDailyMinutes: number;
+  topTrack: IntegratedTrackData;
+  timeRangeLabel: string;
+  dataQuality: 'high' | 'medium' | 'low';
+}
+```
+
+#### Session Management
+
+##### `startListeningSession(): void`
+Starts tracking a new listening session.
+
+##### `endListeningSession(): ListeningSession | null`
+Ends current listening session and returns session data.
+
+##### `getCurrentSession(): ListeningSession | null`
+Gets current active listening session.
 
 ## Spotify API Integration
 
@@ -283,320 +222,297 @@ const { data, isLoading, error } = useExtendedTopArtists('medium_term', 500);
 https://api.spotify.com/v1
 ```
 
-### Authentication Header
-```
-Authorization: Bearer {access_token}
-```
-
 ### Standard Endpoints
 
-#### Get User's Top Tracks
+#### Get User's Top Tracks (Extended)
 ```
 GET /me/top/tracks?limit=50&time_range=medium_term&offset=0
 ```
 
-**Scopes Required:** `user-top-read`
+**Extended Implementation:**
+- Supports pagination up to 1000 tracks
+- Rate limiting with 100ms delays
+- Graceful error handling with partial data
 
-**Parameters:**
-- `limit` - Number of tracks (1-50)
-- `time_range` - `short_term`, `medium_term`, or `long_term`
-- `offset` - Index of first track to return (for pagination)
-
-#### Get User's Top Artists
+#### Get User's Top Artists (Extended)
 ```
 GET /me/top/artists?limit=50&time_range=medium_term&offset=0
 ```
 
-**Scopes Required:** `user-top-read`
+**Extended Implementation:**
+- Supports pagination up to 1000 artists
+- Genre aggregation across extended dataset
+- Enhanced popularity metrics
+
+#### Get Recently Played (Enhanced)
+```
+GET /me/player/recently-played?limit=50&before={timestamp}
+```
+
+**Enhanced Implementation:**
+- Pagination support for up to 200 tracks
+- Time-based filtering capabilities
+- Integration with real-time SDK data
+
+## Real-time SDK Integration
+
+### SpotifyPlaybackSDK Class
+
+Handles real-time playback monitoring and session tracking.
+
+#### Initialization Methods
+
+##### `constructor()`
+Automatically initializes SDK and sets up event listeners.
+
+##### `initializeSDK(): Promise<void>`
+Loads and initializes the Spotify Web Playback SDK.
+
+```typescript
+await spotifyPlaybackSDK.initializeSDK();
+```
+
+#### Session Tracking Methods
+
+##### `getSessionTracks(): SessionTrack[]`
+Returns current session tracks with aggregated play data.
+
+```typescript
+const sessionTracks = spotifyPlaybackSDK.getSessionTracks();
+```
+
+**Returns:**
+- Deduplicated tracks from current session
+- Play counts and total listening time
+- Sorted by most recent play time
+
+##### `getSessionStats()`
+Provides comprehensive session statistics.
+
+```typescript
+const sessionStats = spotifyPlaybackSDK.getSessionStats();
+```
+
+**Returns:**
+```typescript
+{
+  sessionLength: number;      // Number of tracked plays
+  uniqueTracks: number;       // Unique tracks in session
+  totalMinutes: number;       // Total listening time
+  deviceType: 'web' | 'mobile' | 'desktop';
+  isActive: boolean;          // Session activity status
+}
+```
+
+##### `startSession(): void`
+Begins session tracking (automatic through playback events).
+
+##### `clearSessionData(): void`
+Clears all temporary session data for privacy.
+
+#### Real-time Data Methods
+
+##### `generateLocalHeatmapData(): HeatmapDay[]`
+Generates activity heatmap data from current session.
+
+```typescript
+const heatmapData = spotifyPlaybackSDK.generateLocalHeatmapData();
+```
+
+**Features:**
+- Combines session data with demonstration patterns
+- Privacy-first local processing
+- No permanent storage
+
+##### `isConnected(): boolean`
+Checks SDK connection status.
+
+##### `getDeviceId(): string`
+Returns current device ID for playback control.
+
+#### Privacy & Cleanup
+
+##### `disconnect(): void`
+Disconnects player and clears all session data.
+
+##### Auto-cleanup on page unload
+Automatic cleanup prevents data persistence across sessions.
 
 ## Extended Data Fetching
 
-### Pagination Strategy
+### Enhanced Data Hooks
 
-The extended data fetching methods use a pagination approach to gather larger datasets:
-
-1. **Multiple Requests**: Makes sequential API calls with different offset values
-2. **Rate Limiting**: Implements 100ms delays between requests to respect API limits
-3. **Error Handling**: Gracefully handles failures and continues with partial data
-4. **Caching**: Uses longer cache times (10 minutes) for extended datasets
-
-### Implementation Example
+#### `useSpotifyData()`
+Central hook providing access to both enhanced and legacy data methods.
 
 ```typescript
-// Fetch up to 500 top tracks
-const fetchExtendedTracks = async () => {
-  const allTracks = [];
-  const maxLimit = 50; // Spotify API limit per request
-  let offset = 0;
-  const totalLimit = 500;
+const {
+  // Enhanced hooks with integration
+  useEnhancedRecentlyPlayed,
+  useEnhancedTopTracks,
+  useEnhancedTopArtists,
+  useListeningStats,
   
-  while (allTracks.length < totalLimit && offset < 1000) {
-    const response = await fetch(`/me/top/tracks?limit=${maxLimit}&offset=${offset}`, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    
-    const data = await response.json();
-    allTracks.push(...data.items);
-    offset += maxLimit;
-    
-    // Rate limiting
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  
-  return { items: allTracks, total: allTracks.length };
-};
+  // Legacy hooks for backward compatibility
+  useTopTracks,
+  useTopArtists,
+  useRecentlyPlayed,
+  useCurrentPlayback,
+} = useSpotifyData();
 ```
 
-### Benefits of Extended Data
+#### Enhanced Hooks Usage
 
-1. **Deeper Insights**: More comprehensive genre analysis with 500+ artists
-2. **Better Statistics**: More accurate popularity and diversity metrics
-3. **Enhanced Discovery**: Find patterns not visible in top 50
-4. **Improved Accuracy**: Better representation of actual listening habits
+##### `useEnhancedRecentlyPlayed(limit: number = 200)`
+```typescript
+const { data, isLoading, error } = useEnhancedRecentlyPlayed(200);
+```
 
-### Performance Considerations
+##### `useEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 1000)`
+```typescript
+const { data, isLoading, error } = useEnhancedTopTracks('medium_term', 1000);
+```
 
-- **Loading Time**: Extended fetching takes 5-15 seconds depending on data size
-- **Memory Usage**: Larger datasets require more browser memory
-- **Network Usage**: Multiple API calls increase bandwidth usage
-- **Rate Limits**: Respects Spotify's rate limits with built-in delays
+##### `useListeningStats(timeRange: string = 'medium_term')`
+```typescript
+const { data: stats, isLoading, error } = useListeningStats('medium_term');
+```
 
 ## Error Handling
 
-### Error Types
+### Multi-Source Error Management
 
-#### Extended Fetching Errors
+#### Error Types
 ```typescript
-interface ExtendedFetchError {
-  type: 'rate_limit' | 'network' | 'auth' | 'partial_data';
+interface DataIntegrationError {
+  type: 'api_error' | 'sdk_error' | 'network_error' | 'rate_limit';
   message: string;
-  itemsFetched: number;
-  totalRequested: number;
+  source: 'api' | 'sdk' | 'integration';
+  recoverable: boolean;
 }
 ```
 
-#### Rate Limiting for Extended Requests
+#### Graceful Degradation
 ```typescript
-const handleExtendedRateLimit = async (requestCount: number) => {
-  if (requestCount > 5) {
-    // Increase delay for multiple requests
-    const delay = Math.min(200 + (requestCount * 50), 1000);
-    await new Promise(resolve => setTimeout(resolve, delay));
-  }
-};
-```
-
-### Best Practices for Extended Data
-
-1. **Graceful Degradation**: Continue with partial data if some requests fail
-2. **Progress Indication**: Show loading progress for long-running requests
-3. **Caching Strategy**: Cache extended datasets longer to reduce API calls
-4. **User Communication**: Inform users about longer loading times
-
-## Rate Limiting
-
-### Enhanced Rate Limiting for Extended Requests
-
-#### Spotify API Limits
-- **Standard Rate Limit:** 100 requests per minute per user
-- **Burst Limit:** 10 requests per second
-- **Extended Fetching:** Up to 10 requests for 500 items
-
-#### Advanced Rate Limit Handling
-```typescript
-class RateLimitManager {
-  private requestCount = 0;
-  private requestWindow = 60000; // 1 minute
-  private lastReset = Date.now();
+// Partial data handling
+const handlePartialFailure = async () => {
+  const results = await Promise.allSettled([
+    fetchAPIData(),
+    fetchSDKData()
+  ]);
   
-  async throttleRequest(): Promise<void> {
-    if (Date.now() - this.lastReset > this.requestWindow) {
-      this.requestCount = 0;
-      this.lastReset = Date.now();
-    }
-    
-    if (this.requestCount >= 90) { // Leave buffer
-      const waitTime = this.requestWindow - (Date.now() - this.lastReset);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-    }
-    
-    this.requestCount++;
-  }
-}
-```
-
-#### Progressive Backoff Strategy
-```typescript
-const progressiveDelay = (requestIndex: number): number => {
-  // Start with 100ms, increase gradually
-  return Math.min(100 + (requestIndex * 25), 500);
+  return {
+    apiData: getSuccessfulResult(results[0]),
+    sdkData: getSuccessfulResult(results[1]),
+    hasPartialData: results.some(r => r.status === 'rejected')
+  };
 };
 ```
+
+#### Rate Limiting Strategy
+- Progressive backoff for multiple requests
+- 100ms base delay between paginated calls
+- Respect for Spotify API limits (100 requests/minute)
+- Automatic retry with exponential backoff
 
 ## Security & Privacy
 
-### Profile Image Storage
+### Privacy-First Design
 
-#### Secure Storage Implementation
+#### Session Data Handling
+- All SDK data processed locally in browser memory
+- No permanent storage of listening data
+- Automatic cleanup on page unload
+- Session data limited to prevent memory bloat
+
+#### Profile Image Security
 ```typescript
 const storeProfileImage = (userData: any) => {
-  try {
-    if (userData?.images?.[0]?.url) {
-      // Validate image URL before storage
-      const imageUrl = userData.images[0].url;
-      if (imageUrl.startsWith('https://') && imageUrl.includes('spotify')) {
-        localStorage.setItem('user_profile_image', imageUrl);
-        console.log('Profile image stored securely');
-      }
+  if (userData?.images?.[0]?.url) {
+    const imageUrl = userData.images[0].url;
+    if (imageUrl.startsWith('https://') && imageUrl.includes('spotify')) {
+      localStorage.setItem('user_profile_image', imageUrl);
     }
-  } catch (error) {
-    console.warn('Failed to store profile image:', error);
   }
 };
 ```
 
-#### Profile Image Retrieval
-```typescript
-const getUserProfileImage = () => {
-  // Check for cached profile image first
-  const cachedImage = localStorage.getItem('user_profile_image');
-  if (cachedImage) {
-    return cachedImage;
-  }
-  
-  // Fallback to user.images if available
-  return user.images?.[0]?.url || null;
-};
-```
-
-### Data Clearing & Privacy
-
-#### Comprehensive Data Cleanup
+#### Data Cleanup
 ```typescript
 const clearAllUserData = () => {
-  try {
-    const keysToRemove = [
-      'spotify_access_token',
-      'spotify_refresh_token', 
-      'spotify_token_expiry',
-      'user_profile',
-      'user_profile_image'  // Profile image is cleared on logout
-    ];
-    
-    keysToRemove.forEach(key => {
-      localStorage.removeItem(key);
-    });
-    
-    console.log('All user data cleared successfully');
-  } catch (error) {
-    console.error('Error clearing user data:', error);
-  }
+  const keysToRemove = [
+    'spotify_access_token',
+    'spotify_refresh_token', 
+    'spotify_token_expiry',
+    'user_profile',
+    'user_profile_image'
+  ];
+  
+  keysToRemove.forEach(key => localStorage.removeItem(key));
 };
 ```
 
-### Authentication Flow Improvements
+### Authentication Security
 
 #### Enhanced Login Process
-- **Single-Step Login:** Fixed double login requirement
-- **Token Validation:** Background validation without blocking UI
-- **Error Recovery:** Graceful handling of expired or invalid tokens
-- **Secure Storage:** Profile images stored with validation
+- Single-step login (fixed double login requirement)
+- Background token validation
+- Graceful error recovery
+- Secure profile image handling
 
-#### Logout Enhancement
-```typescript
-const logout = async () => {
-  try {
-    console.log('Logging out user...');
-    setUser(null);
-    setError(null);
-    clearAllUserData(); // Includes profile image cleanup
-    console.log('Logout completed successfully');
-  } catch (error) {
-    console.error('Logout error:', error);
-    // Still clear local state even if there's an error
-    setUser(null);
-    setError(null);
-    clearAllUserData();
-  }
-};
-```
+#### Token Management
+- Automatic token refresh
+- Secure token storage
+- Proper cleanup on logout
+- Error handling for expired tokens
 
-### Error Handling & Recovery
+## Performance Optimization
 
-#### Site Stability Improvements
-- **Graceful Degradation:** App doesn't break when data is cleared
-- **Error Recovery UI:** User-friendly error messages with recovery options
-- **Token Expiry Handling:** Automatic cleanup of expired authentication data
-- **Background Validation:** Non-blocking token verification
+### Caching Strategy
 
-#### Error Recovery Component
-```typescript
-// Enhanced AuthGuard with error recovery
-if (error && !user) {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="max-w-md mx-auto p-6 text-center">
-        <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-destructive font-bold text-xl">!</span>
-        </div>
-        <h2 className="text-lg font-semibold mb-2">Connection Issue</h2>
-        <p className="text-sm text-muted-foreground mb-4">{error}</p>
-        <div className="space-y-2">
-          <button onClick={() => window.location.reload()}>Refresh Page</button>
-          <button onClick={() => window.location.href = '/index'}>Back to Home</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-```
+#### API Data Caching
+- 10-minute cache for extended datasets
+- 2-minute cache for recently played
+- Shared cache across all components
+- Smart cache invalidation
 
-### Navigation Security
+#### Real-time Processing
+- In-memory session data processing
+- Efficient event handling
+- Automatic memory management
+- No blocking operations
 
-#### Protected Navigation
-- **Dashboard Access:** Properly secured dashboard routes
-- **Back Navigation:** Fixed "Back to Dashboard" buttons routing correctly
-- **Logout Security:** Complete session cleanup on sign out
-- **Profile Protection:** Avatar display with secure image handling
+### Network Optimization
 
-### Best Practices Implemented
+#### Batch Processing
+- Parallel API requests where possible
+- Sequential requests for rate limiting
+- Partial data continuation
+- Smart retry mechanisms
 
-1. **Privacy by Design:** All sensitive data cleared on logout
-2. **Secure Storage:** Profile images validated before storage
-3. **Error Recovery:** Graceful handling of authentication failures
-4. **Single Sign-On:** Fixed double login requirement
-5. **Session Management:** Proper token expiry and refresh handling
-6. **UI Consistency:** Fixed navigation button behaviors
-7. **Fallback Handling:** Graceful degradation when APIs fail
+#### Memory Management
+- Limited session data storage (100 items max)
+- Automatic cleanup of old data
+- Efficient data structures
+- Memory leak prevention
 
-## Testing
+## Best Practices
 
-### Extended Data Tests
-```typescript
-describe('Extended Data Fetching', () => {
-  test('should fetch up to 500 tracks', async () => {
-    const result = await spotifyAPI.getExtendedTopTracks(token, 'medium_term', 500);
-    expect(result.items.length).toBeLessThanOrEqual(500);
-    expect(result.items.length).toBeGreaterThan(50);
-  });
-  
-  test('should handle rate limiting gracefully', async () => {
-    const startTime = Date.now();
-    await spotifyAPI.getExtendedTopTracks(token, 'medium_term', 200);
-    const duration = Date.now() - startTime;
-    expect(duration).toBeGreaterThan(1000); // Should include delays
-  });
-});
-```
+### Implementation Guidelines
 
-### Performance Tests
-```typescript
-describe('Performance Monitoring', () => {
-  test('should complete extended fetch within reasonable time', async () => {
-    const startTime = performance.now();
-    await spotifyAPI.getExtendedTopTracks(token, 'medium_term', 500);
-    const duration = performance.now() - startTime;
-    expect(duration).toBeLessThan(30000); // 30 seconds max
-  });
-});
-```
+1. **Use Enhanced Hooks**: Always prefer enhanced hooks for new features
+2. **Handle Partial Data**: Gracefully handle scenarios with missing data sources
+3. **Respect Privacy**: Follow privacy-first principles for all data handling
+4. **Cache Calculations**: Use React.useMemo for expensive calculations
+5. **Clean Up Resources**: Properly clean up SDK connections and data
+6. **Progressive Enhancement**: Start with API data, enhance with SDK when available
+
+### Testing Strategies
+
+1. **Mock All Sources**: Test both API and SDK data sources
+2. **Test Offline Scenarios**: Handle cases where SDK is unavailable
+3. **Validate Data Quality**: Test different data source combinations
+4. **Performance Testing**: Verify performance with large datasets
+5. **Error Scenarios**: Test graceful degradation with partial failures
+
+This API reference provides comprehensive documentation for the integrated data architecture, covering both the enhanced capabilities and maintaining backward compatibility with existing implementations.

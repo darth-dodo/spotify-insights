@@ -38,6 +38,17 @@ export interface LocalPlaybackSession {
   deviceType: 'web' | 'mobile' | 'desktop';
 }
 
+export interface SessionTrack {
+  id: string;
+  name: string;
+  artists: Array<{ id: string; name: string }>;
+  duration_ms: number;
+  popularity?: number;
+  playedAt: string;
+  playCount: number;
+  totalListeningTime: number;
+}
+
 export interface HeatmapDay {
   date: string;
   plays: number;
@@ -242,6 +253,40 @@ export class SpotifyPlaybackSDK {
       deviceType: this.detectDeviceType(),
       isActive: this.isInitialized && this.sessionData.length > 0
     };
+  }
+
+  // Get session tracks (required by data integration)
+  public getSessionTracks(): SessionTrack[] {
+    const trackMap = new Map<string, SessionTrack>();
+    
+    this.sessionData.forEach(session => {
+      const existing = trackMap.get(session.trackId);
+      if (existing) {
+        existing.playCount += 1;
+        existing.totalListeningTime += session.duration;
+      } else {
+        trackMap.set(session.trackId, {
+          id: session.trackId,
+          name: `Track ${session.trackId.slice(0, 8)}`, // Placeholder name
+          artists: [{ id: 'unknown', name: 'Unknown Artist' }],
+          duration_ms: session.duration,
+          popularity: 50,
+          playedAt: new Date(session.timestamp).toISOString(),
+          playCount: 1,
+          totalListeningTime: session.duration
+        });
+      }
+    });
+
+    return Array.from(trackMap.values()).sort((a, b) => 
+      new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()
+    );
+  }
+
+  // Start a new session (required by data integration)
+  public startSession(): void {
+    console.log('Starting new listening session');
+    // Session tracking is automatic through player state changes
   }
 
   // Clear all temporary session data

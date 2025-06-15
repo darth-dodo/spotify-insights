@@ -1,11 +1,19 @@
+
 import { spotifyAPI } from './spotify-api';
 import { spotifyPlaybackSDK } from './spotify-playback-sdk';
 import { SpotifyDataCache } from './spotify-data-cache';
+import { extensiveDummyData } from './extensive-dummy-data';
 import type { IntegratedTrackData, IntegratedArtistData, ListeningSession } from './spotify-data-types';
 
 class SpotifyDataIntegration {
   private cache = new SpotifyDataCache();
   private currentSession: ListeningSession | null = null;
+
+  // Helper to check if we should use dummy data
+  private shouldUseDummyData(): boolean {
+    return window.location.pathname === '/sandbox' || 
+           (window.location.pathname === '/' && !localStorage.getItem('spotify_access_token'));
+  }
 
   // Helper to ensure non-negative numbers
   private ensurePositive(value: number): number {
@@ -26,6 +34,24 @@ class SpotifyDataIntegration {
   }
 
   async getEnhancedRecentlyPlayed(limit: number = 200): Promise<IntegratedTrackData[]> {
+    // Use dummy data if no authentication
+    if (this.shouldUseDummyData()) {
+      console.log('Using dummy data for recently played tracks');
+      return extensiveDummyData.recentlyPlayed.items
+        .slice(0, limit)
+        .map(item => ({
+          id: item.track.id,
+          name: item.track.name,
+          artists: item.track.artists || [],
+          duration_ms: this.ensurePositive(item.track.duration_ms),
+          popularity: this.ensurePositive(item.track.popularity),
+          playedAt: item.played_at,
+          playCount: 1,
+          totalListeningTime: this.ensurePositive(item.track.duration_ms),
+          source: 'api' as const
+        }));
+    }
+
     const token = localStorage.getItem('spotify_access_token');
 
     try {
@@ -96,6 +122,23 @@ class SpotifyDataIntegration {
   }
 
   async getEnhancedTopTracks(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedTrackData[]> {
+    // Use dummy data if no authentication
+    if (this.shouldUseDummyData()) {
+      console.log('Using dummy data for top tracks');
+      return extensiveDummyData.topTracks.items
+        .slice(0, totalLimit)
+        .map((track: any, index: number) => ({
+          id: track.id,
+          name: track.name,
+          artists: track.artists || [],
+          duration_ms: this.ensurePositive(track.duration_ms),
+          popularity: this.ensurePositive(track.popularity),
+          playCount: this.ensurePositive(Math.max(100 - index, 1)),
+          totalListeningTime: this.ensurePositive((Math.max(100 - index, 1)) * track.duration_ms),
+          source: 'api' as const
+        }));
+    }
+
     const cacheKey = `${timeRange}_${totalLimit}`;
     
     const cached = this.cache.getCachedTopTracks(cacheKey);
@@ -136,6 +179,22 @@ class SpotifyDataIntegration {
   }
 
   async getEnhancedTopArtists(timeRange: string = 'medium_term', totalLimit: number = 1000): Promise<IntegratedArtistData[]> {
+    // Use dummy data if no authentication
+    if (this.shouldUseDummyData()) {
+      console.log('Using dummy data for top artists');
+      return extensiveDummyData.topArtists.items
+        .slice(0, totalLimit)
+        .map((artist: any, index: number) => ({
+          id: artist.id,
+          name: artist.name,
+          genres: artist.genres || [],
+          popularity: this.ensurePositive(artist.popularity),
+          playCount: this.ensurePositive(Math.max(50 - Math.floor(index / 2), 1)),
+          totalListeningTime: this.ensurePositive((Math.max(50 - Math.floor(index / 2), 1)) * 180000),
+          source: 'api' as const
+        }));
+    }
+
     const cacheKey = `${timeRange}_${totalLimit}`;
     
     const cached = this.cache.getCachedTopArtists(cacheKey);

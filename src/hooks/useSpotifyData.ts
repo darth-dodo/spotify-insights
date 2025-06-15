@@ -6,6 +6,16 @@ import { spotifyDataIntegration } from '@/lib/spotify-data-integration';
 export const useSpotifyData = () => {
   const getAccessToken = () => {
     const token = localStorage.getItem('spotify_access_token');
+    
+    // Check if we're in demo mode
+    const isDemoMode = window.location.pathname === '/sandbox' || 
+      (window.location.pathname === '/' && (!token || token === 'demo_access_token'));
+    
+    if (isDemoMode) {
+      console.log('Demo mode detected, using demo token');
+      return 'demo_access_token';
+    }
+    
     if (!token) {
       throw new Error('No access token found. Please authenticate with Spotify.');
     }
@@ -63,77 +73,99 @@ export const useSpotifyData = () => {
   const useTopTracks = (timeRange: string = 'medium_term', limit: number = 50) => {
     return useQuery({
       queryKey: ['top-tracks', timeRange, limit],
-      queryFn: () => spotifyAPI.getTopTracks(getAccessToken(), timeRange, limit),
+      queryFn: () => {
+        try {
+          return spotifyAPI.getTopTracks(getAccessToken(), timeRange, limit);
+        } catch (error) {
+          console.warn('Failed to fetch top tracks, using empty data:', error);
+          return { items: [] };
+        }
+      },
       staleTime: 1000 * 60 * 5,
       enabled: true,
-      retry: (failureCount, error) => {
-        if (error?.message?.includes('429') || error?.message?.includes('401')) {
-          return false;
-        }
-        return failureCount < 2;
-      },
+      retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
 
   const useTopArtists = (timeRange: string = 'medium_term', limit: number = 50) => {
     return useQuery({
       queryKey: ['top-artists', timeRange, limit],
-      queryFn: () => spotifyAPI.getTopArtists(getAccessToken(), timeRange, limit),
+      queryFn: () => {
+        try {
+          return spotifyAPI.getTopArtists(getAccessToken(), timeRange, limit);
+        } catch (error) {
+          console.warn('Failed to fetch top artists, using empty data:', error);
+          return { items: [] };
+        }
+      },
       staleTime: 1000 * 60 * 5,
       enabled: true,
-      retry: (failureCount, error) => {
-        if (error?.message?.includes('429') || error?.message?.includes('401')) {
-          return false;
-        }
-        return failureCount < 2;
-      },
+      retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
 
   const useExtendedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
       queryKey: ['extended-top-tracks', timeRange, totalLimit],
-      queryFn: () => spotifyAPI.getExtendedTopTracks(getAccessToken(), timeRange, totalLimit),
+      queryFn: () => {
+        try {
+          return spotifyAPI.getExtendedTopTracks(getAccessToken(), timeRange, totalLimit);
+        } catch (error) {
+          console.warn('Failed to fetch extended top tracks, using empty data:', error);
+          return { items: [] };
+        }
+      },
       staleTime: 1000 * 60 * 15,
       enabled: true,
-      retry: (failureCount, error) => {
-        if (error?.message?.includes('429') || error?.message?.includes('401')) {
-          return false;
-        }
-        return failureCount < 2;
-      },
+      retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
 
   const useExtendedTopArtists = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
       queryKey: ['extended-top-artists', timeRange, totalLimit],
-      queryFn: () => spotifyAPI.getExtendedTopArtists(getAccessToken(), timeRange, totalLimit),
+      queryFn: () => {
+        try {
+          return spotifyAPI.getExtendedTopArtists(getAccessToken(), timeRange, totalLimit);
+        } catch (error) {
+          console.warn('Failed to fetch extended top artists, using empty data:', error);
+          return { items: [] };
+        }
+      },
       staleTime: 1000 * 60 * 15,
       enabled: true,
-      retry: (failureCount, error) => {
-        if (error?.message?.includes('429') || error?.message?.includes('401')) {
-          return false;
-        }
-        return failureCount < 2;
-      },
+      retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
 
   const useRecentlyPlayed = (limit: number = 50) => {
     return useQuery({
       queryKey: ['recently-played', limit],
-      queryFn: () => spotifyAPI.getRecentlyPlayed(getAccessToken(), limit),
+      queryFn: () => {
+        try {
+          return spotifyAPI.getRecentlyPlayed(getAccessToken(), limit);
+        } catch (error) {
+          console.warn('Failed to fetch recently played, using empty data:', error);
+          return { items: [] };
+        }
+      },
       staleTime: 1000 * 60 * 1,
       enabled: true,
-      retry: false, // Don't retry frequently updated data
+      retry: false, // Don't retry frequently updated data, especially in demo mode
     });
   };
 
   const useCurrentPlayback = () => {
     return useQuery({
       queryKey: ['current-playback'],
-      queryFn: () => spotifyAPI.getCurrentPlayback(getAccessToken()),
+      queryFn: () => {
+        try {
+          return spotifyAPI.getCurrentPlayback(getAccessToken());
+        } catch (error) {
+          console.warn('Failed to fetch current playback, using empty data:', error);
+          return null;
+        }
+      },
       staleTime: 1000 * 30,
       enabled: true,
       retry: false,
@@ -144,20 +176,20 @@ export const useSpotifyData = () => {
     return useQuery({
       queryKey: ['listening-stats', timeRange],
       queryFn: async () => {
-        const tracks = await spotifyDataIntegration.getEnhancedTopTracks(timeRange, 1000);
-        const timeRangeLabel = timeRange === 'short_term' ? 'Last 4 Weeks' :
-                              timeRange === 'medium_term' ? 'Last 6 Months' :
-                              'All Time';
-        return spotifyDataIntegration.calculateListeningStats(tracks, timeRangeLabel);
+        try {
+          const tracks = await spotifyDataIntegration.getEnhancedTopTracks(timeRange, 1000);
+          const timeRangeLabel = timeRange === 'short_term' ? 'Last 4 Weeks' :
+                                timeRange === 'medium_term' ? 'Last 6 Months' :
+                                'All Time';
+          return spotifyDataIntegration.calculateListeningStats(tracks, timeRangeLabel);
+        } catch (error) {
+          console.warn('Failed to fetch listening stats, using default data:', error);
+          return { totalTracks: 0, totalArtists: 0, topGenres: [] };
+        }
       },
       staleTime: 1000 * 60 * 10,
       enabled: true,
-      retry: (failureCount, error) => {
-        if (error?.message?.includes('429') || error?.message?.includes('401')) {
-          return false;
-        }
-        return failureCount < 2;
-      },
+      retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
 

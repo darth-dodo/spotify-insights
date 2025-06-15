@@ -3,8 +3,9 @@ import { spotifyAPI } from './spotify-api';
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || `${window.location.origin}/callback`;
 
-// Only use sandbox mode when explicitly on /sandbox route
-const USE_DUMMY_DATA = window.location.pathname === '/sandbox';
+// Use sandbox mode when explicitly on /sandbox route OR when on root without auth
+const USE_DUMMY_DATA = window.location.pathname === '/sandbox' || 
+  (window.location.pathname === '/' && !localStorage.getItem('spotify_access_token'));
 
 const SCOPES = [
   'user-read-private',
@@ -40,11 +41,11 @@ class SpotifyAuth {
   }
 
   async login(): Promise<void> {
-    // Only use dummy data in sandbox mode
+    // Use dummy data in sandbox mode or demo mode
     if (USE_DUMMY_DATA) {
-      console.log('Using dummy data for sandbox authentication');
-      localStorage.setItem('spotify_access_token', 'sandbox_access_token');
-      localStorage.setItem('spotify_refresh_token', 'sandbox_refresh_token');
+      console.log('Using dummy data for demo/sandbox authentication');
+      localStorage.setItem('spotify_access_token', 'demo_access_token');
+      localStorage.setItem('spotify_refresh_token', 'demo_refresh_token');
       localStorage.setItem('spotify_token_expiry', (Date.now() + 3600 * 1000).toString());
       await new Promise(resolve => setTimeout(resolve, 1000));
       return;
@@ -80,7 +81,7 @@ class SpotifyAuth {
 
   async handleCallback(code: string, state: string): Promise<void> {
     if (USE_DUMMY_DATA) {
-      throw new Error('Callback should not be called in sandbox mode');
+      throw new Error('Callback should not be called in demo/sandbox mode');
     }
 
     const storedState = localStorage.getItem('auth_state');
@@ -128,7 +129,7 @@ class SpotifyAuth {
   async refreshAccessToken(refreshToken: string): Promise<any> {
     if (USE_DUMMY_DATA) {
       return {
-        access_token: 'sandbox_access_token_refreshed',
+        access_token: 'demo_access_token_refreshed',
         token_type: 'Bearer',
         expires_in: 3600,
         refresh_token: refreshToken
@@ -191,6 +192,10 @@ class SpotifyAuth {
     }
     
     return token;
+  }
+
+  isDemoMode(): boolean {
+    return USE_DUMMY_DATA;
   }
 }
 

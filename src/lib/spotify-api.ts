@@ -1,10 +1,18 @@
-
 const BASE_URL = 'https://api.spotify.com/v1';
 
 export class SpotifyAPI {
   private async makeRequest(endpoint: string, accessToken?: string) {
-    // Remove all dummy data logic - only use real API
-    if (!accessToken) {
+    // Check if we're in demo mode (root path without real auth or sandbox)
+    const isDemoMode = window.location.pathname === '/sandbox' || 
+      (window.location.pathname === '/' && (!accessToken || accessToken === 'demo_access_token'));
+
+    if (isDemoMode) {
+      console.log('Demo mode detected, skipping real API call for:', endpoint);
+      // Return empty data structure to prevent errors
+      return { items: [], total: 0 };
+    }
+
+    if (!accessToken || accessToken === 'demo_access_token') {
       throw new Error('Access token required. Please authenticate with Spotify.');
     }
 
@@ -55,6 +63,15 @@ export class SpotifyAPI {
   }
 
   async getExtendedTopTracks(accessToken?: string, timeRange = 'medium_term', totalLimit = 1000) {
+    // Check for demo mode early
+    const isDemoMode = window.location.pathname === '/sandbox' || 
+      (window.location.pathname === '/' && (!accessToken || accessToken === 'demo_access_token'));
+
+    if (isDemoMode) {
+      console.log('Demo mode detected, returning empty data for extended top tracks');
+      return { items: [], total: 0, limit: 50, offset: 0, next: null, previous: null };
+    }
+
     const allItems = [];
     const maxLimit = 50;
     let offset = 0;
@@ -98,6 +115,15 @@ export class SpotifyAPI {
   }
 
   async getExtendedTopArtists(accessToken?: string, timeRange = 'medium_term', totalLimit = 1000) {
+    // Check for demo mode early
+    const isDemoMode = window.location.pathname === '/sandbox' || 
+      (window.location.pathname === '/' && (!accessToken || accessToken === 'demo_access_token'));
+
+    if (isDemoMode) {
+      console.log('Demo mode detected, returning empty data for extended top artists');
+      return { items: [], total: 0, limit: 50, offset: 0, next: null, previous: null };
+    }
+
     const allItems = [];
     const maxLimit = 50;
     let offset = 0;

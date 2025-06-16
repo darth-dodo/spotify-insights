@@ -59,4 +59,10 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
+*Last updated: June 15, 2025*
+*Enhanced dataset capabilities: Up to 2,000 tracks and artists per analysis*
+
+
+boop
+=======
 For support, please open an issue in the GitHub repository.

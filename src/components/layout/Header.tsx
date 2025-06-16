@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { Menu, LogOut, Settings, User, Home, Shield, HelpCircle, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface HeaderProps {
   user: any;
@@ -18,6 +19,7 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   const handleLogout = async () => {
     try {
@@ -30,13 +32,17 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
 
   const handleHomeNavigation = () => {
     if (user) {
-      // If user is logged in, navigate to dashboard
-      if (location.pathname !== '/') {
-        navigate('/', { replace: true });
-      } else {
-        // Already on dashboard, just scroll to top
-        window.scrollTo(0, 0);
-      }
+      // Clear all React Query cache
+      queryClient.clear();
+      // Clear any stored tokens/data
+      localStorage.removeItem('spotify_access_token');
+      localStorage.removeItem('spotify_refresh_token');
+      localStorage.removeItem('spotify_user');
+      localStorage.removeItem('spotify_token_expires_at');
+      // Navigate to landing page and replace history
+      navigate('/index', { replace: true });
+      // Force page reload to ensure clean state
+      window.location.reload();
     } else {
       // If user is not logged in, go to index page
       navigate('/index', { replace: true });

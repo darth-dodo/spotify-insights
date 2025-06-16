@@ -12,9 +12,12 @@ import { InfoButton } from '@/components/ui/InfoButton';
 export const EnhancedLibraryHealth = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   
-  const { useTopTracks, useTopArtists } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
+  // Use centralized store with full 2000 item dataset
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const topTracksData = { items: tracks };
+  const topArtistsData = { items: artists };
 
   const isLoading = tracksLoading || artistsLoading;
 

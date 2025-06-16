@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { useToast } from '@/hooks/use-toast';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 export const CallbackPage = () => {
   const navigate = useNavigate();
@@ -64,12 +65,6 @@ export const CallbackPage = () => {
   }, [navigate, toast]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
-        <h2 className="text-xl font-semibold">Connecting your account...</h2>
-        <p className="text-muted-foreground">Please wait while we authenticate with Spotify</p>
-      </div>
-    </div>
+    <LoadingScreen message="Connecting your account..." />
   );
 };

@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { calculateStats, calculateGenreAnalysis } from '@/lib/spotify-data-utils';
 import { OverviewHeader } from './overview/OverviewHeader';
 import { StatsOverview } from './overview/StatsOverview';
 import { MusicInsightsSummary } from './overview/MusicInsightsSummary';
-import { ActivityHeatmap } from './overview/ActivityHeatmap';
+import { TopTracksPreview } from './overview/TopTracksPreview';
+import { GamificationPreview } from './overview/GamificationPreview';
 import { RecentActivity } from './overview/RecentActivity';
-import { AchievementsPreview } from './overview/AchievementsPreview';
-import { QuickNavigation } from './overview/QuickNavigation';
+import { EngagementCTA } from './overview/EngagementCTA';
 import { BlurLoader } from '@/components/ui/BlurLoader';
 import { ErrorDialog } from '@/components/auth/ErrorDialog';
 
@@ -17,26 +17,42 @@ interface InteractiveOverviewProps {
 }
 
 export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) => {
-  const { useTopTracks, useTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [currentError, setCurrentError] = useState<string>('');
 
-  // Use smaller datasets for faster loading in demo mode
-  const { data: tracks, isLoading: tracksLoading, error: tracksError } = useTopTracks('medium_term', 50);
-  const { data: artists, isLoading: artistsLoading, error: artistsError } = useTopArtists('medium_term', 50);
-  const { data: recentlyPlayed, isLoading: recentLoading, error: recentError } = useEnhancedRecentlyPlayed(100);
+  // Use centralized data store (fetches all data once with 2000 items)
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading, error: tracksError } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading, error: artistsError } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: recentlyPlayed = [], isLoading: recentLoading, error: recentError } = useEnhancedRecentlyPlayed(200);
+  const isLoading = tracksLoading || artistsLoading || recentLoading;
+  const error = tracksError || artistsError || recentError;
+  
+  // Create dataInfo object for compatibility
+  const dataInfo = {
+    tracksCount: tracks.length,
+    artistsCount: artists.length,
+    recentCount: recentlyPlayed.length,
+    lastFetched: new Date().toISOString(),
+    timeRange: 'medium_term',
+    dataSource: window.location.pathname === '/sandbox' ? 'sandbox' : 'spotify'
+  };
 
   // Check for errors and show them in modal
   React.useEffect(() => {
-    const error = tracksError || artistsError || recentError;
     if (error) {
       setCurrentError(error.message || 'An error occurred while loading your music data');
       setErrorDialogOpen(true);
     }
-  }, [tracksError, artistsError, recentError]);
+  }, [error]);
 
-  const isLoading = tracksLoading || artistsLoading || recentLoading;
+  // Log data info for debugging
+  React.useEffect(() => {
+    if (dataInfo.tracksCount > 0) {
+      console.log('📊 Overview using comprehensive dataset:', dataInfo);
+    }
+  }, [dataInfo]);
 
   const handleNavigation = (view: string) => {
     if (onNavigate) {
@@ -52,40 +68,39 @@ export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) =>
 
   return (
     <BlurLoader isLoading={isLoading}>
-      <div className="space-y-4 md:space-y-6">
-        {/* Header */}
+      <div className="space-y-6 lg:space-y-8">
+        {/* 1. HOOK: Immediate Impact Header */}
         <OverviewHeader />
 
-        {/* Enhanced Stats */}
+        {/* 2. INSTANT GRATIFICATION: Key Stats Grid */}
         <StatsOverview 
           selectedCard={selectedCard} 
           onCardSelect={setSelectedCard} 
         />
 
-        {/* Enhanced Music Insights */}
-        <MusicInsightsSummary />
+        {/* 3. PERSONAL CONNECTION: Gamification First (if enabled) */}
+        <GamificationPreview onNavigate={handleNavigation} />
 
-        {/* Activity Heatmap */}
-        <ActivityHeatmap />
+        {/* 4. DISCOVERY & INSIGHTS: Optimized Desktop Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 xl:col-span-2">
+            <TopTracksPreview onNavigate={handleNavigation} />
+          </div>
+          <div className="lg:col-span-1 xl:col-span-1">
+            {/* 5. INSIGHTS: Music Profile */}
+            <MusicInsightsSummary />
+          </div>
+        </div>
 
-        {/* Quick Navigation to Other Tabs */}
-        <QuickNavigation onNavigate={handleNavigation} />
 
-        {/* Tabs for detailed sections */}
-        <Tabs defaultValue="recent" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="recent">Recent Activity</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="recent" className="space-y-4">
-            <RecentActivity />
-          </TabsContent>
+        {/* 6. ENGAGEMENT: Recent Activity */}
+        <div className="space-y-6">
+          <RecentActivity />
+        </div>
 
-          <TabsContent value="achievements" className="space-y-4">
-            <AchievementsPreview />
-          </TabsContent>
-        </Tabs>
+        {/* 7. CONVERSION: Final Call-to-Action */}
+        <EngagementCTA onNavigate={handleNavigation} />
 
         {/* Error Dialog */}
         <ErrorDialog

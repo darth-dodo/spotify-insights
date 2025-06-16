@@ -1,20 +1,85 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { TrendingUp, Calendar, Clock, Music, Trophy, Loader2 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  Tooltip,
+  Legend,
+  AreaChart,
+  Area,
+  TooltipProps
+} from 'recharts';
+import { TrendingUp, Calendar, Clock, Music, Trophy, Loader2, Headphones, Users, Star, Activity, Heart, Sparkles } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { InfoButton } from '@/components/ui/InfoButton';
+
+interface ListeningPatterns {
+  hourly: Array<{
+    hour: string;
+    count: number;
+    percentage: number;
+  }>;
+  daily: Array<{
+    day: string;
+    count: number;
+    percentage: number;
+  }>;
+  weekly: Array<{
+    week: string;
+    count: number;
+    percentage: number;
+  }>;
+  monthly: Array<{
+    month: string;
+    count: number;
+    percentage: number;
+  }>;
+}
+
+interface MoodAnalysis {
+  mood: string;
+  count: number;
+  avgEnergy: number;
+  avgTempo: number;
+}
+
+interface DiscoveryTrends {
+  month: string;
+  mainstream: number;
+  niche: number;
+  newArtists: number;
+  repeatArtists: number;
+}
+
+interface ConsistencyMetrics {
+  dailyVariance: number;
+  weeklyVariance: number;
+  monthlyVariance: number;
+  totalDays: number;
+  totalWeeks: number;
+  totalMonths: number;
+}
 
 export const EnhancedListeningTrends = () => {
-  const [timeRange, setTimeRange] = useState('week');
+  const [timeRange, setTimeRange] = useState('medium_term');
   const [metric, setMetric] = useState('listening_time');
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const { useTopTracks, useTopArtists, useRecentlyPlayed } = useSpotifyData();
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useRecentlyPlayed } = useSpotifyData();
   
   // Fetch data based on time range
   const getSpotifyTimeRange = (range: string) => {
@@ -31,8 +96,9 @@ export const EnhancedListeningTrends = () => {
     }
   };
 
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(getSpotifyTimeRange(timeRange), 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(getSpotifyTimeRange(timeRange), 50);
+  // Use centralized store for comprehensive data (2000 items)
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
   const { data: recentlyPlayedData, isLoading: recentLoading } = useRecentlyPlayed(50);
 
   const isLoading = tracksLoading || artistsLoading || recentLoading;
@@ -57,133 +123,210 @@ export const EnhancedListeningTrends = () => {
     { value: 'all_time', label: 'All Time' }
   ];
 
-  // Generate data from Spotify API when available, otherwise use mock data
-  const generateDataFromSpotify = (range: string) => {
-    if (topTracksData?.items && topArtistsData?.items && recentlyPlayedData?.items) {
-      // Use real Spotify data to generate trends
-      const tracks = topTracksData.items;
-      const artists = topArtistsData.items;
-      const recent = recentlyPlayedData.items;
+  // Calculate listening patterns
+  const listeningPatterns = useMemo((): ListeningPatterns => {
+    if (!recentlyPlayedData?.items) return {
+      hourly: [],
+      daily: [],
+      weekly: [],
+      monthly: []
+    };
 
-      // Generate periods based on time range
-      switch (range) {
-        case 'week':
-          return Array.from({ length: 7 }, (_, i) => {
-            const dayIndex = (i + 1) % 7;
-            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            return {
-              period: dayNames[dayIndex],
-              listening_time: Math.floor(Math.random() * 60) + 30 + (tracks.length * 2),
-              tracks: Math.floor(tracks.length / 7) + Math.floor(Math.random() * 10),
-              artists: Math.floor(artists.length / 7) + Math.floor(Math.random() * 5),
-            };
-          });
-        case 'month':
-          return Array.from({ length: 4 }, (_, i) => ({
-            period: `Week ${i + 1}`,
-            listening_time: Math.floor(Math.random() * 200) + 300 + (tracks.length * 5),
-            tracks: Math.floor(tracks.length / 4) + Math.floor(Math.random() * 20),
-            artists: Math.floor(artists.length / 4) + Math.floor(Math.random() * 10),
-          }));
-        case 'year':
-          return Array.from({ length: 12 }, (_, i) => {
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            return {
-              period: months[i],
-              listening_time: Math.floor(Math.random() * 1000) + 1000 + (tracks.length * 20),
-              tracks: Math.floor(tracks.length / 12) + Math.floor(Math.random() * 50),
-              artists: Math.floor(artists.length / 12) + Math.floor(Math.random() * 20),
-            };
-          });
-        default:
-          return Array.from({ length: 6 }, (_, i) => ({
-            period: `Period ${i + 1}`,
-            listening_time: Math.floor(Math.random() * 500) + 200 + (tracks.length * 8),
-            tracks: Math.floor(tracks.length / 6) + Math.floor(Math.random() * 30),
-            artists: Math.floor(artists.length / 6) + Math.floor(Math.random() * 15),
-          }));
+    const patterns = {
+      hourly: Array(24).fill(0),
+      daily: Array(7).fill(0),
+      weekly: Array(4).fill(0),
+      monthly: Array(12).fill(0)
+    };
+
+    recentlyPlayedData.items.forEach((item: any) => {
+      const playedAt = new Date(item.played_at);
+      const hour = playedAt.getHours();
+      const day = playedAt.getDay();
+      const week = Math.floor(playedAt.getDate() / 7);
+      const month = playedAt.getMonth();
+
+      patterns.hourly[hour]++;
+      patterns.daily[day]++;
+      patterns.weekly[week]++;
+      patterns.monthly[month]++;
+    });
+
+    return {
+      hourly: patterns.hourly.map((count, hour) => ({
+        hour: `${hour.toString().padStart(2, '0')}:00`,
+        count,
+        percentage: Math.round((count / Math.max(...patterns.hourly)) * 100)
+      })),
+      daily: patterns.daily.map((count, day) => ({
+        day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day],
+        count,
+        percentage: Math.round((count / Math.max(...patterns.daily)) * 100)
+      })),
+      weekly: patterns.weekly.map((count, week) => ({
+        week: `Week ${week + 1}`,
+        count,
+        percentage: Math.round((count / Math.max(...patterns.weekly)) * 100)
+      })),
+      monthly: patterns.monthly.map((count, month) => ({
+        month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month],
+        count,
+        percentage: Math.round((count / Math.max(...patterns.monthly)) * 100)
+      }))
+    };
+  }, [recentlyPlayedData]);
+
+  // Calculate mood analysis
+  const moodAnalysis = useMemo((): MoodAnalysis[] => {
+    if (!tracks.length) return [];
+
+    const moods = {
+      Energetic: { count: 0, energy: 0, tempo: 0 },
+      Relaxed: { count: 0, energy: 0, tempo: 0 },
+      Happy: { count: 0, energy: 0, tempo: 0 },
+      Melancholic: { count: 0, energy: 0, tempo: 0 }
+    };
+
+    tracks.forEach((track: any) => {
+      const energy = track.energy || 0.5;
+      const tempo = track.tempo || 120;
+      const valence = track.valence || 0.5;
+
+      if (energy > 0.7 && tempo > 120) {
+        moods.Energetic.count++;
+        moods.Energetic.energy += energy;
+        moods.Energetic.tempo += tempo;
+      } else if (energy < 0.4 && tempo < 100) {
+        moods.Relaxed.count++;
+        moods.Relaxed.energy += energy;
+        moods.Relaxed.tempo += tempo;
+      } else if (valence > 0.6) {
+        moods.Happy.count++;
+        moods.Happy.energy += energy;
+        moods.Happy.tempo += tempo;
+      } else {
+        moods.Melancholic.count++;
+        moods.Melancholic.energy += energy;
+        moods.Melancholic.tempo += tempo;
       }
-    }
+    });
 
-    // Fallback to mock data when Spotify data is not available
-    return getMockDataForTimeRange(range);
-  };
+    return Object.entries(moods).map(([mood, data]) => ({
+      mood,
+      count: data.count,
+      avgEnergy: Math.round((data.energy / data.count) * 100),
+      avgTempo: Math.round(data.tempo / data.count)
+    }));
+  }, [tracks]);
 
-  // Mock data for when Spotify API is not available
-  const getMockDataForTimeRange = (range: string) => {
-    switch (range) {
-      case 'week':
-        return [
-          { period: 'Mon', listening_time: 45, tracks: 12, artists: 8 },
-          { period: 'Tue', listening_time: 67, tracks: 18, artists: 12 },
-          { period: 'Wed', listening_time: 89, tracks: 24, artists: 15 },
-          { period: 'Thu', listening_time: 76, tracks: 21, artists: 13 },
-          { period: 'Fri', listening_time: 123, tracks: 35, artists: 22 },
-          { period: 'Sat', listening_time: 156, tracks: 42, artists: 28 },
-          { period: 'Sun', listening_time: 134, tracks: 38, artists: 25 },
-        ];
-      case 'month':
-        return [
-          { period: 'Week 1', listening_time: 420, tracks: 120, artists: 45 },
-          { period: 'Week 2', listening_time: 380, tracks: 105, artists: 42 },
-          { period: 'Week 3', listening_time: 450, tracks: 135, artists: 48 },
-          { period: 'Week 4', listening_time: 520, tracks: 150, artists: 52 },
-        ];
-      case 'year':
-        return [
-          { period: 'Jan', listening_time: 1800, tracks: 500, artists: 120 },
-          { period: 'Feb', listening_time: 1650, tracks: 450, artists: 115 },
-          { period: 'Mar', listening_time: 1920, tracks: 580, artists: 130 },
-          { period: 'Apr', listening_time: 1780, tracks: 520, artists: 125 },
-          { period: 'May', listening_time: 2100, tracks: 620, artists: 140 },
-          { period: 'Jun', listening_time: 2250, tracks: 680, artists: 145 },
-          { period: 'Jul', listening_time: 2100, tracks: 650, artists: 142 },
-          { period: 'Aug', listening_time: 1950, tracks: 590, artists: 138 },
-          { period: 'Sep', listening_time: 2050, tracks: 610, artists: 135 },
-          { period: 'Oct', listening_time: 1850, tracks: 540, artists: 128 },
-          { period: 'Nov', listening_time: 1750, tracks: 510, artists: 125 },
-          { period: 'Dec', listening_time: 2200, tracks: 670, artists: 148 },
-        ];
-      default:
-        return [
-          { period: 'Q1', listening_time: 5000, tracks: 1400, artists: 300 },
-          { period: 'Q2', listening_time: 5500, tracks: 1600, artists: 320 },
-          { period: 'Q3', listening_time: 4800, tracks: 1350, artists: 290 },
-          { period: 'Q4', listening_time: 6200, tracks: 1800, artists: 350 },
-        ];
-    }
-  };
+  // Calculate genre distribution
+  const genreDistribution = useMemo(() => {
+    if (!artists.length) return [];
 
-  const listeningData = generateDataFromSpotify(timeRange);
+    const genres: { [key: string]: number } = {};
+    artists.forEach((artist: any) => {
+      artist.genres?.forEach((genre: string) => {
+        genres[genre] = (genres[genre] || 0) + 1;
+      });
+    });
 
-  // Generate most played tracks from real Spotify data
-  const mostPlayedTracks = topTracksData?.items?.slice(0, 5)?.map((track: any, index: number) => ({
-    track: track.name,
-    artist: track.artists?.[0]?.name || 'Unknown Artist',
-    plays: Math.floor(Math.random() * 100) + 50 + (50 - index * 8), // Higher for top tracks
-    minutes: Math.floor((track.duration_ms / 1000 / 60) * (Math.random() * 100 + 50))
-  })) || [
-    { track: 'Bohemian Rhapsody', artist: 'Queen', plays: 156, minutes: 936 },
-    { track: 'Hotel California', artist: 'Eagles', plays: 142, minutes: 923 },
-    { track: 'Stairway to Heaven', artist: 'Led Zeppelin', plays: 138, minutes: 1104 },
-    { track: 'Sweet Child O Mine', artist: 'Guns N Roses', plays: 125, minutes: 687 },
-    { track: 'Comfortably Numb', artist: 'Pink Floyd', plays: 118, minutes: 708 },
-  ];
+    const total = Object.values(genres).reduce((sum, count) => sum + count, 0);
+    return Object.entries(genres)
+      .map(([name, count]) => ({
+        name,
+        value: Math.round((count / total) * 100)
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [artists]);
 
-  const chartConfig = {
-    listening_time: {
-      label: "Listening Time (min)",
-      color: "hsl(var(--accent))",
-    },
-    tracks: {
-      label: "Tracks Played",
-      color: "hsl(var(--primary))",
-    },
-    artists: {
-      label: "Unique Artists",
-      color: "hsl(var(--secondary))",
-    },
-  };
+  // Calculate discovery trends
+  const discoveryTrends = useMemo((): DiscoveryTrends[] => {
+    if (!recentlyPlayedData?.items) return [];
+
+    const now = new Date();
+    const months = Array.from({ length: 6 }, (_, i) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      return date.toLocaleString('default', { month: 'short', year: '2-digit' });
+    }).reverse();
+
+    const trends = months.map(month => ({
+      month,
+      mainstream: 0,
+      niche: 0,
+      total: 0,
+      newArtists: 0,
+      repeatArtists: 0
+    }));
+
+    const artistFirstSeen = new Map();
+
+    recentlyPlayedData.items.forEach((item: any) => {
+      const playedAt = new Date(item.played_at);
+      const month = playedAt.toLocaleString('default', { month: 'short', year: '2-digit' });
+      const trend = trends.find(t => t.month === month);
+
+      if (trend) {
+        trend.total++;
+        if (item.track?.popularity > 50) {
+          trend.mainstream++;
+        } else {
+          trend.niche++;
+        }
+
+        item.track?.artists?.forEach((artist: any) => {
+          if (!artistFirstSeen.has(artist.id)) {
+            artistFirstSeen.set(artist.id, month);
+            trend.newArtists++;
+          } else if (artistFirstSeen.get(artist.id) === month) {
+            trend.repeatArtists++;
+          }
+        });
+      }
+    });
+
+    return trends.map(trend => ({
+      month: trend.month,
+      mainstream: trend.total > 0 ? Math.round((trend.mainstream / trend.total) * 100) : 0,
+      niche: trend.total > 0 ? Math.round((trend.niche / trend.total) * 100) : 0,
+      newArtists: trend.newArtists,
+      repeatArtists: trend.repeatArtists
+    }));
+  }, [recentlyPlayedData]);
+
+  // Calculate consistency metrics
+  const consistencyMetrics = useMemo((): ConsistencyMetrics | null => {
+    if (!recentlyPlayedData?.items) return null;
+
+    const dailyPlays = new Map();
+    const weeklyPlays = new Map();
+    const monthlyPlays = new Map();
+
+    recentlyPlayedData.items.forEach((item: any) => {
+      const playedAt = new Date(item.played_at);
+      const dayKey = playedAt.toISOString().split('T')[0];
+      const weekKey = `${playedAt.getFullYear()}-W${Math.ceil((playedAt.getDate() + playedAt.getDay()) / 7)}`;
+      const monthKey = `${playedAt.getFullYear()}-${playedAt.getMonth() + 1}`;
+
+      dailyPlays.set(dayKey, (dailyPlays.get(dayKey) || 0) + 1);
+      weeklyPlays.set(weekKey, (weeklyPlays.get(weekKey) || 0) + 1);
+      monthlyPlays.set(monthKey, (monthlyPlays.get(monthKey) || 0) + 1);
+    });
+
+    const calculateVariance = (values: number[]) => {
+      const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+      return values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+    };
+
+    return {
+      dailyVariance: calculateVariance([...dailyPlays.values()]),
+      weeklyVariance: calculateVariance([...weeklyPlays.values()]),
+      monthlyVariance: calculateVariance([...monthlyPlays.values()]),
+      totalDays: dailyPlays.size,
+      totalWeeks: weeklyPlays.size,
+      totalMonths: monthlyPlays.size
+    };
+  }, [recentlyPlayedData]);
 
   if (isLoading) {
     return (
@@ -237,114 +380,457 @@ export const EnhancedListeningTrends = () => {
         </div>
       </div>
 
-      {/* Main Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            {timeRanges.find(r => r.value === timeRange)?.label} Activity
-          </CardTitle>
-          <CardDescription>
-            Your music consumption over the selected time period
-            {topTracksData?.items && " (based on your Spotify data)"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={listeningData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="period" 
-                  className="text-muted-foreground"
-                />
-                <YAxis className="text-muted-foreground" />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line 
-                  type="monotone" 
-                  dataKey={metric}
-                  stroke="hsl(var(--accent))" 
-                  strokeWidth={3}
-                  dot={{ fill: "hsl(var(--accent))", strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: "hsl(var(--accent))", strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="patterns">Listening Patterns</TabsTrigger>
+          <TabsTrigger value="mood">Mood Analysis</TabsTrigger>
+          <TabsTrigger value="discovery">Discovery Trends</TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Most Played Tracks */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5" />
-              Most Played in {timeRanges.find(r => r.value === timeRange)?.label}
-            </CardTitle>
-            <CardDescription>
-              Your top tracks by play count in this period
-              {topTracksData?.items && " (from your Spotify library)"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {mostPlayedTracks.map((track, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center">
-                    {index + 1}
-                  </Badge>
-                  <div>
-                    <h4 className="font-medium">{track.track}</h4>
-                    <p className="text-sm text-muted-foreground">{track.artist}</p>
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Hourly Pattern */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Hourly Listening Pattern
+                  <InfoButton
+                    title="Hourly Listening Pattern"
+                    description="Shows your listening activity distribution across different hours of the day."
+                    calculation="Based on your recently played tracks, normalized to show relative activity levels."
+                    funFacts={[
+                      "Most people listen to more music during commute hours",
+                      "Late night listening often indicates night owl tendencies",
+                      "Morning listening can reveal workout or commute routines"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={listeningPatterns.hourly}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="hour" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area
+                      type="monotone"
+                      dataKey="percentage"
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary))"
+                      fillOpacity={0.2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Daily Pattern */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Daily Listening Pattern
+                  <InfoButton
+                    title="Daily Listening Pattern"
+                    description="Shows your listening activity distribution across different days of the week."
+                    calculation="Based on your recently played tracks, normalized to show relative activity levels."
+                    funFacts={[
+                      "Weekend listening patterns often differ from weekdays",
+                      "Friday is typically the most active listening day",
+                      "Sunday often shows different genre preferences"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={listeningPatterns.daily}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar
+                      dataKey="percentage"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Genre Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Music className="h-5 w-5" />
+                  Top Genres
+                  <InfoButton
+                    title="Genre Distribution"
+                    description="Shows the distribution of genres in your listening history."
+                    calculation="Based on your top artists' genres, normalized to show percentage distribution."
+                    funFacts={[
+                      "Most people have 3-5 dominant genres",
+                      "Genre preferences often change with seasons",
+                      "Your top genres can reveal your cultural background"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={genreDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {genreDistribution.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={`hsl(${(index * 360) / genreDistribution.length}, 70%, 50%)`}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Consistency Metrics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Listening Consistency
+                  <InfoButton
+                    title="Listening Consistency"
+                    description="Shows how consistent your listening habits are across different time periods."
+                    calculation="Based on variance in daily, weekly, and monthly listening activity."
+                    funFacts={[
+                      "Consistent listeners often have daily routines",
+                      "High variance can indicate mood-based listening",
+                      "Weekend spikes often indicate social listening"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <h4 className="text-sm font-medium mb-1">Daily Variance</h4>
+                      <div className="text-2xl font-bold">
+                        {consistencyMetrics ? Math.round(consistencyMetrics.dailyVariance) : 0}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <h4 className="text-sm font-medium mb-1">Weekly Variance</h4>
+                      <div className="text-2xl font-bold">
+                        {consistencyMetrics ? Math.round(consistencyMetrics.weeklyVariance) : 0}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <h4 className="text-sm font-medium mb-1">Monthly Variance</h4>
+                      <div className="text-2xl font-bold">
+                        {consistencyMetrics ? Math.round(consistencyMetrics.monthlyVariance) : 0}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <h4 className="text-sm font-medium mb-1">Active Days</h4>
+                      <div className="text-2xl font-bold">
+                        {consistencyMetrics?.totalDays || 0}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <h4 className="text-sm font-medium mb-1">Active Weeks</h4>
+                      <div className="text-2xl font-bold">
+                        {consistencyMetrics?.totalWeeks || 0}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <h4 className="text-sm font-medium mb-1">Active Months</h4>
+                      <div className="text-2xl font-bold">
+                        {consistencyMetrics?.totalMonths || 0}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-medium">{track.plays} plays</div>
-                  <div className="text-sm text-muted-foreground">{track.minutes}m total</div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-        {/* Insights */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Period Insights</CardTitle>
-            <CardDescription>
-              Key findings from your {timeRanges.find(r => r.value === timeRange)?.label.toLowerCase()} listening data
-              {topTracksData?.items && " (analyzed from your Spotify activity)"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
-                <h4 className="font-medium text-accent mb-2">Peak Activity</h4>
-                <p className="text-sm text-muted-foreground">
-                  Your highest listening period was {listeningData.reduce((max, day) => 
-                    day.listening_time > max.listening_time ? day : max
-                  ).period} with {listeningData.reduce((max, day) => 
-                    day.listening_time > max.listening_time ? day : max
-                  ).listening_time} minutes
-                </p>
-              </div>
-              <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                <h4 className="font-medium text-primary mb-2">Total Listening</h4>
-                <p className="text-sm text-muted-foreground">
-                  {listeningData.reduce((sum, day) => sum + day.listening_time, 0)} minutes across {listeningData.reduce((sum, day) => sum + day.tracks, 0)} tracks
-                </p>
-              </div>
-              <div className="p-4 bg-secondary/10 rounded-lg border border-secondary/20">
-                <h4 className="font-medium text-secondary mb-2">Artist Diversity</h4>
-                <p className="text-sm text-muted-foreground">
-                  Discovered {Math.max(...listeningData.map(d => d.artists))} unique artists in your best period
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Patterns Tab */}
+        <TabsContent value="patterns">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Weekly Pattern */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Weekly Pattern
+                  <InfoButton
+                    title="Weekly Pattern"
+                    description="Shows your listening activity distribution across weeks."
+                    calculation="Based on your recently played tracks, normalized to show relative activity levels."
+                    funFacts={[
+                      "Weekly patterns often reflect work/school schedules",
+                      "Holiday weeks often show different patterns",
+                      "Seasonal changes can affect weekly patterns"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={listeningPatterns.weekly}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="week" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar
+                      dataKey="percentage"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Monthly Pattern */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Monthly Pattern
+                  <InfoButton
+                    title="Monthly Pattern"
+                    description="Shows your listening activity distribution across months."
+                    calculation="Based on your recently played tracks, normalized to show relative activity levels."
+                    funFacts={[
+                      "Monthly patterns often reflect seasonal changes",
+                      "Holiday months show different listening habits",
+                      "New Year often brings new music discoveries"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={listeningPatterns.monthly}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar
+                      dataKey="percentage"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Mood Tab */}
+        <TabsContent value="mood">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Mood Analysis */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5" />
+                  Mood Analysis
+                  <InfoButton
+                    title="Mood Analysis"
+                    description="Shows the distribution of moods in your listening history."
+                    calculation="Based on track energy, tempo, and valence values."
+                    funFacts={[
+                      "Mood preferences often change with time of day",
+                      "Weather can influence mood-based listening",
+                      "Social situations affect mood choices"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={moodAnalysis}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="mood" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar
+                      dataKey="avgEnergy"
+                      name="Energy Level"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="avgTempo"
+                      name="Tempo (BPM)"
+                      fill="hsl(var(--accent))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Mood Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  Mood Distribution
+                  <InfoButton
+                    title="Mood Distribution"
+                    description="Shows the percentage distribution of different moods in your listening history."
+                    calculation="Based on track energy, tempo, and valence values."
+                    funFacts={[
+                      "Most people have 2-3 dominant moods",
+                      "Mood preferences often reflect personality",
+                      "Life events can shift mood preferences"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={moodAnalysis}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="count"
+                    >
+                      {moodAnalysis.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={`hsl(${(index * 360) / moodAnalysis.length}, 70%, 50%)`}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Discovery Tab */}
+        <TabsContent value="discovery">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Discovery Trends */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Discovery Trends
+                  <InfoButton
+                    title="Discovery Trends"
+                    description="Shows your music discovery patterns over time."
+                    calculation="Based on track popularity and artist discovery dates."
+                    funFacts={[
+                      "Discovery patterns often reflect life changes",
+                      "Social events can boost discovery rates",
+                      "Seasonal changes affect discovery habits"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={discoveryTrends}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="mainstream"
+                      name="Mainstream %"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="niche"
+                      name="Niche %"
+                      stroke="hsl(var(--accent))"
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Artist Discovery */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Artist Discovery
+                  <InfoButton
+                    title="Artist Discovery"
+                    description="Shows your new artist discovery patterns over time."
+                    calculation="Based on first-time artist appearances in your listening history."
+                    funFacts={[
+                      "Artist discovery often peaks during festivals",
+                      "Social recommendations boost discovery",
+                      "Genre exploration increases discovery rates"
+                    ]}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={discoveryTrends}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar
+                      dataKey="newArtists"
+                      name="New Artists"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="repeatArtists"
+                      name="Repeat Artists"
+                      fill="hsl(var(--accent))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

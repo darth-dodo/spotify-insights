@@ -4,15 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Music, TrendingUp, Users, Clock, Star, Headphones } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
+import { calculateStats, calculateGenreAnalysis } from '@/lib/spotify-data-utils';
 
 export const MusicInsightsSummary = () => {
-  const { tracks, artists, recentlyPlayed, getGenreAnalysis, getStats, isLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: recentlyPlayed = [], isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
+  const isLoading = tracksLoading || artistsLoading || recentLoading;
 
   const calculateEnhancedInsights = () => {
-    const stats = getStats();
-    const genreAnalysis = getGenreAnalysis();
+    const stats = calculateStats(tracks, artists, recentlyPlayed, 'medium_term');
+    const genreAnalysis = calculateGenreAnalysis(artists);
 
     // Check if we have any data
     const hasData = stats?.hasSpotifyData && (tracks.length > 0 || artists.length > 0);
@@ -146,9 +151,9 @@ export const MusicInsightsSummary = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
       {/* Enhanced Music Profile - Mobile Responsive */}
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-2 xl:col-span-3">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Star className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -200,11 +205,11 @@ export const MusicInsightsSummary = () => {
       </Card>
 
       {/* Enhanced Genre Diversity - Mobile Responsive */}
-      <Card>
+      <Card className="hover:shadow-md transition-shadow">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Music className="h-4 w-4 sm:h-5 sm:w-5" />
-            Genre Exploration (Limited Dataset)
+            Genre Exploration
             <InfoButton
               title="Genre Exploration Analysis"
               description="Measures your musical diversity and genre exploration from the limited dataset."
@@ -237,17 +242,22 @@ export const MusicInsightsSummary = () => {
             </div>
             
             <div>
-              <h4 className="font-medium mb-2 text-sm sm:text-base">Top Genres (from {insights.totalArtists} artists)</h4>
+              <h4 className="font-medium mb-2 text-sm sm:text-base">Top Genres</h4>
               <div className="flex flex-wrap gap-1 sm:gap-2">
                 {insights.topGenres.length > 0 ? (
-                  insights.topGenres.map((genre, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
+                  insights.topGenres.slice(0, 6).map((genre, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs hover:bg-secondary/80 transition-colors">
                       {genre}
                     </Badge>
                   ))
                 ) : (
                   <Badge variant="secondary" className="text-xs text-muted-foreground">
                     No genres available
+                  </Badge>
+                )}
+                {insights.topGenres.length > 6 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{insights.topGenres.length - 6} more
                   </Badge>
                 )}
               </div>
@@ -268,7 +278,7 @@ export const MusicInsightsSummary = () => {
       </Card>
 
       {/* Enhanced Taste Analysis - Mobile Responsive */}
-      <Card>
+      <Card className="hover:shadow-md transition-shadow">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -306,14 +316,18 @@ export const MusicInsightsSummary = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 text-center">
-              <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
-                <div className="text-base sm:text-lg font-bold">{insights.recentActivity}</div>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 gap-2 sm:gap-3 text-center">
+              <div className="p-2 sm:p-3 bg-accent/5 rounded-lg border border-accent/20">
+                <div className="text-base sm:text-lg font-bold text-accent">{insights.recentActivity}</div>
                 <div className="text-xs text-muted-foreground">Recent Activity</div>
               </div>
-              <div className="p-2 sm:p-3 bg-muted/50 rounded-lg">
-                <div className="text-base sm:text-lg font-bold">{Math.round(insights.totalListeningTime / 60)}h</div>
+              <div className="p-2 sm:p-3 bg-primary/5 rounded-lg border border-primary/20">
+                <div className="text-base sm:text-lg font-bold text-primary">{Math.round(insights.totalListeningTime / 60)}h</div>
                 <div className="text-xs text-muted-foreground">Total Hours</div>
+              </div>
+              <div className="p-2 sm:p-3 bg-secondary/5 rounded-lg border border-secondary/20 lg:block xl:hidden hidden">
+                <div className="text-base sm:text-lg font-bold text-secondary">{insights.uniqueGenres}</div>
+                <div className="text-xs text-muted-foreground">Genres</div>
               </div>
             </div>
 

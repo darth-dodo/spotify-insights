@@ -2,11 +2,16 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { calculateStats } from '@/lib/spotify-data-utils';
 import { CalmingLoader } from '@/components/ui/CalmingLoader';
 
 export const AchievementsPreview = () => {
-  const { tracks, artists, recentlyPlayed, isLoading, getStats } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: recentlyPlayed = [], isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
+  const isLoading = tracksLoading || artistsLoading || recentLoading;
 
   if (isLoading) {
     return (
@@ -18,7 +23,7 @@ export const AchievementsPreview = () => {
     );
   }
 
-  const stats = getStats();
+  const stats = calculateStats(tracks, artists, recentlyPlayed, 'medium_term');
 
   const badges = [
     { 

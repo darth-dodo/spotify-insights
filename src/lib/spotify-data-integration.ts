@@ -63,22 +63,29 @@ class SpotifyDataIntegration {
     const cacheKey = `${timeRange}_${totalLimit}`;
     const cached = this.cache.getCachedTopTracks(cacheKey);
     if (cached) {
+      console.log('Returning cached top tracks data');
       return cached;
     }
 
     try {
       const response = await fetchTopTracksData(timeRange, totalLimit);
       
-      if (response?.items && response.items.length > 0) {
-        const integratedTracks = processTopTracksData(response.items);
-        const sdkData = spotifyPlaybackSDK.getSessionTracks();
-        const enhanced = enhanceTracksWithSDKData(integratedTracks, sdkData);
-        
-        this.cache.setCachedTopTracks(cacheKey, enhanced);
-        return enhanced;
-      } else {
-        throw new Error('No top tracks found. Listen to more music on Spotify to build your top tracks list.');
+      if (!response?.items) {
+        console.warn('No top tracks found in response. Returning empty array.');
+        return [];
       }
+
+      const integratedTracks = processTopTracksData(response.items);
+      if (!integratedTracks.length) {
+        console.warn('No tracks after processing. Returning empty array.');
+        return [];
+      }
+
+      const sdkData = spotifyPlaybackSDK.getSessionTracks();
+      const enhanced = enhanceTracksWithSDKData(integratedTracks, sdkData);
+      
+      this.cache.setCachedTopTracks(cacheKey, enhanced);
+      return enhanced;
     } catch (error) {
       console.error('Error fetching enhanced top tracks:', error);
       
@@ -88,7 +95,8 @@ class SpotifyDataIntegration {
         return cached;
       }
       
-      throw new Error('Unable to load your top tracks. Please check your internet connection and try again.');
+      console.warn('No cached data available. Returning empty array.');
+      return [];
     }
   }
 
@@ -96,19 +104,26 @@ class SpotifyDataIntegration {
     const cacheKey = `${timeRange}_${totalLimit}`;
     const cached = this.cache.getCachedTopArtists(cacheKey);
     if (cached) {
+      console.log('Returning cached top artists data');
       return cached;
     }
 
     try {
       const response = await fetchTopArtistsData(timeRange, totalLimit);
       
-      if (response?.items && response.items.length > 0) {
-        const integratedArtists = processTopArtistsData(response.items);
-        this.cache.setCachedTopArtists(cacheKey, integratedArtists);
-        return integratedArtists;
-      } else {
-        throw new Error('No top artists found. Listen to more music on Spotify to build your top artists list.');
+      if (!response?.items) {
+        console.warn('No top artists found in response. Returning empty array.');
+        return [];
       }
+
+      const integratedArtists = processTopArtistsData(response.items);
+      if (!integratedArtists.length) {
+        console.warn('No artists after processing. Returning empty array.');
+        return [];
+      }
+
+      this.cache.setCachedTopArtists(cacheKey, integratedArtists);
+      return integratedArtists;
     } catch (error) {
       console.error('Error fetching enhanced top artists:', error);
       
@@ -118,7 +133,8 @@ class SpotifyDataIntegration {
         return cached;
       }
       
-      throw new Error('Unable to load your top artists. Please check your internet connection and try again.');
+      console.warn('No cached data available. Returning empty array.');
+      return [];
     }
   }
 

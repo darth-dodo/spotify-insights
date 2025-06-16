@@ -1,8 +1,7 @@
-
 # System Architecture Documentation
 
 ## Overview
-The Spotify Analytics Dashboard is built as a privacy-first, client-side application that processes music data locally while providing comprehensive analytics and insights.
+The Spotify Insights Dashboard is built with a modern, scalable architecture that emphasizes performance, maintainability, and user experience. The system is designed to handle real-time data processing, complex analytics, and interactive visualizations while maintaining high performance and reliability.
 
 ## Architecture Principles
 

@@ -29,7 +29,7 @@ export const Footer = () => {
             <h4 className="font-medium mb-3 text-foreground">Open Source</h4>
             <div className="space-y-2">
               <a 
-                href="https://github.com" 
+                href="https://github.com/darth-dodo/spotify-analytics" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-accent hover:underline"
@@ -54,7 +54,6 @@ export const Footer = () => {
               Made with <Heart className="h-3 w-3 text-red-500" /> for music lovers
             </p>
             <p className="text-xs text-muted-foreground">
-              Made with Lovable
             </p>
           </div>
         </div>

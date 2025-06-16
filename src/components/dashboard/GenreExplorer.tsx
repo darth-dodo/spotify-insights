@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Music, Search, TrendingUp, Users, Star, Filter, Grid, List, Loader2 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { calculateGenreAnalysis, getTopTracks, getTopArtists, getTracksByGenre } from '@/lib/spotify-data-utils';
 import { cn } from '@/lib/utils';
 
 export const GenreExplorer = () => {
@@ -20,85 +20,42 @@ export const GenreExplorer = () => {
   const [sortBy, setSortBy] = useState<'popularity' | 'artists' | 'tracks'>('popularity');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
-  const { useTopTracks, useTopArtists } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracksData, isLoading: tracksLoading } = useEnhancedTopTracks(timeRange);
+  const { data: artistsData, isLoading: artistsLoading } = useEnhancedTopArtists(timeRange);
 
-  const isLoading = tracksLoading || artistsLoading;
+  const isLoading = tracksLoading || artistsLoading || !tracksData || !artistsData;
 
-  // Process genre data
+  // Process genre data using utility function
   const genreData = useMemo(() => {
-    if (!topArtistsData?.items || !topTracksData?.items) {
+    if (isLoading) {
       return { genres: [], total: 0 };
     }
 
-    const genreCounts: { [key: string]: { 
-      count: number; 
-      artists: Set<string>; 
-      tracks: Set<string>;
-      popularity: number;
-    } } = {};
+    const analysis = calculateGenreAnalysis(artistsData);
     
-    // Process artists and their genres
-    topArtistsData.items.forEach((artist: any) => {
-      const artistPopularity = artist.popularity || 0;
-      artist.genres?.forEach((genre: string) => {
-        if (!genreCounts[genre]) {
-          genreCounts[genre] = { 
-            count: 0, 
-            artists: new Set(), 
-            tracks: new Set(),
-            popularity: 0
-          };
-        }
-        genreCounts[genre].count += 1;
-        genreCounts[genre].artists.add(artist.name);
-        genreCounts[genre].popularity += artistPopularity;
-      });
+    // Sort genres based on selected criteria
+    const sortedGenres = analysis.sort((a, b) => {
+      switch (sortBy) {
+        case 'artists': return b.artists - a.artists;
+        case 'tracks': return b.tracks - a.tracks;
+        case 'popularity': return b.avgPopularity - a.avgPopularity;
+        default: return b.value - a.value;
+      }
     });
 
-    // Add track information
-    topTracksData.items.forEach((track: any) => {
-      track.artists?.forEach((artist: any) => {
-        const matchingArtist = topArtistsData.items.find((a: any) => a.id === artist.id);
-        if (matchingArtist?.genres) {
-          matchingArtist.genres.forEach((genre: string) => {
-            if (genreCounts[genre]) {
-              genreCounts[genre].tracks.add(track.name);
-            }
-          });
-        }
-      });
-    });
+    const topTracks = getTopTracks(tracksData, 10);
+    const topArtists = getTopArtists(artistsData, 10);
 
-    // Create final genre list
-    const genres = Object.entries(genreCounts)
-      .map(([genre, data]) => ({
-        name: genre,
-        count: data.count,
-        artists: Array.from(data.artists),
-        tracks: Array.from(data.tracks),
-        avgPopularity: data.count > 0 ? Math.round(data.popularity / data.count) : 0,
-        percentage: 0,
-      }))
-      .sort((a, b) => {
-        switch (sortBy) {
-          case 'artists': return b.count - a.count;
-          case 'tracks': return b.tracks.length - a.tracks.length;
-          case 'popularity': return b.avgPopularity - a.avgPopularity;
-          default: return b.count - a.count;
-        }
-      });
-
-    const total = genres.reduce((sum, genre) => sum + genre.count, 0);
-    
-    // Calculate percentages
-    genres.forEach(genre => {
-      genre.percentage = total > 0 ? Math.round((genre.count / total) * 100) : 0;
-    });
-
-    return { genres, total };
-  }, [topArtistsData, topTracksData, sortBy]);
+    return { 
+      genres: sortedGenres, 
+      total: analysis.length,
+      totalArtists: artistsData.length,
+      totalTracks: tracksData.length,
+      topTracks,
+      topArtists
+    };
+  }, [artistsData, tracksData, sortBy, isLoading]);
 
   // Filter genres based on search
   const filteredGenres = useMemo(() => {
@@ -122,6 +79,11 @@ export const GenreExplorer = () => {
     if (!selectedGenre) return null;
     return genreData.genres.find(g => g.name === selectedGenre);
   }, [selectedGenre, genreData.genres]);
+
+  const selectedGenreTracks = useMemo(() => {
+    if (!selectedGenre || !tracksData || !artistsData) return [];
+    return getTracksByGenre(tracksData, artistsData, selectedGenre, 5);
+  }, [selectedGenre, tracksData, artistsData]);
 
   if (isLoading) {
     return (
@@ -239,7 +201,7 @@ export const GenreExplorer = () => {
               <span className="text-xs md:text-sm font-medium">Artists</span>
             </div>
             <div className="text-lg md:text-2xl font-bold">
-              {topArtistsData?.items?.length || 0}
+              {genreData.totalArtists}
             </div>
           </CardContent>
         </Card>
@@ -299,11 +261,11 @@ export const GenreExplorer = () => {
                             <div className="space-y-1">
                               <div className="flex justify-between text-xs text-muted-foreground">
                                 <span>Artists:</span>
-                                <span>{genre.artists.length}</span>
+                                <span>{genre.artists}</span>
                               </div>
                               <div className="flex justify-between text-xs text-muted-foreground">
                                 <span>Tracks:</span>
-                                <span>{genre.tracks.length}</span>
+                                <span>{genre.tracks}</span>
                               </div>
                               <div className="flex justify-between text-xs text-muted-foreground">
                                 <span>Share:</span>
@@ -338,8 +300,8 @@ export const GenreExplorer = () => {
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                            <span>{genre.artists.length} artists</span>
-                            <span>{genre.tracks.length} tracks</span>
+                            <span>{genre.artists} artists</span>
+                            <span>{genre.tracks} tracks</span>
                             <span>Pop: {genre.avgPopularity}/100</span>
                           </div>
                           <Progress value={genre.percentage} className="h-1" />
@@ -371,7 +333,7 @@ export const GenreExplorer = () => {
                         cy="50%"
                         outerRadius={60}
                         fill="#8884d8"
-                        dataKey="count"
+                        dataKey="value"
                       >
                         {genreData.genres.slice(0, 6).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
@@ -385,7 +347,7 @@ export const GenreExplorer = () => {
                               <div className="bg-background border border-border rounded-lg p-3 shadow-md">
                                 <p className="font-medium">{data.name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {data.count} artists ({data.percentage}%)
+                                  {data.value} genres ({data.percentage}%)
                                 </p>
                               </div>
                             );
@@ -424,11 +386,11 @@ export const GenreExplorer = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Artists:</span>
-                        <span className="font-medium">{selectedGenreData.artists.length}</span>
+                        <span className="font-medium">{selectedGenreData.artists}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Tracks:</span>
-                        <span className="font-medium">{selectedGenreData.tracks.length}</span>
+                        <span className="font-medium">{selectedGenreData.tracks}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Popularity:</span>

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, Star, Flame, Target, Zap, Crown, Award, Music } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
 
 interface GamificationPreviewProps {
@@ -13,7 +13,9 @@ interface GamificationPreviewProps {
 }
 
 export const GamificationPreview = ({ onNavigate, isEnabled = true }: GamificationPreviewProps) => {
-  const { tracks, artists } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [] } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [] } = useEnhancedTopArtists('medium_term', 2000);
   const tracksData = { items: tracks };
   const artistsData = { items: artists };
 

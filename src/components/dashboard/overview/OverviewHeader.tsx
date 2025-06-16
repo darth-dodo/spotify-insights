@@ -1,10 +1,10 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { useAuth } from '@/hooks/useAuth';
 import { Trophy, Sparkles, Music, TrendingUp } from 'lucide-react';
+import { calculateGenreAnalysis, getTopTracks, getTopArtists, getRecentlyPlayed } from '@/lib/spotify-data-utils';
 
 interface OverviewHeaderProps {
   onNavigate?: (view: string) => void;
@@ -12,15 +12,37 @@ interface OverviewHeaderProps {
 
 export const OverviewHeader = ({ onNavigate }: OverviewHeaderProps) => {
   const { user } = useAuth();
-  const { tracks, artists, dataInfo } = useExtendedSpotifyDataStore();
-  
-  // Use the full dataset from the store (up to 2000 items)
-  const topTracksData = { items: tracks };
-  const topArtistsData = { items: artists };
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracksData } = useEnhancedTopTracks('medium_term');
+  const { data: artistsData } = useEnhancedTopArtists('medium_term');
+
+  const stats = useMemo(() => {
+    if (!tracksData || !artistsData) return null;
+
+    const genreAnalysis = calculateGenreAnalysis(artistsData);
+    const totalGenres = genreAnalysis.length;
+    const topGenre = genreAnalysis[0]?.name || 'N/A';
+
+    const topTracks = getTopTracks(tracksData, 5);
+    const topArtists = getTopArtists(artistsData, 5);
+    const recentTracks = getRecentlyPlayed(tracksData, 5);
+
+    return {
+      totalTracks: tracksData.length,
+      totalArtists: artistsData.length,
+      totalGenres,
+      topGenre,
+      listeningTime: tracksData.reduce((acc, track) => acc + (track.duration_ms || 0), 0) / (1000 * 60 * 60),
+      averagePopularity: tracksData.reduce((acc, track) => acc + (track.popularity || 0), 0) / tracksData.length,
+      topTracks,
+      topArtists,
+      recentTracks
+    };
+  }, [tracksData, artistsData]);
 
   const calculateLevel = () => {
-    const totalTracks = topTracksData?.items?.length || 0;
-    const totalArtists = topArtistsData?.items?.length || 0;
+    const totalTracks = stats?.totalTracks || 0;
+    const totalArtists = stats?.totalArtists || 0;
     return Math.min(Math.floor((totalTracks + totalArtists) / 8) + 1, 50);
   };
 
@@ -34,8 +56,8 @@ export const OverviewHeader = ({ onNavigate }: OverviewHeaderProps) => {
   };
 
   const getPersonalizedMessage = () => {
-    const artists = topArtistsData?.items || [];
-    const tracks = topTracksData?.items || [];
+    const artists = artistsData || [];
+    const tracks = tracksData || [];
     const topGenres = artists.flatMap((artist: any) => artist.genres || []);
     const topGenre = topGenres[0];
     
@@ -48,8 +70,8 @@ export const OverviewHeader = ({ onNavigate }: OverviewHeaderProps) => {
   };
 
   const getEngagementStats = () => {
-    const tracks = topTracksData?.items || [];
-    const artists = topArtistsData?.items || [];
+    const tracks = tracksData || [];
+    const artists = artistsData || [];
     const totalMinutes = tracks.reduce((acc: number, track: any) => acc + (track.duration_ms || 0), 0) / (1000 * 60);
     
     return {
@@ -71,7 +93,7 @@ export const OverviewHeader = ({ onNavigate }: OverviewHeaderProps) => {
     }
   };
 
-  const stats = getEngagementStats();
+  const statsEngagement = getEngagementStats();
 
   return (
     <div className="relative overflow-hidden">
@@ -94,11 +116,11 @@ export const OverviewHeader = ({ onNavigate }: OverviewHeaderProps) => {
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">
               <Music className="h-3 w-3 mr-1" />
-              {stats.tracks} tracks
+              {statsEngagement.tracks} tracks
             </Badge>
             <Badge variant="outline" className="bg-accent/10 border-accent/20 text-accent">
               <TrendingUp className="h-3 w-3 mr-1" />
-              {stats.artists} artists
+              {statsEngagement.artists} artists
             </Badge>
             <Button
               variant="outline"
@@ -114,13 +136,13 @@ export const OverviewHeader = ({ onNavigate }: OverviewHeaderProps) => {
         </div>
 
         {/* Engagement Hook */}
-        {stats.tracks > 0 && (
+        {statsEngagement.tracks > 0 && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
             <span>
-              {stats.minutes > 60 
-                ? `${Math.round(stats.minutes / 60)}+ hours of music in your library`
-                : `${stats.minutes} minutes of curated music`
+              {statsEngagement.minutes > 60 
+                ? `${Math.round(statsEngagement.minutes / 60)}+ hours of music in your library`
+                : `${statsEngagement.minutes} minutes of curated music`
               }
             </span>
           </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,22 +9,23 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Area, AreaChart } from 'recharts';
 import { Music, TrendingUp, Users, Clock, Disc, Star, Eye, BarChart3, Loader2 } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { calculateGenreAnalysis, getTracksByGenre } from '@/lib/spotify-data-utils';
 import { cn } from '@/lib/utils';
 import { FunFactsCarousel } from './FunFactsCarousel';
 import { InfoButton } from '@/components/ui/InfoButton';
 
 export const ImprovedGenreAnalysis = () => {
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const [timeRange, setTimeRange] = useState('six_months');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
 
   // Use centralized store with full 2000 item dataset
-  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, 2000);
   const topTracksData = { items: tracks };
   const topArtistsData = { items: artists };
-  const tracksLoading = storeLoading;
-  const artistsLoading = storeLoading;
 
   const isLoading = tracksLoading || artistsLoading;
 
@@ -162,9 +162,12 @@ export const ImprovedGenreAnalysis = () => {
 
   const getTimeRangeLabel = (range: string) => {
     switch (range) {
-      case 'short_term': return 'Last 4 Weeks';
-      case 'medium_term': return 'Last 6 Months';
-      case 'long_term': return 'All Time';
+      case 'one_week': return 'Last Week';
+      case 'one_month': return 'Last Month';
+      case 'three_months': return 'Last Three Months';
+      case 'six_months': return 'Last Six Months';
+      case 'one_year': return 'Last Year';
+      case 'all_time': return 'All Time';
       default: return 'This Period';
     }
   };
@@ -219,13 +222,16 @@ export const ImprovedGenreAnalysis = () => {
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full sm:w-40">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Time range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="short_term">Last 4 Weeks</SelectItem>
-              <SelectItem value="medium_term">Last 6 Months</SelectItem>
-              <SelectItem value="long_term">All Time</SelectItem>
+              <SelectItem value="one_week">Last Week</SelectItem>
+              <SelectItem value="one_month">Last Month</SelectItem>
+              <SelectItem value="three_months">Last Three Months</SelectItem>
+              <SelectItem value="six_months">Last Six Months</SelectItem>
+              <SelectItem value="one_year">Last Year</SelectItem>
+              <SelectItem value="all_time">All Time</SelectItem>
             </SelectContent>
           </Select>
 

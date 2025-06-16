@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { calculateStats, calculateGenreAnalysis } from '@/lib/spotify-data-utils';
 import { OverviewHeader } from './overview/OverviewHeader';
 import { StatsOverview } from './overview/StatsOverview';
 import { MusicInsightsSummary } from './overview/MusicInsightsSummary';
@@ -21,14 +22,22 @@ export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) =>
   const [currentError, setCurrentError] = useState<string>('');
 
   // Use centralized data store (fetches all data once with 2000 items)
-  const { 
-    tracks, 
-    artists, 
-    recentlyPlayed, 
-    isLoading, 
-    error,
-    dataInfo 
-  } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading, error: tracksError } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading, error: artistsError } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: recentlyPlayed = [], isLoading: recentLoading, error: recentError } = useEnhancedRecentlyPlayed(200);
+  const isLoading = tracksLoading || artistsLoading || recentLoading;
+  const error = tracksError || artistsError || recentError;
+  
+  // Create dataInfo object for compatibility
+  const dataInfo = {
+    tracksCount: tracks.length,
+    artistsCount: artists.length,
+    recentCount: recentlyPlayed.length,
+    lastFetched: new Date().toISOString(),
+    timeRange: 'medium_term',
+    dataSource: window.location.pathname === '/sandbox' ? 'sandbox' : 'spotify'
+  };
 
   // Check for errors and show them in modal
   React.useEffect(() => {

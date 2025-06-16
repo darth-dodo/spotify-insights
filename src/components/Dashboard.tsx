@@ -19,7 +19,7 @@ import { TrackExplorer } from './dashboard/TrackExplorer';
 import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
 import LoadingScreen from './ui/LoadingScreen';
 import { DataLoadingScreen } from './ui/DataLoadingScreen';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 
 export const Dashboard = () => {
   const { user, isLoading, error, clearError, refreshToken } = useAuth();
@@ -28,7 +28,11 @@ export const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Check if comprehensive data is loading
-  const { isLoading: dataLoading, dataInfo } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
+  const { isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const { isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
+  const dataLoading = tracksLoading || artistsLoading || recentLoading;
 
   const handleSettingsClick = () => {
     setActiveView('privacy');

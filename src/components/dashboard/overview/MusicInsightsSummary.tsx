@@ -4,15 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Music, TrendingUp, Users, Clock, Star, Headphones } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
+import { calculateStats, calculateGenreAnalysis } from '@/lib/spotify-data-utils';
 
 export const MusicInsightsSummary = () => {
-  const { tracks, artists, recentlyPlayed, getGenreAnalysis, getStats, isLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: recentlyPlayed = [], isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
+  const isLoading = tracksLoading || artistsLoading || recentLoading;
 
   const calculateEnhancedInsights = () => {
-    const stats = getStats();
-    const genreAnalysis = getGenreAnalysis();
+    const stats = calculateStats(tracks, artists, recentlyPlayed, 'medium_term');
+    const genreAnalysis = calculateGenreAnalysis(artists);
 
     // Check if we have any data
     const hasData = stats?.hasSpotifyData && (tracks.length > 0 || artists.length > 0);

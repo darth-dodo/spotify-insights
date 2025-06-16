@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell } from 'recharts';
 import { Users, TrendingUp, Music, Clock, Star, Info, Play, Album, Calendar, Sparkles, Target } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { cn } from '@/lib/utils';
 import { InfoButton } from '@/components/ui/InfoButton';
 
@@ -134,7 +133,7 @@ const ArtistDetailDialog = ({ artist, isOpen, onClose }: ArtistDetailDialogProps
 };
 
 export const ImprovedArtistExplorer = () => {
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const [timeRange, setTimeRange] = useState('six_months');
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
   const [explanationModal, setExplanationModal] = useState<{ open: boolean; title: string; content: string }>({
     open: false,
@@ -143,11 +142,11 @@ export const ImprovedArtistExplorer = () => {
   });
 
   // Use centralized store with full 2000 item dataset
-  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, 2000);
   const topArtistsData = { items: artists };
   const topTracksData = { items: tracks };
-  const artistsLoading = storeLoading;
-  const tracksLoading = storeLoading;
 
   const isLoading = artistsLoading || tracksLoading;
 
@@ -220,9 +219,12 @@ export const ImprovedArtistExplorer = () => {
 
   const getTimeRangeLabel = (range: string) => {
     switch (range) {
-      case 'short_term': return 'Last Month';
-      case 'medium_term': return 'Last Six Months';
-      case 'long_term': return 'All Time';
+      case 'one_week': return 'Last Week';
+      case 'one_month': return 'Last Month';
+      case 'three_months': return 'Last Three Months';
+      case 'six_months': return 'Last Six Months';
+      case 'one_year': return 'Last Year';
+      case 'all_time': return 'All Time';
       default: return 'This Period';
     }
   };
@@ -257,9 +259,12 @@ export const ImprovedArtistExplorer = () => {
             <SelectValue placeholder="Time range" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="short_term">Last Month</SelectItem>
-            <SelectItem value="medium_term">Last Six Months</SelectItem>
-            <SelectItem value="long_term">All Time</SelectItem>
+            <SelectItem value="one_week">Last Week</SelectItem>
+            <SelectItem value="one_month">Last Month</SelectItem>
+            <SelectItem value="three_months">Last Three Months</SelectItem>
+            <SelectItem value="six_months">Last Six Months</SelectItem>
+            <SelectItem value="one_year">Last Year</SelectItem>
+            <SelectItem value="all_time">All Time</SelectItem>
           </SelectContent>
         </Select>
       </div>

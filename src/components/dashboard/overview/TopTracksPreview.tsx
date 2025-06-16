@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Music, Play, ExternalLink, Clock, TrendingUp } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
 
 interface TopTracksPreviewProps {
@@ -11,7 +11,8 @@ interface TopTracksPreviewProps {
 }
 
 export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
-  const { tracks, isLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks } = useSpotifyData();
+  const { data: tracks = [], isLoading } = useEnhancedTopTracks('medium_term', 2000);
   const tracksData = { items: tracks.slice(0, 50) }; // Use first 50 from the full dataset
 
   const formatDuration = (ms: number) => {

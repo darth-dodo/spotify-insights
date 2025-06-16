@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell, Treemap } from 'recharts';
 import { Music, TrendingUp, Star, Sparkles, Target, Zap, Heart, Brain, Palette, Compass } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { cn } from '@/lib/utils';
 import { InfoButton } from '@/components/ui/InfoButton';
 
@@ -38,7 +38,10 @@ export const RefactoredGenreAnalysis = () => {
   const [analysisMode, setAnalysisMode] = useState<'overview' | 'deep' | 'comparison'>('overview');
   const [sortBy, setSortBy] = useState<'dominance' | 'diversity' | 'popularity' | 'evolution'>('dominance');
 
-  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const storeLoading = tracksLoading || artistsLoading;
   const isLoading = storeLoading;
 
   // Helper functions - moved before useMemo to fix initialization error

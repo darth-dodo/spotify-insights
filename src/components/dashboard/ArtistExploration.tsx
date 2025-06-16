@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { Users, Music, TrendingUp, ExternalLink, Play, Heart, Calendar, Clock, Info, Album, Sparkles, Target, Zap } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { ArtistDetailModal } from './artist/ArtistDetailModal';
 import { InfoButton } from '@/components/ui/InfoButton';
 
@@ -16,7 +16,10 @@ export const ArtistExploration = () => {
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
   const [showArtistModal, setShowArtistModal] = useState(false);
 
-  const { artists, tracks, isLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const isLoading = tracksLoading || artistsLoading;
 
   // Process extended artist data with time filtering simulation
   const processedArtists = useMemo(() => {

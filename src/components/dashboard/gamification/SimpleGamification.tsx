@@ -9,7 +9,7 @@ import {
   Trophy, Star, Zap, Music, Headphones, Clock, Target, Award, 
   Flame, Volume2, Calendar, TrendingUp
 } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
 
 interface Achievement {
@@ -27,7 +27,10 @@ interface Achievement {
 
 export const SimpleGamification = () => {
   // Use centralized store with full 2000 item dataset
-  const { tracks, artists, recentlyPlayed } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
+  const { data: tracks = [] } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [] } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: recentlyPlayed = [] } = useEnhancedRecentlyPlayed(200);
   const [activeTab, setActiveTab] = useState('overview');
   
   const topTracksData = { items: tracks };

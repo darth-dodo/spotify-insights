@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Sparkles } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
 import { FunFactCard } from './funfacts/FunFactCard';
 import { useFunFactsCalculator } from './funfacts/useFunFactsCalculator';
@@ -13,11 +13,11 @@ export const FunFactsCarousel = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   
   // Use centralized store with full 2000 item dataset
-  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
   const topTracksData = { items: tracks };
   const topArtistsData = { items: artists };
-  const tracksLoading = storeLoading;
-  const artistsLoading = storeLoading;
 
   const isLoading = tracksLoading || artistsLoading;
   const funFacts = useFunFactsCalculator(topTracksData, topArtistsData, timeRange);

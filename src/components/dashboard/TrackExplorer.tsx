@@ -172,22 +172,30 @@ const TrackDetailModal = ({ track, isOpen, onClose }: TrackDetailModalProps) => 
 export const TrackExplorer = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   const [selectedTrack, setSelectedTrack] = useState<any>(null);
-  const [sortBy, setSortBy] = useState<'popularity' | 'duration' | 'replay' | 'discovery'>('popularity');
-  const [filterGenre, setFilterGenre] = useState<string>('all');
+  const [showTrackModal, setShowTrackModal] = useState(false);
 
   // Use proper Spotify data hooks that handle user vs sandbox mode
   const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
-  const { data: topTracksData = [], isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, 2000);
-  const { data: topArtistsData = [], isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, 2000);
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, 2000);
 
   const isLoading = tracksLoading || artistsLoading;
 
-  // Enhanced track analysis with comprehensive metrics - using real Spotify data
+  // Enhanced track analysis with comprehensive metrics
   const trackAnalysis = useMemo(() => {
-    if (!topTracksData || !topArtistsData) return [];
-
-    return topTracksData.map((track: any, index: number) => {
-      const artist = topArtistsData.find((a: any) => 
+    if (!tracks.length || !artists.length) return [];
+    
+    // Simulate time filtering by adjusting the dataset size
+    const timeMultiplier = {
+      'short_term': 0.3,
+      'medium_term': 0.7,
+      'long_term': 1.0
+    }[timeRange] || 0.7;
+    
+    const filteredTracks = tracks.slice(0, Math.floor(tracks.length * timeMultiplier));
+    
+    return filteredTracks.map((track: any, index: number) => {
+      const artist = artists.find((a: any) => 
         track.artists?.some((ta: any) => ta.id === a.id)
       );
 
@@ -215,6 +223,9 @@ export const TrackExplorer = () => {
       // Estimate total plays based on rank and popularity
       const totalPlays = Math.max(1, Math.floor((60 - index) * (popularity / 100) * 2) + Math.floor(Math.random() * 20));
       
+      // Calculate listening time
+      const listeningTime = Math.floor((duration * totalPlays) / (1000 * 60));
+      
       return {
         ...track,
         rank: index + 1,
@@ -231,117 +242,117 @@ export const TrackExplorer = () => {
         discoveryYear,
         moodScore,
         totalPlays,
+        listeningTime,
         genres: artist?.genres || [],
         personalInsight: `This ${artist?.genres?.[0] || 'track'} masterpiece has been played ${totalPlays} times, showing your deep connection to its ${moodScore > 70 ? 'uplifting' : moodScore > 40 ? 'balanced' : 'contemplative'} energy.`
       };
-    });
-  }, [topTracksData, topArtistsData]);
+    }).sort((a, b) => b.listeningTime - a.listeningTime);
+  }, [tracks, artists, timeRange]);
 
-  // Get unique genres for filtering
-  const availableGenres = useMemo(() => {
-    const genres = new Set<string>();
-    trackAnalysis.forEach(track => {
-      track.genres?.forEach((genre: string) => genres.add(genre));
+  // Generate fun facts
+  const funFacts = useMemo(() => {
+    if (!trackAnalysis.length) return [];
+    
+    const facts = [];
+    const topTrack = trackAnalysis[0];
+    const totalMinutes = trackAnalysis.reduce((acc, track) => acc + track.listeningTime, 0);
+    const avgMinutesPerTrack = totalMinutes / trackAnalysis.length;
+    const mostReplayed = trackAnalysis.reduce((prev, current) => 
+      current.replayScore > prev.replayScore ? current : prev
+    );
+    const longestTrack = trackAnalysis.reduce((prev, current) => 
+      current.duration_ms > prev.duration_ms ? current : prev
+    );
+    
+    facts.push({
+      icon: Heart,
+      title: "Top Track Devotion",
+      description: `You've spent ${Math.floor(topTrack?.listeningTime / 60)} hours with ${topTrack?.name || 'your favorite track'} - that's like ${Math.round((topTrack?.listeningTime / 60) / 8)} full work days!`
     });
-    return Array.from(genres).sort();
+    
+    facts.push({
+      icon: Sparkles,
+      title: "Replay Champion",
+      description: `${mostReplayed?.name || 'Your favorite'} has the highest replay score at ${mostReplayed?.replayScore || 0}% - you never get tired of it!`
+    });
+    
+    facts.push({
+      icon: Clock,
+      title: "Track Diversity",
+      description: `You spend an average of ${Math.round(avgMinutesPerTrack)} minutes per track across ${trackAnalysis.length} different tracks.`
+    });
+    
+    facts.push({
+      icon: Music,
+      title: "Longest Journey",
+      description: `${longestTrack?.name || 'Your longest track'} is ${longestTrack?.durationMinutes || 0}:${longestTrack?.durationSeconds?.toString().padStart(2, '0') || '00'} minutes long - a true musical journey!`
+    });
+    
+    return facts.slice(0, 4);
   }, [trackAnalysis]);
 
-  // Filter and sort tracks
-  const filteredTracks = useMemo(() => {
-    let filtered = trackAnalysis;
-    
-    if (filterGenre !== 'all') {
-      filtered = filtered.filter(track => 
-        track.genres?.some((genre: string) => genre.toLowerCase().includes(filterGenre.toLowerCase()))
-      );
-    }
-    
-    return filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'duration':
-          return (b.duration_ms || 0) - (a.duration_ms || 0);
-        case 'replay':
-          return b.replayScore - a.replayScore;
-        case 'discovery':
-          return b.discoveryYear - a.discoveryYear;
-        case 'popularity':
-        default:
-          return (b.popularity || 0) - (a.popularity || 0);
-      }
-    });
-  }, [trackAnalysis, filterGenre, sortBy]);
-
   // Chart data generation
-  const popularityData = useMemo(() => {
-    return filteredTracks.slice(0, 10).map(track => ({
-      name: track.name.length > 15 ? track.name.substring(0, 15) + '...' : track.name,
+  const listeningTimeData = useMemo(() => {
+    return trackAnalysis.slice(0, 8).map(track => ({
+      name: track.name.length > 12 ? track.name.substring(0, 12) + '...' : track.name,
       fullName: track.name,
-      popularity: track.popularity || 0,
-      replay: track.replayScore,
-      duration: Math.floor((track.duration_ms || 0) / 60000)
+      minutes: Math.floor(track.listeningTime / 60),
+      plays: track.totalPlays
     }));
-  }, [filteredTracks]);
+  }, [trackAnalysis]);
+
+  const replayScoreData = useMemo(() => {
+    return trackAnalysis.slice(0, 10).map(track => ({
+      name: track.name.length > 10 ? track.name.substring(0, 10) + '...' : track.name,
+      fullName: track.name,
+      replay: track.replayScore,
+      plays: track.totalPlays
+    }));
+  }, [trackAnalysis]);
 
   const audioFeaturesData = useMemo(() => {
-    return filteredTracks.slice(0, 6).map(track => ({
-      track: track.name.length > 10 ? track.name.substring(0, 10) + '...' : track.name,
+    return trackAnalysis.slice(0, 6).map(track => ({
+      track: track.name.length > 8 ? track.name.substring(0, 8) + '...' : track.name,
       fullName: track.name,
       energy: track.energy,
       danceability: track.danceability,
       valence: track.valence,
-      acousticness: track.acousticness
+      acousticness: track.acousticness,
+      popularity: track.popularity,
+      replay: track.replayScore
     }));
-  }, [filteredTracks]);
+  }, [trackAnalysis]);
 
-  const genreDistribution = useMemo(() => {
-    const genreCounts: { [key: string]: number } = {};
-    filteredTracks.forEach(track => {
-      track.genres?.forEach((genre: string) => {
-        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-      });
-    });
-    
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
-    return Object.entries(genreCounts)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 6)
-      .map(([genre, count], index) => ({
-        name: genre,
-        value: count,
-        color: colors[index % colors.length]
-      }));
-  }, [filteredTracks]);
-
-  // Calculate statistics
+  // Calculate real statistics
   const calculateStats = () => {
-    const totalDuration = filteredTracks.reduce((acc, track) => acc + (track.duration_ms || 0), 0);
-    const avgPopularity = filteredTracks.length > 0 ? 
-      filteredTracks.reduce((acc, track) => acc + (track.popularity || 0), 0) / filteredTracks.length : 0;
-    const avgReplay = filteredTracks.length > 0 ? 
-      filteredTracks.reduce((acc, track) => acc + track.replayScore, 0) / filteredTracks.length : 0;
-    const totalPlays = filteredTracks.reduce((acc, track) => acc + track.totalPlays, 0);
+    const totalMinutes = trackAnalysis.reduce((acc, track) => acc + track.listeningTime, 0);
+    const totalPlays = trackAnalysis.reduce((acc, track) => acc + track.totalPlays, 0);
+    const avgPopularity = trackAnalysis.length > 0 ? 
+      trackAnalysis.reduce((acc, track) => acc + track.popularity, 0) / trackAnalysis.length : 0;
+    const avgReplayScore = trackAnalysis.length > 0 ? 
+      trackAnalysis.reduce((acc, track) => acc + track.replayScore, 0) / trackAnalysis.length : 0;
     
     return {
-      totalTracks: filteredTracks.length,
-      totalHours: Math.round(totalDuration / (1000 * 60 * 60) * 100) / 100,
+      totalTracks: trackAnalysis.length,
+      totalHours: Math.floor(totalMinutes / 60),
+      totalPlays,
       avgPopularity: Math.round(avgPopularity),
-      avgReplay: Math.round(avgReplay),
-      totalPlays
+      avgReplayScore: Math.round(avgReplayScore)
     };
   };
 
   const stats = calculateStats();
 
   const chartConfig = {
-    popularity: { label: "Popularity", color: "hsl(var(--accent))" },
+    minutes: { label: "Listening Time (hours)", color: "hsl(var(--accent))" },
     replay: { label: "Replay Score", color: "hsl(var(--primary))" },
     energy: { label: "Energy", color: "hsl(217, 91%, 60%)" },
   };
 
   const getTimeRangeLabel = (range: string) => {
     switch (range) {
-      case 'short_term': return 'Last Month';
-      case 'medium_term': return 'Last Six Months';
+      case 'short_term': return 'Last 4 Weeks';
+      case 'medium_term': return 'Last 6 Months';
       case 'long_term': return 'All Time';
       default: return 'This Period';
     }
@@ -349,6 +360,7 @@ export const TrackExplorer = () => {
 
   const handleTrackClick = (track: any) => {
     setSelectedTrack(track);
+    setShowTrackModal(true);
   };
 
   if (isLoading) {
@@ -368,65 +380,23 @@ export const TrackExplorer = () => {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header with Controls */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
-            Track Explorer
-            <InfoButton
-              title="Track Explorer System"
-              description="Deep dive into your individual tracks with comprehensive analysis including audio features, personal metrics, and listening patterns."
-              calculation="Tracks analyzed from your real Spotify listening data. Replay scores calculated based on popularity, ranking, and estimated play frequency. Audio features estimated from track metadata and genre characteristics."
-              funFacts={[
-                "Track analysis reveals your musical DNA at the song level",
-                "Replay scores indicate which songs have lasting appeal",
-                "Audio features help understand what makes you love certain tracks",
-                "Discovery years show your musical journey timeline"
-              ]}
-              metrics={[
-                { label: "Data Source", value: "Real Spotify", description: "Your actual listening data" },
-                { label: "Audio Features", value: "4 metrics", description: "Energy, danceability, valence, acousticness" },
-                { label: "Time Range", value: getTimeRangeLabel(timeRange), description: "Current analysis period" },
-              ]}
-            />
-          </h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Track Explorer</h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Explore your individual tracks with detailed insights and audio analysis
+            Deep insights from your extended track collection • Click any track for detailed info
           </p>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex items-center gap-4">
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-48">
               <SelectValue placeholder="Time range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="short_term">Last Month</SelectItem>
-              <SelectItem value="medium_term">Last Six Months</SelectItem>
+              <SelectItem value="short_term">Last 4 Weeks</SelectItem>
+              <SelectItem value="medium_term">Last 6 Months</SelectItem>
               <SelectItem value="long_term">All Time</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="popularity">Popularity</SelectItem>
-              <SelectItem value="duration">Duration</SelectItem>
-              <SelectItem value="replay">Replay Score</SelectItem>
-              <SelectItem value="discovery">Discovery Year</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={filterGenre} onValueChange={setFilterGenre}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by genre" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Genres</SelectItem>
-              {availableGenres.slice(0, 10).map(genre => (
-                <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
@@ -441,12 +411,16 @@ export const TrackExplorer = () => {
               <span className="text-xs md:text-sm font-medium">Tracks</span>
               <InfoButton
                 title="Total Tracks"
-                description="Number of tracks in your current filtered view from real Spotify data"
-                calculation="Filtered from your actual Spotify listening history based on selected criteria and time range"
+                description="Number of unique tracks in your extended dataset for the selected time period."
+                funFacts={[
+                  "Your track collection shows musical diversity",
+                  "More tracks indicate broad musical exploration",
+                  "Each track represents a unique musical journey"
+                ]}
               />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.totalTracks}</div>
-            <div className="text-xs text-muted-foreground">analyzed</div>
+            <div className="text-xs text-muted-foreground">{getTimeRangeLabel(timeRange)}</div>
           </CardContent>
         </Card>
 
@@ -454,282 +428,334 @@ export const TrackExplorer = () => {
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Duration</span>
+              <span className="text-xs md:text-sm font-medium">Hours</span>
               <InfoButton
-                title="Total Listening Time"
-                description="Combined duration of all tracks in current view"
-                calculation="Sum of all track durations in hours"
+                title="Total Listening Hours"
+                description="Estimated total hours spent listening to these tracks."
+                calculation="Calculated from track durations and estimated play counts based on ranking."
+                funFacts={[
+                  "Shows dedication to musical tracks",
+                  "Listening hours indicate deep musical engagement",
+                  "More hours suggest consistent music consumption"
+                ]}
               />
             </div>
-            <div className="text-lg md:text-2xl font-bold">{stats.totalHours}h</div>
-            <div className="text-xs text-muted-foreground">total time</div>
+            <div className="text-lg md:text-2xl font-bold">{stats.totalHours}</div>
+            <div className="text-xs text-muted-foreground">Total listening</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Avg Pop</span>
-              <InfoButton
-                title="Average Popularity"
-                description="Mean popularity score across all tracks"
-                calculation="Sum of all popularity scores divided by track count"
-              />
-            </div>
-            <div className="text-lg md:text-2xl font-bold">{stats.avgPopularity}</div>
-            <div className="text-xs text-muted-foreground">out of 100</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <span className="text-xs md:text-sm font-medium">Replay</span>
-              <InfoButton
-                title="Average Replay Score"
-                description="How likely you are to replay these tracks"
-                calculation="Calculated from popularity, ranking, and estimated listening frequency"
-              />
-            </div>
-            <div className="text-lg md:text-2xl font-bold">{stats.avgReplay}</div>
-            <div className="text-xs text-muted-foreground">replay score</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <Play className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+              <Play className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               <span className="text-xs md:text-sm font-medium">Plays</span>
               <InfoButton
-                title="Estimated Total Plays"
-                description="Estimated number of times you've played these tracks"
-                calculation="Based on track ranking, popularity, and listening patterns"
+                title="Total Plays"
+                description="Estimated total number of times you've played these tracks."
+                calculation="Based on track ranking, popularity, and listening patterns."
+                funFacts={[
+                  "Higher play counts indicate favorite tracks",
+                  "Shows your most cherished music",
+                  "Reflects your musical preferences"
+                ]}
               />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.totalPlays}</div>
-            <div className="text-xs text-muted-foreground">est. plays</div>
+            <div className="text-xs text-muted-foreground">Estimated plays</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
+              <span className="text-xs md:text-sm font-medium">Popularity</span>
+              <InfoButton
+                title="Average Popularity"
+                description="Average popularity score of your tracks on Spotify."
+                calculation="Based on Spotify's popularity metric (0-100)."
+                funFacts={[
+                  "Higher scores indicate mainstream appeal",
+                  "Shows your music discovery patterns",
+                  "Reflects your musical taste"
+                ]}
+              />
+            </div>
+            <div className="text-lg md:text-2xl font-bold">{stats.avgPopularity}</div>
+            <div className="text-xs text-muted-foreground">Spotify score</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2">
+              <Heart className="h-4 w-4 md:h-5 md:w-5 text-red-500" />
+              <span className="text-xs md:text-sm font-medium">Replay</span>
+              <InfoButton
+                title="Average Replay Score"
+                description="How much you tend to replay your tracks."
+                calculation="Based on track ranking, popularity, and listening patterns."
+                funFacts={[
+                  "Higher scores indicate favorite tracks",
+                  "Shows your most cherished music",
+                  "Reflects your musical preferences"
+                ]}
+              />
+            </div>
+            <div className="text-lg md:text-2xl font-bold">{stats.avgReplayScore}%</div>
+            <div className="text-xs text-muted-foreground">Replay value</div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="detailed">Detailed</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+      {/* Fun Facts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {funFacts.map((fact, index) => (
+          <Card key={index}>
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <fact.icon className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+                <span className="text-xs md:text-sm font-medium">{fact.title}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{fact.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-        <TabsContent value="overview" className="space-y-4 md:space-y-6">
-          {/* Track Grid */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Music className="h-5 w-5" />
-                Top Tracks - {getTimeRangeLabel(timeRange)}
-              </CardTitle>
-              <CardDescription>
-                Click any track to see detailed analysis and insights
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-                {filteredTracks.slice(0, 12).map((track) => (
-                  <Card 
-                    key={track.id} 
-                    className="hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => handleTrackClick(track)}
-                  >
-                    <CardContent className="p-3 md:p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <Badge variant="outline" className="text-xs">
-                          #{track.rank}
-                        </Badge>
-                        <div className="text-right">
-                          <div className="text-xs text-muted-foreground">Replay</div>
-                          <div className="text-sm font-bold text-accent">{track.replayScore}</div>
-                        </div>
+      {!trackAnalysis.length ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Music className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">No Extended Track Data Available</h3>
+            <p className="text-muted-foreground">
+              Connect your Spotify account to see your comprehensive track exploration data
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="detailed">Detailed</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4 md:space-y-6">
+            {/* Top Tracks List with enhanced metrics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Music className="h-5 w-5" />
+                  Top Tracks - {getTimeRangeLabel(timeRange)}
+                </CardTitle>
+                <CardDescription>
+                  Click any track to see detailed information and insights
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {trackAnalysis.slice(0, 15).map((track, index) => (
+                    <div 
+                      key={track.id} 
+                      className="flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-accent/5 border hover:border-accent/20"
+                      onClick={() => handleTrackClick(track)}
+                    >
+                      <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center text-xs font-medium">
+                        {track.rank}
                       </div>
-                      
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-sm truncate">{track.name}</h3>
-                        <p className="text-xs text-muted-foreground truncate">{track.artistName}</p>
-                        
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs">
-                            <span>Popularity</span>
-                            <span>{track.popularity || 0}/100</span>
-                          </div>
-                          <Progress value={track.popularity || 0} className="h-1" />
+                      {track.album?.images?.[0]?.url && (
+                        <img 
+                          src={track.album.images[0].url} 
+                          alt={track.name}
+                          className="w-12 h-12 rounded object-cover"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium truncate">{track.name}</h3>
+                          <Badge variant="outline" className="text-xs">
+                            {track.artistName}
+                          </Badge>
                         </div>
-                        
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             <span>{track.durationMinutes}:{track.durationSeconds.toString().padStart(2, '0')}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Volume2 className="h-3 w-3" />
-                            <span>{track.moodScore}% mood</span>
+                            <Play className="h-3 w-3" />
+                            <span>{track.totalPlays} plays</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Heart className="h-3 w-3" />
+                            <span>{track.replayScore}% replay</span>
                           </div>
                         </div>
-                        
-                        {track.genres.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {track.genres.slice(0, 2).map((genre: string) => (
-                              <Badge key={genre} variant="secondary" className="text-xs px-1.5 py-0">
-                                {genre}
-                              </Badge>
-                            ))}
-                            {track.genres.length > 2 && (
-                              <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                +{track.genres.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="detailed" className="space-y-4 md:space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Track Analysis</CardTitle>
-              <CardDescription>
-                Complete breakdown of all tracks with comprehensive metrics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-3">
-                  {filteredTracks.map((track) => (
+          <TabsContent value="detailed" className="space-y-4 md:space-y-6">
+            {/* Detailed Track Grid */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Music className="h-5 w-5" />
+                  Extended Track Collection - {getTimeRangeLabel(timeRange)}
+                </CardTitle>
+                <CardDescription>
+                  Complete track analysis from your extended dataset
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                  {trackAnalysis.slice(0, 20).map((track) => (
                     <Card 
                       key={track.id} 
-                      className="border-l-4 border-l-accent/30 cursor-pointer hover:bg-muted/5"
+                      className="hover:shadow-md transition-shadow cursor-pointer"
                       onClick={() => handleTrackClick(track)}
                     >
-                      <CardContent className="p-3 md:p-4">
-                        <div className="flex flex-col space-y-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline">#{track.rank}</Badge>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate">{track.name}</h3>
-                              <p className="text-sm text-muted-foreground truncate">{track.artistName}</p>
-                            </div>
-                            <Badge variant="secondary">{track.replayScore}/100</Badge>
-                          </div>
+                      <CardContent className="p-4">
+                        {track.album?.images?.[0]?.url && (
+                          <img 
+                            src={track.album.images[0].url} 
+                            alt={track.name}
+                            className="w-full aspect-square rounded-lg object-cover mb-3"
+                          />
+                        )}
+                        
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm truncate">{track.name}</h3>
+                          <p className="text-xs text-muted-foreground truncate">{track.artistName}</p>
                           
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                            <div className="text-center p-2 bg-muted/20 rounded">
-                              <span className="text-muted-foreground block">Popularity</span>
-                              <div className="font-medium">{track.popularity || 0}/100</div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="text-center p-1 bg-muted/20 rounded">
+                              <div className="text-xs text-muted-foreground">Plays</div>
+                              <div className="font-medium">{track.totalPlays}</div>
                             </div>
-                            <div className="text-center p-2 bg-muted/20 rounded">
-                              <span className="text-muted-foreground block">Duration</span>
-                              <div className="font-medium">{track.durationMinutes}:{track.durationSeconds.toString().padStart(2, '0')}</div>
-                            </div>
-                            <div className="text-center p-2 bg-muted/20 rounded">
-                              <span className="text-muted-foreground block">Energy</span>
-                              <div className="font-medium">{track.energy}%</div>
-                            </div>
-                            <div className="text-center p-2 bg-muted/20 rounded">
-                              <span className="text-muted-foreground block">Mood</span>
-                              <div className="font-medium">{track.moodScore}%</div>
+                            <div className="text-center p-1 bg-muted/20 rounded">
+                              <div className="text-xs text-muted-foreground">Replay</div>
+                              <div className="font-medium">{track.replayScore}%</div>
                             </div>
                           </div>
                           
-                          {track.genres.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {track.genres.slice(0, 4).map((genre: string) => (
-                                <Badge key={genre} variant="outline" className="text-xs">
-                                  {genre}
-                                </Badge>
-                              ))}
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <span>{track.durationMinutes}:{track.durationSeconds.toString().padStart(2, '0')}</span>
                             </div>
-                          )}
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3 w-3" />
+                              <span>{track.popularity}/100</span>
+                            </div>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4 md:space-y-6">
-          {/* Analytics Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-            {/* Popularity vs Replay Chart */}
+          <TabsContent value="analytics" className="space-y-4 md:space-y-6">
+            {/* Listening Time Analysis */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm md:text-base">Popularity vs Replay Score</CardTitle>
-                <CardDescription className="text-xs md:text-sm">
-                  How track popularity correlates with your personal replay preference
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Listening Time Analysis
+                </CardTitle>
+                <CardDescription>
+                  How much time you spend with each track
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={chartConfig} className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={popularityData}>
+                    <BarChart data={listeningTimeData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" fontSize={12} />
-                      <YAxis fontSize={12} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="popularity" fill="hsl(var(--accent))" />
-                      <Bar dataKey="replay" fill="hsl(var(--primary))" />
+                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                      <YAxis />
+                      <ChartTooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload[0]) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background border border-border rounded-lg p-3 shadow-md">
+                                <p className="font-medium text-sm">{data.fullName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {data.minutes} hours ({data.plays} plays)
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="minutes" fill="hsl(var(--accent))" />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </CardContent>
             </Card>
 
-            {/* Genre Distribution */}
+            {/* Replay Score Analysis */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm md:text-base">Genre Distribution</CardTitle>
-                <CardDescription className="text-xs md:text-sm">
-                  Breakdown of genres in your top tracks
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5" />
+                  Replay Score Analysis
+                </CardTitle>
+                <CardDescription>
+                  How much you tend to replay each track
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={{}} className="h-[300px]">
+                <ChartContainer config={chartConfig} className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={genreDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={120}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {genreDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                    </PieChart>
+                    <LineChart data={replayScoreData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                      <YAxis />
+                      <ChartTooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload[0]) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background border border-border rounded-lg p-3 shadow-md">
+                                <p className="font-medium text-sm">{data.fullName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Replay: {data.replay}% ({data.plays} plays)
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Line type="monotone" dataKey="replay" stroke="hsl(var(--primary))" />
+                    </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </CardContent>
             </Card>
 
-            {/* Audio Features Radar */}
-            <Card className="lg:col-span-2">
+            {/* Audio Features Analysis */}
+            <Card>
               <CardHeader>
-                <CardTitle className="text-sm md:text-base">Audio Features Analysis</CardTitle>
-                <CardDescription className="text-xs md:text-sm">
-                  Radar chart showing audio characteristics of your top tracks
+                <CardTitle className="flex items-center gap-2">
+                  <Volume2 className="h-5 w-5" />
+                  Audio Features Analysis
+                </CardTitle>
+                <CardDescription>
+                  Musical characteristics of your top tracks
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -737,37 +763,49 @@ export const TrackExplorer = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={audioFeaturesData}>
                       <PolarGrid />
-                      <PolarAngleAxis dataKey="track" fontSize={12} />
-                      <PolarRadiusAxis fontSize={10} />
+                      <PolarAngleAxis dataKey="track" />
+                      <PolarRadiusAxis angle={60} domain={[0, 100]} tickCount={5} />
                       <Radar
                         name="Energy"
                         dataKey="energy"
-                        stroke="hsl(var(--accent))"
-                        fill="hsl(var(--accent))"
-                        fillOpacity={0.1}
+                        stroke="hsl(217, 91%, 60%)"
+                        fill="hsl(217, 91%, 60%)"
+                        fillOpacity={0.3}
                       />
                       <Radar
-                        name="Danceability"
+                        name="Danceability" 
                         dataKey="danceability"
+                        stroke="hsl(var(--accent))"
+                        fill="hsl(var(--accent))"
+                        fillOpacity={0.2}
+                      />
+                      <Radar
+                        name="Valence"
+                        dataKey="valence"
                         stroke="hsl(var(--primary))"
                         fill="hsl(var(--primary))"
-                        fillOpacity={0.1}
+                        fillOpacity={0.2}
                       />
-                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Radar
+                        name="Acousticness"
+                        dataKey="acousticness"
+                        stroke="hsl(var(--muted-foreground))"
+                        fill="hsl(var(--muted-foreground))"
+                        fillOpacity={0.2}
+                      />
                     </RadarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      )}
 
-      {/* Track Detail Modal */}
       <TrackDetailModal 
         track={selectedTrack}
-        isOpen={!!selectedTrack}
-        onClose={() => setSelectedTrack(null)}
+        isOpen={showTrackModal}
+        onClose={() => setShowTrackModal(false)}
       />
     </div>
   );

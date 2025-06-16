@@ -1,384 +1,351 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
-import { Music, Users, TrendingUp, Calendar, Star, Headphones, Database } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Info, Music, TrendingUp, Clock, Users, BarChart3, Activity } from 'lucide-react';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { calculateStats, TimeDimension } from '@/lib/spotify-data-utils';
+import { InfoButton } from '@/components/ui/InfoButton';
 
 export const LibraryHealth = () => {
-  const { tracks, artists, recentlyPlayed, isLoading } = useExtendedSpotifyDataStore();
+  const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
+  const { data: tracksData = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term');
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: recentlyPlayed = [], isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
+  const isLoading = tracksLoading || artistsLoading || recentLoading;
 
-  // Calculate library metrics
-  const libraryMetrics = React.useMemo(() => {
-    if (!tracks.length || !artists.length) {
-      return null;
-    }
+  const stats = useMemo(() => {
+    if (!tracksData || !artists) return null;
+    return calculateStats(tracksData, artists, recentlyPlayed, 'all_time');
+  }, [tracksData, artists, recentlyPlayed]);
 
-    // Genre analysis
-    const genreMap = new Map<string, number>();
-    artists.forEach(artist => {
+  // Calculate additional insights
+  const insights = useMemo(() => {
+    if (!stats) return null;
+
+    // Calculate genre distribution
+    const genreCounts = artists.reduce((acc: Record<string, number>, artist) => {
       artist.genres?.forEach(genre => {
-        genreMap.set(genre, (genreMap.get(genre) || 0) + 1);
+        acc[genre] = (acc[genre] || 0) + 1;
       });
-    });
+      return acc;
+    }, {});
 
-    const topGenres = Array.from(genreMap.entries())
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 10) // Show more genres with larger dataset
+    const topGenres = Object.entries(genreCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
       .map(([genre, count]) => ({ genre, count }));
 
-    // Popularity distribution
-    const popularityBuckets = { low: 0, medium: 0, high: 0 };
-    tracks.forEach(track => {
-      if (track.popularity < 40) popularityBuckets.low++;
-      else if (track.popularity < 70) popularityBuckets.medium++;
-      else popularityBuckets.high++;
+    // Calculate popularity distribution
+    const popularityRanges = {
+      underground: 0, // 0-39
+      alternative: 0, // 40-59
+      popular: 0, // 60-79
+      mainstream: 0 // 80-100
+    };
+
+    tracksData.forEach(track => {
+      const popularity = track.popularity || 0;
+      if (popularity >= 80) popularityRanges.mainstream++;
+      else if (popularity >= 60) popularityRanges.popular++;
+      else if (popularity >= 40) popularityRanges.alternative++;
+      else popularityRanges.underground++;
     });
 
-    // Track age analysis (based on album release date)
-    const currentYear = new Date().getFullYear();
-    const trackAges = tracks
-      .map(track => {
-        const releaseYear = track.album?.release_date ? 
-          new Date(track.album.release_date).getFullYear() : currentYear;
-        return currentYear - releaseYear;
-      })
-      .filter(age => !isNaN(age));
+    // Calculate activity score
+    const activityScore = Math.min(100, Math.round(
+      (stats.recentTracksCount / stats.totalTracks) * 100
+    ));
 
-    const avgTrackAge = trackAges.length > 0 ? 
-      trackAges.reduce((sum, age) => sum + age, 0) / trackAges.length : 0;
-
-    // Decade distribution
-    const decadeMap = new Map<string, number>();
-    tracks.forEach(track => {
-      if (track.album?.release_date) {
-        const year = new Date(track.album.release_date).getFullYear();
-        const decade = Math.floor(year / 10) * 10;
-        const decadeLabel = `${decade}s`;
-        decadeMap.set(decadeLabel, (decadeMap.get(decadeLabel) || 0) + 1);
-      }
-    });
-
-    const topDecades = Array.from(decadeMap.entries())
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5);
-
-    // Diversity score
-    const uniqueArtists = new Set(tracks.map(track => track.artists[0]?.id)).size;
-    const diversityScore = Math.round((uniqueArtists / tracks.length) * 100);
-
-    // Artist popularity distribution
-    const artistPopularityBuckets = { emerging: 0, established: 0, mainstream: 0 };
-    artists.forEach(artist => {
-      if (artist.popularity < 40) artistPopularityBuckets.emerging++;
-      else if (artist.popularity < 70) artistPopularityBuckets.established++;
-      else artistPopularityBuckets.mainstream++;
-    });
+    // Calculate diversity score
+    const diversityScore = Math.min(100, Math.round(
+      (stats.uniqueGenres / 20) * 100 // Assuming 20 genres is considered high diversity
+    ));
 
     return {
-      totalTracks: tracks.length,
-      totalArtists: artists.length,
       topGenres,
-      topDecades,
-      popularityBuckets,
-      artistPopularityBuckets,
-      avgTrackAge: Math.round(avgTrackAge),
-      diversityScore,
-      avgPopularity: Math.round(tracks.reduce((sum, track) => sum + track.popularity, 0) / tracks.length),
-      genreCount: genreMap.size,
-      uniqueArtists
+      popularityRanges,
+      activityScore,
+      diversityScore
     };
-  }, [tracks, artists]);
+  }, [stats, artists, tracksData]);
 
-  if (isLoading) {
+  if (isLoading || !stats || !insights) {
     return (
-      <div className="space-y-6 p-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Enhanced Library Health</h1>
-          <p className="text-muted-foreground">Analyzing your extended music library (up to 1000 tracks & artists)...</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="space-y-2">
-                <div className="h-4 bg-muted rounded w-1/2"></div>
-                <div className="h-6 bg-muted rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-12 bg-muted rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!libraryMetrics) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Enhanced Library Health</h1>
-          <p className="text-muted-foreground">Unable to load library data. Please try again.</p>
-        </div>
+      <div className="flex items-center justify-center h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Enhanced Library Health</h1>
-        <p className="text-muted-foreground">
-          Deep analysis of your extended Spotify music library ({libraryMetrics.totalTracks} tracks, {libraryMetrics.totalArtists} artists)
-        </p>
-        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
-          <Database className="h-3 w-3" />
-          Extended Dataset (up to 1000 items)
-        </Badge>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold tracking-tight">Library Health</h2>
+          <p className="text-sm text-muted-foreground">
+            Comprehensive analysis of your music library's health and diversity
+          </p>
+        </div>
+        <InfoButton
+          title="Library Health Analysis"
+          description="Comprehensive analysis of your music library's health, diversity, and listening patterns."
+          calculation="Analyzes your library's size, genre diversity, artist variety, and listening patterns to provide insights into your musical habits and preferences."
+          funFacts={[
+            "A healthy library typically has diverse genres and artists",
+            "Regular listening activity indicates good library engagement",
+            "Genre diversity often correlates with musical exploration",
+            "Library size affects recommendation quality and discovery"
+          ]}
+          metrics={[
+            { label: "Library Size", value: `${stats.totalTracks}`, description: "Total tracks in library" },
+            { label: "Genre Diversity", value: `${stats.uniqueGenres}`, description: "Unique genres explored" },
+            { label: "Artist Variety", value: `${stats.totalArtists}`, description: "Unique artists followed" }
+          ]}
+        />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Total Tracks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tracks</CardTitle>
-            <Music className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{libraryMetrics.totalTracks}</div>
-            <p className="text-xs text-muted-foreground">
-              Extended dataset
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Total Artists */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Artists</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{libraryMetrics.totalArtists}</div>
-            <p className="text-xs text-muted-foreground">
-              Unique: {libraryMetrics.uniqueArtists}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Genre Diversity */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Genre Diversity</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{libraryMetrics.genreCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Different genres represented
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Average Track Age */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Track Age</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{libraryMetrics.avgTrackAge} years</div>
-            <p className="text-xs text-muted-foreground">
-              Music era preference
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Diversity Score */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Artist Diversity</CardTitle>
-            <Headphones className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{libraryMetrics.diversityScore}%</div>
-            <p className="text-xs text-muted-foreground">
-              Unique artist ratio
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Average Popularity */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Popularity</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{libraryMetrics.avgPopularity}/100</div>
-            <p className="text-xs text-muted-foreground">
-              Mainstream level
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Mainstream vs Niche */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Music Profile</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">
-              {libraryMetrics.popularityBuckets.high > libraryMetrics.popularityBuckets.low ? 'Mainstream' : 'Niche'}
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Music className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium">Library Size</span>
+              <InfoButton
+                title="Library Size Analysis"
+                description="Total number of tracks in your music library."
+                calculation="Counts all unique tracks in your library. A larger library typically indicates more diverse musical exploration."
+                funFacts={[
+                  "The average music fan has 200-500 songs in regular rotation",
+                  "Library size affects recommendation quality",
+                  "Larger libraries suggest adventurous music discovery",
+                  "Regular updates keep your library fresh and relevant"
+                ]}
+                metrics={[
+                  { label: "Total Tracks", value: `${stats.totalTracks}`, description: "In your library" },
+                  { label: "Recent Activity", value: `${stats.recentTracksCount}`, description: "Recently played" }
+                ]}
+              />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {Math.round((libraryMetrics.popularityBuckets.high / libraryMetrics.totalTracks) * 100)}% popular tracks
-            </p>
+            <div className="text-2xl font-bold">{stats.totalTracks}</div>
+            <div className="text-xs text-muted-foreground">total tracks</div>
           </CardContent>
         </Card>
 
-        {/* Discovery Score */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Discovery Score</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round((libraryMetrics.popularityBuckets.low / libraryMetrics.totalTracks) * 100)}%
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="h-4 w-4 text-green-500" />
+              <span className="text-sm font-medium">Genre Diversity</span>
+              <InfoButton
+                title="Genre Diversity Analysis"
+                description="Number of unique genres in your music library."
+                calculation="Counts all unique genres from your artists. Higher diversity indicates broader musical exploration."
+                funFacts={[
+                  "Most people explore 3-7 genres regularly",
+                  "Genre diversity often correlates with personality openness",
+                  "Exploring diverse genres can enhance cognitive flexibility",
+                  "Genre variety improves music recommendations"
+                ]}
+                metrics={[
+                  { label: "Unique Genres", value: `${stats.uniqueGenres}`, description: "Different styles" },
+                  { label: "Diversity Score", value: `${insights.diversityScore}%`, description: "Exploration level" }
+                ]}
+              />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Hidden gems found
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Genres */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Genres</CardTitle>
-            <CardDescription>Most represented genres in your extended library</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {libraryMetrics.topGenres.map((genre, index) => (
-              <div key={genre.genre} className="flex items-center justify-between">
-                <Badge variant={index < 3 ? "default" : "secondary"} className="capitalize">
-                  {genre.genre}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {genre.count} artists
-                </span>
-              </div>
-            ))}
+            <div className="text-2xl font-bold">{stats.uniqueGenres}</div>
+            <div className="text-xs text-muted-foreground">unique genres</div>
           </CardContent>
         </Card>
 
-        {/* Decade Distribution */}
         <Card>
-          <CardHeader>
-            <CardTitle>Era Distribution</CardTitle>
-            <CardDescription>Your music across different decades</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {libraryMetrics.topDecades.map(([decade, count], index) => (
-              <div key={decade} className="flex items-center justify-between">
-                <Badge variant={index === 0 ? "default" : "secondary"}>
-                  {decade}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {count} tracks ({Math.round((count / libraryMetrics.totalTracks) * 100)}%)
-                </span>
-              </div>
-            ))}
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-4 w-4 text-purple-500" />
+              <span className="text-sm font-medium">Artist Variety</span>
+              <InfoButton
+                title="Artist Variety Analysis"
+                description="Number of unique artists in your music library."
+                calculation="Counts all unique artists you follow. Higher variety indicates broader musical exploration."
+                funFacts={[
+                  "Diverse artist libraries often predict musical openness",
+                  "The typical listener follows 50-150 artists regularly",
+                  "Supporting many artists helps fund the music ecosystem",
+                  "Artist variety improves discovery recommendations"
+                ]}
+                metrics={[
+                  { label: "Total Artists", value: `${stats.totalArtists}`, description: "In your library" },
+                  { label: "Variety Level", value: stats.totalArtists >= 100 ? 'High' : stats.totalArtists >= 50 ? 'Medium' : 'Focused', description: "Exploration range" }
+                ]}
+              />
+            </div>
+            <div className="text-2xl font-bold">{stats.totalArtists}</div>
+            <div className="text-xs text-muted-foreground">unique artists</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="h-4 w-4 text-orange-500" />
+              <span className="text-sm font-medium">Listening Time</span>
+              <InfoButton
+                title="Listening Time Analysis"
+                description="Total listening time from your recent activity."
+                calculation="Calculated from your recent listening sessions and track durations. Shows current engagement with music."
+                funFacts={[
+                  "The average person listens to 2-4 hours of music daily",
+                  "Music listening often peaks during commutes and work",
+                  "Recent activity indicates current music engagement",
+                  "Time metrics help understand listening patterns"
+                ]}
+                metrics={[
+                  { label: "Total Hours", value: `${Math.round(stats.listeningTime)}`, description: "Recent activity" },
+                  { label: "Recent Tracks", value: `${stats.recentTracksCount}`, description: "Songs played recently" }
+                ]}
+              />
+            </div>
+            <div className="text-2xl font-bold">{Math.round(stats.listeningTime)}</div>
+            <div className="text-xs text-muted-foreground">hours listened</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Track Popularity Distribution */}
+      {/* Additional Insights Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Track Popularity Distribution</CardTitle>
-            <CardDescription>How mainstream vs niche your track selection is</CardDescription>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4" />
+              Top Genres
+              <InfoButton
+                title="Top Genres Analysis"
+                description="Your most frequently occurring genres and their distribution."
+                calculation="Calculated from artist genre tags. Shows your primary musical interests and genre preferences."
+                funFacts={[
+                  "Top genres often reflect your core musical identity",
+                  "Genre distribution shows musical taste balance",
+                  "Genre preferences can change over time",
+                  "Diverse genre distribution indicates eclectic taste"
+                ]}
+                metrics={insights.topGenres.map(({ genre, count }) => ({
+                  label: genre,
+                  value: `${count} artists`,
+                  description: `${Math.round((count / artists.length) * 100)}% of library`
+                }))}
+              />
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Hidden Gems (0-39)</span>
-                <span>{libraryMetrics.popularityBuckets.low} tracks</span>
-              </div>
-              <Progress 
-                value={(libraryMetrics.popularityBuckets.low / libraryMetrics.totalTracks) * 100} 
-                className="h-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Rising Stars (40-69)</span>
-                <span>{libraryMetrics.popularityBuckets.medium} tracks</span>
-              </div>
-              <Progress 
-                value={(libraryMetrics.popularityBuckets.medium / libraryMetrics.totalTracks) * 100} 
-                className="h-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Chart Toppers (70-100)</span>
-                <span>{libraryMetrics.popularityBuckets.high} tracks</span>
-              </div>
-              <Progress 
-                value={(libraryMetrics.popularityBuckets.high / libraryMetrics.totalTracks) * 100} 
-                className="h-2"
-              />
+          <CardContent>
+            <div className="space-y-4">
+              {insights.topGenres.map(({ genre, count }) => (
+                <div key={genre} className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{genre}</span>
+                  <Badge variant="secondary">{count} artists</Badge>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Artist Discovery Level */}
         <Card>
           <CardHeader>
-            <CardTitle>Artist Discovery Level</CardTitle>
-            <CardDescription>Your taste for emerging vs established artists</CardDescription>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart3 className="h-4 w-4" />
+              Popularity Distribution
+              <InfoButton
+                title="Popularity Distribution Analysis"
+                description="Breakdown of your library's music by popularity level."
+                calculation="Based on Spotify's popularity scores (0-100). Shows your preference for mainstream vs. underground music."
+                funFacts={[
+                  "Mainstream tracks (80-100) are widely popular",
+                  "Popular tracks (60-79) have good recognition",
+                  "Alternative tracks (40-59) are more niche",
+                  "Underground tracks (0-39) are less known"
+                ]}
+                metrics={[
+                  { label: "Mainstream", value: `${insights.popularityRanges.mainstream}`, description: "80-100 popularity" },
+                  { label: "Popular", value: `${insights.popularityRanges.popular}`, description: "60-79 popularity" },
+                  { label: "Alternative", value: `${insights.popularityRanges.alternative}`, description: "40-59 popularity" },
+                  { label: "Underground", value: `${insights.popularityRanges.underground}`, description: "0-39 popularity" }
+                ]}
+              />
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Emerging (0-39)</span>
-                <span>{libraryMetrics.artistPopularityBuckets.emerging} artists</span>
-              </div>
-              <Progress 
-                value={(libraryMetrics.artistPopularityBuckets.emerging / libraryMetrics.totalArtists) * 100} 
-                className="h-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Established (40-69)</span>
-                <span>{libraryMetrics.artistPopularityBuckets.established} artists</span>
-              </div>
-              <Progress 
-                value={(libraryMetrics.artistPopularityBuckets.established / libraryMetrics.totalArtists) * 100} 
-                className="h-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Mainstream (70-100)</span>
-                <span>{libraryMetrics.artistPopularityBuckets.mainstream} artists</span>
-              </div>
-              <Progress 
-                value={(libraryMetrics.artistPopularityBuckets.mainstream / libraryMetrics.totalArtists) * 100} 
-                className="h-2"
-              />
+          <CardContent>
+            <div className="space-y-4">
+              {Object.entries(insights.popularityRanges).map(([range, count]) => (
+                <div key={range} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium capitalize">{range}</span>
+                    <Badge variant="secondary">{count} tracks</Badge>
+                  </div>
+                  <Progress 
+                    value={(count / tracksData.length) * 100} 
+                    className="h-2"
+                  />
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Health Score Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Activity className="h-4 w-4" />
+            Library Health Score
+            <InfoButton
+              title="Library Health Score Analysis"
+              description="Overall health score based on multiple factors including diversity, activity, and balance."
+              calculation="Combines genre diversity, artist variety, recent activity, and popularity distribution to calculate an overall health score."
+              funFacts={[
+                "A healthy library has good genre diversity",
+                "Regular activity keeps your library fresh",
+                "Balanced popularity distribution shows varied taste",
+                "High health scores often correlate with better recommendations"
+              ]}
+              metrics={[
+                { label: "Diversity Score", value: `${insights.diversityScore}%`, description: "Genre exploration" },
+                { label: "Activity Score", value: `${insights.activityScore}%`, description: "Recent engagement" },
+                { label: "Overall Health", value: `${Math.round((insights.diversityScore + insights.activityScore) / 2)}%`, description: "Combined score" }
+              ]}
+            />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Overall Health</span>
+              <Badge variant={insights.diversityScore >= 70 ? 'default' : insights.diversityScore >= 50 ? 'secondary' : 'destructive'}>
+                {Math.round((insights.diversityScore + insights.activityScore) / 2)}%
+              </Badge>
+            </div>
+            <Progress 
+              value={(insights.diversityScore + insights.activityScore) / 2} 
+              className="h-2"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Diversity</span>
+                  <Badge variant="secondary">{insights.diversityScore}%</Badge>
+                </div>
+                <Progress value={insights.diversityScore} className="h-2" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Activity</span>
+                  <Badge variant="secondary">{insights.activityScore}%</Badge>
+                </div>
+                <Progress value={insights.activityScore} className="h-2" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

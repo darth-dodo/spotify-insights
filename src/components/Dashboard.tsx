@@ -14,6 +14,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { ImprovedGenreAnalysis } from './dashboard/ImprovedGenreAnalysis';
+import { RefactoredGenreAnalysis } from './dashboard/RefactoredGenreAnalysis';
+import { TrackExplorer } from './dashboard/TrackExplorer';
 import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
 import LoadingScreen from './ui/LoadingScreen';
 import { DataLoadingScreen } from './ui/DataLoadingScreen';
@@ -105,8 +107,9 @@ export const Dashboard = () => {
               <div className="container-responsive">
                 {activeView === 'overview' && <InteractiveOverview onNavigate={handleViewChange} />}
                 {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
-                {activeView === 'genres' && <ImprovedGenreAnalysis />}
+                {activeView === 'genres' && <RefactoredGenreAnalysis />}
                 {activeView === 'artists' && <ArtistExploration />}
+                {activeView === 'tracks' && <TrackExplorer />}
                 {activeView === 'library-health' && <LibraryHealth />}
                 {activeView === 'gamification' && <SimpleGamification />}
                 {activeView === 'privacy' && <EnhancedPrivacySettings />}

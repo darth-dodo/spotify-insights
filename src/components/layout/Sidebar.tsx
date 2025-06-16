@@ -78,6 +78,11 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
           id: 'artists',
           title: 'Artist Explorer',
           icon: Users
+        },
+        {
+          id: 'tracks',
+          title: 'Track Explorer',
+          icon: Music
         }
       ]
     },

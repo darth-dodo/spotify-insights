@@ -10,6 +10,7 @@ import {
   Flame, Volume2, Calendar, TrendingUp
 } from 'lucide-react';
 import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { InfoButton } from '@/components/ui/InfoButton';
 
 interface Achievement {
   id: string;
@@ -142,6 +143,22 @@ export const SimpleGamification = () => {
           <Badge variant="outline" className="text-accent border-accent">
             Level {level}
           </Badge>
+          <InfoButton
+            title="Music Journey Gamification"
+            description="Track your musical exploration through achievements, levels, and statistics based on your comprehensive Spotify data."
+            calculation="Level calculated from total XP: (tracks × 10) + (artists × 25) + (genres × 50). Achievements unlock based on real listening data from your 2000-item dataset."
+            funFacts={[
+              "Your music journey is unique - no two users have identical achievement patterns",
+              "Achievements encourage musical exploration and discovery",
+              "XP system rewards both quantity and diversity of listening",
+              "Level progression reflects your musical engagement over time"
+            ]}
+            metrics={[
+              { label: "Current Level", value: level.toString(), description: "Based on total XP earned" },
+              { label: "Total XP", value: totalXP.toLocaleString(), description: "Lifetime experience points" },
+              { label: "Achievements", value: `${unlockedAchievements.length}/${achievements.length}`, description: "Unlocked achievements" }
+            ]}
+          />
         </h1>
         <p className="text-muted-foreground">
           Track your musical exploration and unlock achievements
@@ -185,6 +202,11 @@ export const SimpleGamification = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <Music className="h-4 w-4 text-blue-500" />
                   <span className="text-sm font-medium">Tracks</span>
+                  <InfoButton
+                    title="Track Collection"
+                    description="Total number of tracks in your comprehensive dataset"
+                    calculation="Tracks from your Spotify library (up to 2000 for performance)"
+                  />
                 </div>
                 <div className="text-2xl font-bold">{userStats.totalTracks}</div>
               </CardContent>
@@ -195,6 +217,11 @@ export const SimpleGamification = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="h-4 w-4 text-green-500" />
                   <span className="text-sm font-medium">Artists</span>
+                  <InfoButton
+                    title="Artist Discovery"
+                    description="Total number of unique artists in your library"
+                    calculation="Artists from your Spotify library (up to 2000 for performance)"
+                  />
                 </div>
                 <div className="text-2xl font-bold">{userStats.totalArtists}</div>
               </CardContent>

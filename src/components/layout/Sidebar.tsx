@@ -18,7 +18,6 @@ import {
   Gamepad2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface SidebarProps {
@@ -31,7 +30,6 @@ interface SidebarProps {
 export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { refreshData } = useExtendedSpotifyDataStore();
 
   const handleBackNavigation = () => {
     // Clear all React Query cache
@@ -70,8 +68,8 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
           primary: true
         },
         {
-          id: 'genres',
-          title: 'Genre Analysis',
+          id: 'tracks',
+          title: 'Track Explorer',
           icon: Music
         },
         {
@@ -80,8 +78,8 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
           icon: Users
         },
         {
-          id: 'tracks',
-          title: 'Track Explorer',
+          id: 'genres',
+          title: 'Genre Analysis',
           icon: Music
         }
       ]

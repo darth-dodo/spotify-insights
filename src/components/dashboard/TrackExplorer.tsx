@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell } from 'recharts';
 import { Music, TrendingUp, Clock, Star, Info, Play, Album, Calendar, Sparkles, Target, Zap, Heart, Volume2 } from 'lucide-react';
-import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { cn } from '@/lib/utils';
 import { InfoButton } from '@/components/ui/InfoButton';
 
@@ -175,20 +175,19 @@ export const TrackExplorer = () => {
   const [sortBy, setSortBy] = useState<'popularity' | 'duration' | 'replay' | 'discovery'>('popularity');
   const [filterGenre, setFilterGenre] = useState<string>('all');
 
-  // Use centralized store with full 2000 item dataset
-  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
-  const topTracksData = { items: tracks };
-  const topArtistsData = { items: artists };
-  const tracksLoading = storeLoading;
+  // Use proper Spotify data hooks that handle user vs sandbox mode
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: topTracksData = [], isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, 2000);
+  const { data: topArtistsData = [], isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, 2000);
 
-  const isLoading = tracksLoading;
+  const isLoading = tracksLoading || artistsLoading;
 
-  // Enhanced track analysis with comprehensive metrics - using full 2000 dataset
+  // Enhanced track analysis with comprehensive metrics - using real Spotify data
   const trackAnalysis = useMemo(() => {
-    if (!topTracksData?.items || !topArtistsData?.items) return [];
+    if (!topTracksData || !topArtistsData) return [];
 
-    return topTracksData.items.map((track: any, index: number) => {
-      const artist = topArtistsData.items.find((a: any) => 
+    return topTracksData.map((track: any, index: number) => {
+      const artist = topArtistsData.find((a: any) => 
         track.artists?.some((ta: any) => ta.id === a.id)
       );
 
@@ -376,7 +375,7 @@ export const TrackExplorer = () => {
             <InfoButton
               title="Track Explorer System"
               description="Deep dive into your individual tracks with comprehensive analysis including audio features, personal metrics, and listening patterns."
-              calculation="Tracks analyzed from your complete Spotify library (up to 2000 tracks). Replay scores calculated based on popularity, ranking, and estimated play frequency. Audio features estimated from track metadata and genre characteristics."
+              calculation="Tracks analyzed from your real Spotify listening data. Replay scores calculated based on popularity, ranking, and estimated play frequency. Audio features estimated from track metadata and genre characteristics."
               funFacts={[
                 "Track analysis reveals your musical DNA at the song level",
                 "Replay scores indicate which songs have lasting appeal",
@@ -384,7 +383,7 @@ export const TrackExplorer = () => {
                 "Discovery years show your musical journey timeline"
               ]}
               metrics={[
-                { label: "Data Scope", value: "2000 max", description: "Tracks analyzed" },
+                { label: "Data Source", value: "Real Spotify", description: "Your actual listening data" },
                 { label: "Audio Features", value: "4 metrics", description: "Energy, danceability, valence, acousticness" },
                 { label: "Time Range", value: getTimeRangeLabel(timeRange), description: "Current analysis period" },
               ]}
@@ -442,8 +441,8 @@ export const TrackExplorer = () => {
               <span className="text-xs md:text-sm font-medium">Tracks</span>
               <InfoButton
                 title="Total Tracks"
-                description="Number of tracks in your current filtered view"
-                calculation="Filtered from your complete music library based on selected criteria"
+                description="Number of tracks in your current filtered view from real Spotify data"
+                calculation="Filtered from your actual Spotify listening history based on selected criteria and time range"
               />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.totalTracks}</div>

@@ -34,7 +34,6 @@ This guide provides step-by-step instructions for technically verifying that our
    ✅ ALLOWED DOMAINS:
    - api.spotify.com (Spotify Web API)
    - accounts.spotify.com (OAuth authentication)
-   - lovable.app (application hosting)
    
    ❌ SHOULD NOT SEE:
    - google-analytics.com
@@ -339,7 +338,7 @@ We encourage third-party security researchers to audit our privacy implementatio
 
 ```bash
 # Clone and audit the repository
-git clone https://github.com/your-repo/spotify-analytics
+git clone https://github.com/darth-dodo/spotify-analytics
 cd spotify-analytics
 
 # Run security analysis tools

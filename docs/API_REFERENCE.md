@@ -1,4 +1,3 @@
-
 # API Reference Documentation
 
 ## Table of Contents
@@ -514,5 +513,319 @@ const clearAllUserData = () => {
 3. **Validate Data Quality**: Test different data source combinations
 4. **Performance Testing**: Verify performance with large datasets
 5. **Error Scenarios**: Test graceful degradation with partial failures
+
+## Spotify Data Integration
+
+### Time Ranges
+The application now uses standardized time ranges across all components:
+
+```typescript
+type TimeRange = 'short_term' | 'medium_term' | 'long_term';
+```
+
+Mapping to user-friendly labels:
+- `short_term`: ~4 weeks
+- `medium_term`: ~6 months
+- `long_term`: several years
+
+### Enhanced Listening Trends API
+
+#### Data Fetching
+```typescript
+interface EnhancedListeningTrendsData {
+  tracks: IntegratedTrackData[];
+  artists: IntegratedArtistData[];
+  recentlyPlayed: RecentlyPlayedData;
+}
+
+// Hooks
+const { useEnhancedTopTracks, useEnhancedTopArtists, useRecentlyPlayed } = useSpotifyData();
+
+// Usage
+const { data: tracks, isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, limit);
+const { data: artists, isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, limit);
+const { data: recentlyPlayed, isLoading: recentLoading } = useRecentlyPlayed(limit);
+```
+
+#### Listening Patterns
+```typescript
+interface ListeningPatterns {
+  hourly: Array<{
+    hour: string;
+    count: number;
+    percentage: number;
+  }>;
+  daily: Array<{
+    day: string;
+    count: number;
+    percentage: number;
+  }>;
+  weekly: Array<{
+    week: string;
+    count: number;
+    percentage: number;
+  }>;
+  monthly: Array<{
+    month: string;
+    count: number;
+    percentage: number;
+  }>;
+}
+```
+
+#### Mood Analysis
+```typescript
+interface MoodAnalysis {
+  mood: string;
+  count: number;
+  avgEnergy: number;
+  avgTempo: number;
+}
+
+type Mood = 'Energetic' | 'Relaxed' | 'Happy' | 'Melancholic';
+```
+
+#### Discovery Trends
+```typescript
+interface DiscoveryTrends {
+  month: string;
+  mainstream: number;
+  niche: number;
+  newArtists: number;
+  repeatArtists: number;
+}
+```
+
+#### Consistency Metrics
+```typescript
+interface ConsistencyMetrics {
+  dailyVariance: number;
+  weeklyVariance: number;
+  monthlyVariance: number;
+  totalDays: number;
+  totalWeeks: number;
+  totalMonths: number;
+}
+```
+
+### Library Health API
+
+#### Health Metrics
+```typescript
+interface LibraryHealthMetrics {
+  overallScore: number;
+  diversityScore: number;
+  consistencyScore: number;
+  discoveryScore: number;
+  metrics: {
+    uniqueArtists: number;
+    uniqueGenres: number;
+    averagePopularity: number;
+    discoveryRate: number;
+  };
+}
+```
+
+### Track Explorer API
+
+#### Track Analysis
+```typescript
+interface TrackAnalysis {
+  track: IntegratedTrackData;
+  artist: IntegratedArtistData;
+  metrics: {
+    popularity: number;
+    energy: number;
+    danceability: number;
+    valence: number;
+    tempo: number;
+  };
+  insights: {
+    mood: string;
+    genre: string;
+    era: string;
+  };
+}
+```
+
+### Gamification API
+
+#### Achievements
+```typescript
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: AchievementCategory;
+  rarity: AchievementRarity;
+  xpReward: number;
+  progress: number;
+  maxProgress: number;
+  unlocked: boolean;
+}
+
+type AchievementCategory = 'listening' | 'discovery' | 'social' | 'streaks' | 'special';
+type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
+```
+
+## Error Handling
+
+### API Errors
+```typescript
+interface APIError {
+  code: number;
+  message: string;
+  retryable: boolean;
+}
+
+// Common Error Codes
+const ERROR_CODES = {
+  RATE_LIMIT: 429,
+  UNAUTHORIZED: 401,
+  NOT_FOUND: 404,
+  SERVER_ERROR: 500
+};
+```
+
+### Retry Logic
+```typescript
+interface RetryConfig {
+  maxRetries: number;
+  retryDelay: number;
+  retryableErrors: number[];
+}
+```
+
+## Data Types
+
+### Track Data
+```typescript
+interface IntegratedTrackData {
+  id: string;
+  name: string;
+  artists: Array<{
+    id: string;
+    name: string;
+  }>;
+  album: {
+    id: string;
+    name: string;
+    images: Array<{
+      url: string;
+      height: number;
+      width: number;
+    }>;
+  };
+  duration_ms: number;
+  popularity: number;
+  preview_url: string | null;
+  audio_features?: {
+    danceability: number;
+    energy: number;
+    key: number;
+    loudness: number;
+    mode: number;
+    speechiness: number;
+    acousticness: number;
+    instrumentalness: number;
+    liveness: number;
+    valence: number;
+    tempo: number;
+  };
+}
+```
+
+### Artist Data
+```typescript
+interface IntegratedArtistData {
+  id: string;
+  name: string;
+  genres: string[];
+  popularity: number;
+  images: Array<{
+    url: string;
+    height: number;
+    width: number;
+  }>;
+  followers: {
+    total: number;
+  };
+}
+```
+
+### Recently Played Data
+```typescript
+interface RecentlyPlayedData {
+  items: Array<{
+    track: IntegratedTrackData;
+    played_at: string;
+    context: {
+      uri: string;
+      href: string;
+      external_urls: {
+        spotify: string;
+      };
+      type: string;
+    } | null;
+  }>;
+  next: string | null;
+  cursors: {
+    after: string;
+    before: string;
+  };
+}
+```
+
+## Performance Considerations
+
+### Caching
+- Implemented client-side caching for frequently accessed data
+- Cache invalidation based on data freshness
+- Optimistic updates for better UX
+
+### Rate Limiting
+- Implemented rate limiting protection
+- Automatic retry with exponential backoff
+- Queue system for multiple requests
+
+### Data Freshness
+- Real-time updates for critical data
+- Background refresh for non-critical data
+- Stale-while-revalidate pattern
+
+## Security
+
+### Authentication
+- OAuth 2.0 with PKCE
+- Secure token storage
+- Automatic token refresh
+- Session management
+
+### Data Protection
+- End-to-end encryption
+- Secure data transmission
+- Privacy-first approach
+- GDPR compliance
+
+## Best Practices
+
+### Error Handling
+1. Always check for API errors
+2. Implement proper retry logic
+3. Show user-friendly error messages
+4. Log errors for debugging
+
+### Data Fetching
+1. Use appropriate time ranges
+2. Implement proper loading states
+3. Handle empty states
+4. Cache data when possible
+
+### Performance
+1. Implement proper caching
+2. Use pagination for large datasets
+3. Optimize API calls
+4. Monitor performance metrics
 
 This API reference provides comprehensive documentation for the integrated data architecture, covering both the enhanced capabilities and maintaining backward compatibility with existing implementations.

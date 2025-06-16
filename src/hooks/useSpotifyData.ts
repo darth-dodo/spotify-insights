@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { spotifyAPI } from '@/lib/spotify-api';
 import { spotifyDataIntegration } from '@/lib/spotify-data-integration';
@@ -39,10 +38,22 @@ export const useSpotifyData = () => {
     });
   };
 
-  const useEnhancedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
+  const useEnhancedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 2000) => {
     return useQuery({
       queryKey: ['enhanced-top-tracks', timeRange, totalLimit],
-      queryFn: () => spotifyDataIntegration.getEnhancedTopTracks(timeRange, totalLimit),
+      queryFn: async () => {
+        try {
+          const tracks = await spotifyDataIntegration.getEnhancedTopTracks(timeRange, totalLimit);
+          if (!tracks?.length) {
+            console.warn('No tracks returned from getEnhancedTopTracks');
+            return [];
+          }
+          return tracks;
+        } catch (error) {
+          console.warn('Error fetching enhanced top tracks:', error);
+          return [];
+        }
+      },
       staleTime: 1000 * 60 * 10,
       enabled: true,
       retry: (failureCount, error) => {
@@ -50,14 +61,26 @@ export const useSpotifyData = () => {
           return false;
         }
         return failureCount < 2;
-      },
+      }
     });
   };
 
-  const useEnhancedTopArtists = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
+  const useEnhancedTopArtists = (timeRange: string = 'medium_term', totalLimit: number = 2000) => {
     return useQuery({
       queryKey: ['enhanced-top-artists', timeRange, totalLimit],
-      queryFn: () => spotifyDataIntegration.getEnhancedTopArtists(timeRange, totalLimit),
+      queryFn: async () => {
+        try {
+          const artists = await spotifyDataIntegration.getEnhancedTopArtists(timeRange, totalLimit);
+          if (!artists?.length) {
+            console.warn('No artists returned from getEnhancedTopArtists');
+            return [];
+          }
+          return artists;
+        } catch (error) {
+          console.warn('Error fetching enhanced top artists:', error);
+          return [];
+        }
+      },
       staleTime: 1000 * 60 * 10,
       enabled: true,
       retry: (failureCount, error) => {
@@ -65,7 +88,7 @@ export const useSpotifyData = () => {
           return false;
         }
         return failureCount < 2;
-      },
+      }
     });
   };
 

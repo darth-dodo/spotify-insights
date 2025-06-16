@@ -13,7 +13,7 @@ export const ProjectDisclaimer = () => {
         The Spotify name, logo, and related marks are trademarks of Spotify AB. 
         All music data displayed is for demonstration purposes only.
         <a 
-          href="https://github.com" 
+          href="https://github.com/darth-dodo/spotify-analytics" 
           target="_blank" 
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 ml-2 text-accent hover:underline"

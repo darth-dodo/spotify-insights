@@ -10,15 +10,22 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts';
 import { Music, TrendingUp, Users, Clock, Disc, Star, Eye, BarChart3 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { calculateGenreAnalysis } from '@/lib/spotify-data-utils';
 
 export const EnhancedGenreAnalysis = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
 
-  const { useTopTracks, useTopArtists } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
+  // Use centralized store with full 2000 item dataset
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const storeLoading = tracksLoading || artistsLoading;
+  const topTracksData = { items: tracks };
+  const topArtistsData = { items: artists };
+  const tracksLoading = storeLoading;
+  const artistsLoading = storeLoading;
 
   const isLoading = tracksLoading || artistsLoading;
 

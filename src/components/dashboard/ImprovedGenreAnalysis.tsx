@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,18 +10,22 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Area, AreaChart } from 'recharts';
 import { Music, TrendingUp, Users, Clock, Disc, Star, Eye, BarChart3, Loader2 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { calculateGenreAnalysis, getTracksByGenre } from '@/lib/spotify-data-utils';
 import { cn } from '@/lib/utils';
 import { FunFactsCarousel } from './FunFactsCarousel';
+import { InfoButton } from '@/components/ui/InfoButton';
 
 export const ImprovedGenreAnalysis = () => {
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const [timeRange, setTimeRange] = useState('six_months');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
 
-  const { useTopTracks, useTopArtists } = useSpotifyData();
-  // Use the full 2000 record dataset for all calculations
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 2000);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 2000);
+  // Use centralized store with full 2000 item dataset
+  const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, 2000);
+  const topTracksData = { items: tracks };
+  const topArtistsData = { items: artists };
 
   const isLoading = tracksLoading || artistsLoading;
 
@@ -159,9 +162,12 @@ export const ImprovedGenreAnalysis = () => {
 
   const getTimeRangeLabel = (range: string) => {
     switch (range) {
-      case 'short_term': return 'Last 4 Weeks';
-      case 'medium_term': return 'Last 6 Months';
-      case 'long_term': return 'All Time';
+      case 'one_week': return 'Last Week';
+      case 'one_month': return 'Last Month';
+      case 'three_months': return 'Last Three Months';
+      case 'six_months': return 'Last Six Months';
+      case 'one_year': return 'Last Year';
+      case 'all_time': return 'All Time';
       default: return 'This Period';
     }
   };
@@ -190,7 +196,25 @@ export const ImprovedGenreAnalysis = () => {
       {/* Header with Controls */}
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Genre Analysis</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
+            Genre Analysis
+            <InfoButton
+              title="Genre Analysis System"
+              description="Comprehensive analysis of your musical genre preferences from your complete Spotify library (up to 2000 tracks/artists)."
+              calculation="Genres extracted from artist metadata in your library. Percentages calculated as (genre count / total artist genres) × 100. Popularity scores averaged from all artists in each genre."
+              funFacts={[
+                "Genre analysis reveals your musical identity patterns",
+                "Top 20 genres shown for optimal performance",
+                "Diversity score indicates musical exploration breadth",
+                "Genre evolution tracks taste changes over time"
+              ]}
+              metrics={[
+                { label: "Data Scope", value: "2000 max", description: "Tracks/artists analyzed" },
+                { label: "Genre Limit", value: "Top 20", description: "Genres displayed" },
+                { label: "Time Range", value: getTimeRangeLabel(timeRange), description: "Current analysis period" },
+              ]}
+            />
+          </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Explore your musical taste and genre preferences with enhanced analytics from your full dataset
           </p>
@@ -198,13 +222,16 @@ export const ImprovedGenreAnalysis = () => {
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full sm:w-40">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Time range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="short_term">Last 4 Weeks</SelectItem>
-              <SelectItem value="medium_term">Last 6 Months</SelectItem>
-              <SelectItem value="long_term">All Time</SelectItem>
+              <SelectItem value="one_week">Last Week</SelectItem>
+              <SelectItem value="one_month">Last Month</SelectItem>
+              <SelectItem value="three_months">Last Three Months</SelectItem>
+              <SelectItem value="six_months">Last Six Months</SelectItem>
+              <SelectItem value="one_year">Last Year</SelectItem>
+              <SelectItem value="all_time">All Time</SelectItem>
             </SelectContent>
           </Select>
 

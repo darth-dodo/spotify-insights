@@ -21,16 +21,18 @@ export const useExtendedSpotifyDataStore = () => {
     return isSandboxMode() ? undefined : localStorage.getItem('spotify_access_token');
   };
 
-  // Single query to load all limited dataset data (capped at 2000 for performance)
-  const { data, isLoading, error } = useQuery({
+  // Single query to load ALL data once at startup (maximum 2000 items for comprehensive analysis)
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['extended-spotify-data-store', isSandboxMode()],
     queryFn: async () => {
+      console.log('🚀 Fetching comprehensive Spotify data (2000 items)...');
+      
       if (isSandboxMode()) {
         console.log('Using sandbox data strategy');
         const [tracksData, artistsData, recentData] = await Promise.all([
           sandboxDataStrategy.getTopTracks(2000),
           sandboxDataStrategy.getTopArtists(2000),
-          sandboxDataStrategy.getRecentlyPlayed(50)
+          sandboxDataStrategy.getRecentlyPlayed(200)
         ]);
 
         return {
@@ -42,32 +44,49 @@ export const useExtendedSpotifyDataStore = () => {
 
       const accessToken = getAccessToken();
       
-      // Fetch all data in parallel for production mode (limited to 2000 for performance)
+      // Fetch maximum data in parallel for comprehensive analysis
       const [tracksData, artistsData, recentData] = await Promise.all([
         spotifyAPI.getExtendedTopTracks(accessToken, 'medium_term', 2000),
         spotifyAPI.getExtendedTopArtists(accessToken, 'medium_term', 2000),
-        spotifyAPI.getRecentlyPlayed(accessToken, 50)
+        spotifyAPI.getRecentlyPlayed(accessToken, 50) // Recently played is limited to 50 by Spotify
       ]);
 
+      console.log('✅ Data fetched:', {
+        tracks: tracksData?.items?.length || 0,
+        artists: artistsData?.items?.length || 0,
+        recent: recentData?.items?.length || 0
+      });
+
       return {
-        tracks: tracksData.items || [],
-        artists: artistsData.items || [],
-        recentlyPlayed: recentData.items || []
+        tracks: tracksData?.items || [],
+        artists: artistsData?.items || [],
+        recentlyPlayed: recentData?.items || []
       };
     },
-    staleTime: 1000 * 60 * 30, // 30 minutes cache
+    staleTime: 1000 * 60 * 60, // 1 hour cache - data doesn't change frequently
+    gcTime: 1000 * 60 * 60 * 2, // Keep in cache for 2 hours
     enabled: true,
+    retry: 2,
   });
 
-  // Memory-based operations
+  // ===== DATA ACCESS METHODS (All use full 2000 item dataset) =====
+  
+  // Top Tracks with flexible filtering
   const getTopTracks = (limit: number = 50, timeRange?: string) => {
     if (!data?.tracks) return [];
-    return data.tracks.slice(0, limit);
+    return data.tracks.slice(0, Math.min(limit, data.tracks.length));
   };
 
+  // Top Artists with flexible filtering  
   const getTopArtists = (limit: number = 50, timeRange?: string) => {
     if (!data?.artists) return [];
-    return data.artists.slice(0, limit);
+    return data.artists.slice(0, Math.min(limit, data.artists.length));
+  };
+
+  // Recently Played tracks
+  const getRecentlyPlayed = (limit: number = 50) => {
+    if (!data?.recentlyPlayed) return [];
+    return data.recentlyPlayed.slice(0, Math.min(limit, data.recentlyPlayed.length));
   };
 
   const getTracksByGenre = (genre: string, limit: number = 10) => {
@@ -169,8 +188,14 @@ export const useExtendedSpotifyDataStore = () => {
     };
   };
 
+  // Clear cache and refetch
+  const refreshData = () => {
+    console.log('🔄 Refreshing Spotify data...');
+    refetch();
+  };
+
   return {
-    // Raw data access
+    // Raw data access (full 2000 item datasets)
     tracks: data?.tracks || [],
     artists: data?.artists || [],
     recentlyPlayed: data?.recentlyPlayed || [],
@@ -179,11 +204,23 @@ export const useExtendedSpotifyDataStore = () => {
     isLoading,
     error,
     
-    // Memory-based operations
+    // Data access methods (all use the full 2000 item dataset)
     getTopTracks,
     getTopArtists,
+    getRecentlyPlayed,
     getTracksByGenre,
     getGenreAnalysis,
     getStats,
+    
+    // Utility methods
+    refreshData,
+    
+    // Data quality info
+    dataInfo: {
+      tracksCount: data?.tracks?.length || 0,
+      artistsCount: data?.artists?.length || 0,
+      recentCount: data?.recentlyPlayed?.length || 0,
+      lastFetched: data ? new Date().toISOString() : null
+    }
   };
 };

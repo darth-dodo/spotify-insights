@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell } from 'recharts';
 import { Users, TrendingUp, Music, Clock, Star, Info, Play, Album, Calendar, Sparkles, Target } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { cn } from '@/lib/utils';
 import { InfoButton } from '@/components/ui/InfoButton';
 
@@ -142,9 +142,12 @@ export const ImprovedArtistExplorer = () => {
     content: ''
   });
 
-  const { useTopArtists, useTopTracks } = useSpotifyData();
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
+  // Use centralized store with full 2000 item dataset
+  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const topArtistsData = { items: artists };
+  const topTracksData = { items: tracks };
+  const artistsLoading = storeLoading;
+  const tracksLoading = storeLoading;
 
   const isLoading = artistsLoading || tracksLoading;
 

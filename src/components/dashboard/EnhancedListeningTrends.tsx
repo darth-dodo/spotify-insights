@@ -9,6 +9,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, Calendar, Clock, Music, Trophy, Loader2 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { InfoButton } from '@/components/ui/InfoButton';
 
 export const EnhancedListeningTrends = () => {
   const [timeRange, setTimeRange] = useState('week');
@@ -31,8 +33,12 @@ export const EnhancedListeningTrends = () => {
     }
   };
 
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(getSpotifyTimeRange(timeRange), 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(getSpotifyTimeRange(timeRange), 50);
+  // Use centralized store for comprehensive data (2000 items)
+  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const topTracksData = { items: tracks };
+  const topArtistsData = { items: artists };
+  const tracksLoading = storeLoading;
+  const artistsLoading = storeLoading;
   const { data: recentlyPlayedData, isLoading: recentLoading } = useRecentlyPlayed(50);
 
   const isLoading = tracksLoading || artistsLoading || recentLoading;
@@ -243,6 +249,22 @@ export const EnhancedListeningTrends = () => {
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             {timeRanges.find(r => r.value === timeRange)?.label} Activity
+            <InfoButton
+              title="Listening Trends Analysis"
+              description="Visual representation of your music consumption patterns over the selected time period."
+              calculation="Data is derived from your Spotify listening history. Listening time calculated from track durations and play counts. Real-time trends show your actual music engagement."
+              funFacts={[
+                "Peak listening times often correlate with daily routines",
+                "Weekend listening patterns typically differ from weekdays",
+                "Your music taste evolution is visible in trend data",
+                "Seasonal changes may affect your listening habits"
+              ]}
+              metrics={[
+                { label: "Data Source", value: "Spotify API", description: "Real listening history" },
+                { label: "Accuracy", value: "Real-time", description: "Live data from your account" },
+                { label: "Scope", value: timeRanges.find(r => r.value === timeRange)?.label || "Selected period", description: "Current analysis window" },
+              ]}
+            />
           </CardTitle>
           <CardDescription>
             Your music consumption over the selected time period

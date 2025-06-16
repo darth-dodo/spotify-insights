@@ -16,7 +16,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
 
   const stats = getStats();
 
-  // Calculate enhanced stats from the limited dataset (capped at 2000 for performance)
+  // Calculate enhanced stats from the full 2000 item dataset
   const calculateEnhancedStats = () => {
     const totalTracks = tracks.length;
     const totalArtists = artists.length;
@@ -58,8 +58,8 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
       infoButton: (
         <InfoButton
           title="Library Size Analysis"
-          description="Total number of unique tracks in your limited dataset, capped at 2000 for optimal performance."
-          calculation="Counts all unique songs in your limited Spotify dataset. Higher numbers indicate extensive music exploration and diverse listening habits."
+          description="Total number of unique tracks in your comprehensive dataset (up to 2000 for optimal performance)."
+          calculation="Counts all unique songs in your comprehensive Spotify dataset. Higher numbers indicate extensive music exploration and diverse listening habits."
           funFacts={[
             "The average music fan has 200-500 songs in regular rotation",
             "Your library size directly affects recommendation quality",
@@ -67,7 +67,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
             "Large libraries suggest adventurous music discovery habits"
           ]}
           metrics={[
-            { label: "Your Tracks", value: `${enhancedStats.totalTracks}`, description: "In your limited dataset" },
+            { label: "Your Tracks", value: `${enhancedStats.totalTracks}`, description: "In your comprehensive dataset" },
             { label: "Performance Cap", value: "2000", description: "Maximum for optimization" }
           ]}
         />
@@ -108,8 +108,8 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
       infoButton: (
         <InfoButton
           title="Artist Discovery Analysis"
-          description="Number of unique artists in your limited dataset, showing the breadth of your musical exploration."
-          calculation="Counts all unique artists from your limited dataset (capped at 2000 for performance). Includes primary artists, featured artists, and collaborators from your listening history."
+          description="Number of unique artists in your comprehensive dataset, showing the breadth of your musical exploration."
+          calculation="Counts all unique artists from your comprehensive dataset (up to 2000 for performance). Includes primary artists, featured artists, and collaborators from your listening history."
           funFacts={[
             "Diverse artist libraries often predict musical openness",
             "The typical listener follows 50-150 artists regularly",
@@ -117,7 +117,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
             "Artist count is limited to 2000 for app performance"
           ]}
           metrics={[
-            { label: "Your Artists", value: `${enhancedStats.totalArtists}`, description: "In your limited library" },
+            { label: "Your Artists", value: `${enhancedStats.totalArtists}`, description: "In your comprehensive library" },
             { label: "Performance Cap", value: "2000", description: "Maximum for optimization" }
           ]}
         />
@@ -133,8 +133,8 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
       infoButton: (
         <InfoButton
           title="Musical Diversity Analysis"
-          description="Number of unique genres you explore, indicating the breadth of your musical taste from the limited dataset."
-          calculation="Calculated from all artist genres in your limited library. Higher numbers suggest eclectic taste and willingness to explore different musical styles and cultures."
+          description="Number of unique genres you explore, indicating the breadth of your musical taste from the comprehensive dataset."
+          calculation="Calculated from all artist genres in your comprehensive library. Higher numbers suggest eclectic taste and willingness to explore different musical styles and cultures."
           funFacts={[
             "Most people stick to 3-7 genres throughout their lives",
             "Genre diversity often correlates with personality openness",
@@ -178,25 +178,40 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-      {statCards.map((card) => {
+      {statCards.map((card, index) => {
         const Icon = card.icon;
         const isSelected = selectedCard === card.id;
+        const isHighlight = card.id === 'streak'; // Highlight the first card
         
         return (
           <Card 
             key={card.id}
-            className={`cursor-pointer transition-all hover:shadow-lg ${
-              isSelected ? 'ring-2 ring-accent bg-accent/5' : ''
+            className={`cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
+              isSelected ? 'ring-2 ring-accent bg-accent/5 shadow-lg' : ''
+            } ${
+              isHighlight ? 'bg-gradient-to-br from-accent/10 to-primary/10 border-accent/20' : 'hover:bg-muted/30'
             }`}
             onClick={() => onCardSelect(isSelected ? null : card.id)}
+            style={{ animationDelay: `${index * 100}ms` }}
           >
-            <CardContent className="p-3 md:p-4">
-              <div className="flex items-center gap-2">
-                <Icon className={`h-4 w-4 md:h-5 md:w-5 ${card.color}`} />
-                <span className="text-xs md:text-sm font-medium">{card.label}</span>
+            <CardContent className="p-3 md:p-4 relative overflow-hidden">
+              {/* Background decoration for highlight card */}
+              {isHighlight && (
+                <div className="absolute top-0 right-0 w-16 h-16 bg-accent/10 rounded-full -translate-y-8 translate-x-8" />
+              )}
+              
+              <div className="flex items-center gap-2 relative z-10">
+                <div className={`p-1.5 rounded-lg ${isHighlight ? 'bg-accent/20' : 'bg-muted/50'} group-hover:scale-110 transition-transform`}>
+                  <Icon className={`h-4 w-4 md:h-5 md:w-5 ${isHighlight ? 'text-accent' : card.color}`} />
+                </div>
+                <span className="text-xs md:text-sm font-medium flex-1">{card.label}</span>
                 {card.infoButton}
               </div>
-              <div className={`text-lg md:text-2xl font-bold ${card.id === 'streak' && hasData ? 'text-accent' : hasData ? '' : 'text-muted-foreground'}`}>
+              
+              <div className={`text-lg md:text-2xl font-bold mt-2 ${
+                isHighlight && hasData ? 'text-accent' : 
+                hasData ? 'text-foreground' : 'text-muted-foreground'
+              } group-hover:scale-105 transition-transform origin-left`}>
                 {card.value}
               </div>
               <p className="text-xs text-muted-foreground">{card.unit}</p>

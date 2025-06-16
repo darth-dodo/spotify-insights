@@ -4,27 +4,29 @@ import { useTheme } from '@/hooks/useTheme';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { InteractiveOverview } from '@/components/dashboard/InteractiveOverview';
-import { ListeningActivity } from '@/components/dashboard/ListeningActivity';
-import { EnhancedGenreAnalysis } from '@/components/dashboard/EnhancedGenreAnalysis';
 import { ArtistExploration } from '@/components/dashboard/ArtistExploration';
 import { EnhancedPrivacySettings } from '@/components/dashboard/EnhancedPrivacySettings';
 import { EnhancedListeningTrends } from '@/components/dashboard/EnhancedListeningTrends';
 import { SimpleGamification } from '@/components/dashboard/gamification/SimpleGamification';
 import { LibraryHealth } from '@/components/dashboard/LibraryHealth';
-import { ListeningPatterns } from '@/components/dashboard/ListeningPatterns';
-import { GamificationSettings } from '@/components/dashboard/GamificationSettings';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { ImprovedGenreAnalysis } from './dashboard/ImprovedGenreAnalysis';
 import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
+import LoadingScreen from './ui/LoadingScreen';
+import { DataLoadingScreen } from './ui/DataLoadingScreen';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 
 export const Dashboard = () => {
   const { user, isLoading, error, clearError, refreshToken } = useAuth();
   const { theme } = useTheme();
   const [activeView, setActiveView] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Check if comprehensive data is loading
+  const { isLoading: dataLoading, dataInfo } = useExtendedSpotifyDataStore();
 
   const handleSettingsClick = () => {
     setActiveView('privacy');
@@ -46,18 +48,16 @@ export const Dashboard = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin h-8 w-8 border-2 border-accent rounded-full border-t-transparent mx-auto" />
-          <p className="text-muted-foreground">Loading your music data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading your music data..." />;
   }
 
   if (!user) {
     return null;
+  }
+
+  // Show data loading screen when fetching comprehensive dataset
+  if (dataLoading) {
+    return <DataLoadingScreen message="Fetching your comprehensive music library (up to 2000 tracks & artists)..." />;
   }
 
   return (
@@ -80,8 +80,8 @@ export const Dashboard = () => {
             onSettingsClick={handleSettingsClick}
           />
           
-          <main className="flex-1 overflow-y-auto p-3 md:p-6">
-            <div className="max-w-7xl mx-auto">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            <div className="max-w-[1400px] mx-auto">
               {/* Error Alert */}
               {error && (
                 <Alert variant="destructive" className="mb-4">
@@ -104,15 +104,17 @@ export const Dashboard = () => {
               {/* Content Area */}
               <div className="container-responsive">
                 {activeView === 'overview' && <InteractiveOverview onNavigate={handleViewChange} />}
-                {activeView === 'trends' && <ListeningActivity />}
                 {activeView === 'enhanced-trends' && <EnhancedListeningTrends />}
                 {activeView === 'genres' && <ImprovedGenreAnalysis />}
                 {activeView === 'artists' && <ArtistExploration />}
                 {activeView === 'library-health' && <LibraryHealth />}
-                {activeView === 'listening-patterns' && <ListeningPatterns />}
-                {activeView === 'privacy' && <EnhancedPrivacySettings />}
                 {activeView === 'gamification' && <SimpleGamification />}
-                {activeView === 'gamification-settings' && <GamificationSettings />}
+                {activeView === 'privacy' && <EnhancedPrivacySettings />}
+                
+                {/* Redirect removed views to appropriate alternatives */}
+                {activeView === 'trends' && <EnhancedListeningTrends />}
+                {activeView === 'listening-patterns' && <LibraryHealth />}
+                {activeView === 'gamification-settings' && <EnhancedPrivacySettings />}
               </div>
             </div>
           </main>

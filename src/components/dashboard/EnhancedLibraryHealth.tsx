@@ -6,15 +6,18 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Heart, TrendingUp, Users, Gem, Award, Star, Music, Clock } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { InfoButton } from '@/components/ui/InfoButton';
 
 export const EnhancedLibraryHealth = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   
-  const { useTopTracks, useTopArtists } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
+  // Use centralized store with full 2000 item dataset
+  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const topTracksData = { items: tracks };
+  const topArtistsData = { items: artists };
+  const tracksLoading = storeLoading;
+  const artistsLoading = storeLoading;
 
   const isLoading = tracksLoading || artistsLoading;
 

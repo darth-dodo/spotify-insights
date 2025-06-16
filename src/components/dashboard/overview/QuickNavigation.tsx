@@ -13,71 +13,81 @@ export const QuickNavigation = ({ onNavigate }: QuickNavigationProps) => {
   const navigationItems = [
     {
       id: 'enhanced-trends',
-      title: 'Listening Trends',
-      description: 'Track your music evolution over time',
+      title: 'Discover Trends',
+      description: 'See how your taste evolved',
       icon: TrendingUp,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-50 hover:bg-blue-100',
-      badge: 'Insights'
+      color: 'text-primary',
+      badge: 'Popular',
+      gradient: 'from-blue-500/10 to-primary/10'
     },
     {
       id: 'genres',
-      title: 'Genre Analysis',
-      description: 'Explore your musical preferences',
+      title: 'Genre Explorer',
+      description: 'Find your musical DNA',
       icon: Music,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-50 hover:bg-purple-100',
-      badge: 'Discovery'
+      color: 'text-secondary',
+      badge: 'Insights',
+      gradient: 'from-purple-500/10 to-secondary/10'
     },
     {
       id: 'artists',
-      title: 'Artist Deep Dive',
-      description: 'Discover artist connections',
+      title: 'Artist Journey',
+      description: 'Deep dive into favorites',
       icon: Users,
-      color: 'text-green-500',
-      bgColor: 'bg-green-50 hover:bg-green-100',
-      badge: 'Explore'
+      color: 'text-accent',
+      badge: 'Detailed',
+      gradient: 'from-green-500/10 to-accent/10'
     },
     {
       id: 'gamification',
-      title: 'Achievements',
-      description: 'Your music listening progress',
+      title: 'Unlock Achievements',
+      description: 'Level up your music game',
       icon: Trophy,
-      color: 'text-yellow-500',
-      bgColor: 'bg-yellow-50 hover:bg-yellow-100',
-      badge: 'Gaming'
+      color: 'text-yellow-600',
+      badge: 'Fun',
+      gradient: 'from-yellow-500/10 to-orange-500/10'
     }
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
-          Explore Your Music Data
+    <Card className="border-2 border-dashed border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+      <CardHeader className="text-center">
+        <CardTitle className="flex items-center justify-center gap-2 text-xl">
+          <BarChart3 className="h-6 w-6 text-primary" />
+          Ready to Explore?
         </CardTitle>
+        <p className="text-muted-foreground text-sm">
+          Dive deeper into your musical world with these powerful tools
+        </p>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             return (
               <Button
                 key={item.id}
                 variant="ghost"
-                className={`h-auto p-4 justify-start ${item.bgColor} border transition-all hover:scale-[1.02]`}
+                className={`h-auto p-4 justify-start border-2 transition-all hover:scale-[1.02] hover:shadow-lg bg-gradient-to-br ${item.gradient} hover:border-current group`}
                 onClick={() => onNavigate(item.id)}
               >
                 <div className="flex items-start gap-3 w-full">
-                  <Icon className={`h-5 w-5 mt-1 ${item.color}`} />
+                  <div className={`p-2 rounded-lg bg-current/10 group-hover:bg-current/20 transition-colors`}>
+                    <Icon className={`h-5 w-5 ${item.color}`} />
+                  </div>
                   <div className="text-left flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium">{item.title}</span>
-                      <Badge variant="outline" className="text-xs">
+                      <span className="font-semibold group-hover:text-current transition-colors">
+                        {item.title}
+                      </span>
+                      <Badge 
+                        variant="secondary" 
+                        className={`text-xs ${item.color} bg-current/10 border-current/20`}
+                      >
                         {item.badge}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground group-hover:text-muted-foreground/80">
                       {item.description}
                     </p>
                   </div>

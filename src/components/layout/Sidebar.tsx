@@ -1,9 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { 
   Home, 
@@ -11,18 +9,17 @@ import {
   Music, 
   Users, 
   Trophy,
-  BarChart3,
   Settings,
-  ChevronRight,
-  Sparkles,
-  Headphones,
-  Calendar,
   ArrowLeft,
   X,
   Heart,
-  Activity
+  Sparkles,
+  BarChart3,
+  Gamepad2
 } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -33,176 +30,157 @@ interface SidebarProps {
 
 export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarProps) => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const queryClient = useQueryClient();
+  const { refreshData } = useExtendedSpotifyDataStore();
 
   const handleBackNavigation = () => {
-    // Navigate to the main landing page
-    navigate('/');
+    // Clear all React Query cache
+    queryClient.clear();
+    // Clear any stored tokens/data
+    localStorage.removeItem('spotify_access_token');
+    localStorage.removeItem('spotify_refresh_token');
+    localStorage.removeItem('spotify_user');
+    // Clear any other cached data
+    localStorage.removeItem('spotify_token_expires_at');
+    // Navigate back to landing page and replace history
+    navigate('/', { replace: true });
+    // Force page reload to ensure clean state
+    window.location.reload();
   };
 
-  const navigationItems = [
+  const handleNavigation = (viewId: string) => {
+    onViewChange(viewId);
+    // Close mobile sidebar immediately
+    if (window.innerWidth < 1024) {
+      onToggle();
+    }
+  };
+
+  // Organized navigation sections
+  const navigationSections = [
     {
-      id: 'overview',
-      title: 'Overview',
-      icon: Home,
-      description: 'Dashboard home',
-      category: 'main'
+      id: 'discovery',
+      title: 'Discovery',
+      icon: Sparkles,
+      items: [
+        {
+          id: 'overview',
+          title: 'Overview',
+          icon: Home,
+          primary: true
+        },
+        {
+          id: 'genres',
+          title: 'Genre Analysis',
+          icon: Music
+        },
+        {
+          id: 'artists',
+          title: 'Artist Explorer',
+          icon: Users
+        }
+      ]
     },
     {
-      id: 'artists',
-      title: 'Artist Explorer',
-      icon: Users,
-      description: 'Discover artist insights',
-      category: 'discovery',
-      badge: 'Enhanced'
-    },
-    {
-      id: 'genres',
-      title: 'Genre Analysis',
-      icon: Music,
-      description: 'Musical taste breakdown',
-      category: 'discovery'
-    },
-    {
-      id: 'library-health',
-      title: 'Library Health',
-      icon: Heart,
-      description: 'Library analytics & metrics',
-      category: 'analytics',
-      badge: 'New'
-    },
-    {
-      id: 'listening-patterns',
-      title: 'Listening Patterns',
-      icon: Activity,
-      description: 'Listening habits analysis',
-      category: 'analytics',
-      badge: 'New'
-    },
-    {
-      id: 'enhanced-trends',
-      title: 'Listening Trends',
-      icon: TrendingUp,
-      description: 'Timeline insights',
-      category: 'analytics'
-    },
-    {
-      id: 'trends',
-      title: 'Activity Details',
+      id: 'analytics',
+      title: 'Analytics',
       icon: BarChart3,
-      description: 'Detailed statistics',
-      category: 'analytics'
+      items: [
+        {
+          id: 'enhanced-trends',
+          title: 'Listening Trends',
+          icon: TrendingUp
+        },
+        {
+          id: 'library-health',
+          title: 'Library Health',
+          icon: Heart
+        }
+      ]
     },
     {
-      id: 'gamification',
-      title: 'Music Journey',
-      icon: Trophy,
-      description: 'Achievements & progress',
-      category: 'experience',
-      badge: 'New'
-    },
-    {
-      id: 'privacy',
-      title: 'Privacy & Settings',
-      icon: Settings,
-      description: 'Privacy by design controls',
-      category: 'settings'
+      id: 'experience',
+      title: 'Experience',
+      icon: Gamepad2,
+      items: [
+        {
+          id: 'gamification',
+          title: 'Achievements',
+          icon: Trophy
+        },
+        {
+          id: 'privacy',
+          title: 'Settings',
+          icon: Settings
+        }
+      ]
     }
   ];
 
-  const categories = [
-    { id: 'main', title: 'Dashboard', icon: Home },
-    { id: 'discovery', title: 'Music Discovery', icon: Sparkles },
-    { id: 'analytics', title: 'Analytics', icon: BarChart3 },
-    { id: 'experience', title: 'Experience', icon: Headphones },
-    { id: 'settings', title: 'Settings', icon: Settings }
-  ];
-
-  const groupedItems = categories.reduce((acc, category) => {
-    acc[category.id] = navigationItems.filter(item => item.category === category.id);
-    return acc;
-  }, {} as Record<string, typeof navigationItems>);
-
   const SidebarContent = () => (
-    <div className="h-full flex flex-col">
-      <div className="p-6 border-b">
+    <div className="h-full flex flex-col bg-card">
+      {/* Header */}
+      <div className="p-4 border-b border-border/50">
         <Button
           variant="ghost"
           onClick={handleBackNavigation}
-          className="w-full justify-start p-2 h-auto"
+          className="w-full justify-start p-3 h-auto hover:bg-muted/50 transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="h-4 w-4 mr-3 text-muted-foreground" />
           <div className="text-left">
-            <div className="font-semibold">Back to Home</div>
+            <div className="font-medium text-sm">Back to Home</div>
             <div className="text-xs text-muted-foreground">Exit dashboard</div>
           </div>
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 px-3">
-        <div className="py-4 space-y-6">
-          {categories.map((category) => {
-            const items = groupedItems[category.id];
-            if (!items?.length) return null;
-
-            const CategoryIcon = category.icon;
+      {/* Navigation Sections */}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
+          {navigationSections.map((section) => {
+            const SectionIcon = section.icon;
             
             return (
-              <div key={category.id} className="space-y-2">
-                <div className="flex items-center gap-2 px-3 py-1">
-                  <CategoryIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    {category.title}
+              <div key={section.id} className="space-y-3">
+                {/* Section Header */}
+                <div className="flex items-center gap-2 px-2">
+                  <SectionIcon className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                    {section.title}
                   </span>
                 </div>
                 
+                {/* Section Items */}
                 <div className="space-y-1">
-                  {items.map((item) => {
+                  {section.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = activeView === item.id;
                     
                     return (
                       <Button
                         key={item.id}
-                        variant={isActive ? "secondary" : "ghost"}
+                        variant="ghost"
                         className={cn(
-                          "w-full justify-start h-auto p-3 text-left",
-                          isActive && "bg-accent/10 border-l-2 border-accent"
+                          "w-full justify-start p-3 h-auto transition-all duration-200",
+                          "hover:bg-muted/50 hover:translate-x-1",
+                          isActive && [
+                            "bg-primary/10 text-primary border-r-2 border-primary",
+                            "hover:bg-primary/15 shadow-sm"
+                          ],
+                          item.primary && !isActive && "font-medium"
                         )}
-                        onClick={() => {
-                          onViewChange(item.id);
-                          if (window.innerWidth < 768) {
-                            onToggle();
-                          }
-                        }}
+                        onClick={() => handleNavigation(item.id)}
                       >
-                        <div className="flex items-center gap-3 w-full">
-                          <Icon className={cn(
-                            "h-4 w-4 flex-shrink-0",
-                            isActive ? "text-accent" : "text-muted-foreground"
-                          )} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className={cn(
-                                "font-medium text-sm",
-                                isActive ? "text-accent" : "text-foreground"
-                              )}>
-                                {item.title}
-                              </span>
-                              {item.badge && (
-                                <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                  {item.badge}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {item.description}
-                            </p>
-                          </div>
-                          {isActive && (
-                            <ChevronRight className="h-3 w-3 text-accent flex-shrink-0" />
-                          )}
-                        </div>
+                        <Icon className={cn(
+                          "h-4 w-4 mr-3 transition-colors",
+                          isActive ? "text-primary" : "text-muted-foreground"
+                        )} />
+                        <span className={cn(
+                          "text-sm transition-colors",
+                          isActive ? "text-primary font-medium" : "text-foreground"
+                        )}>
+                          {item.title}
+                        </span>
                       </Button>
                     );
                   })}
@@ -213,14 +191,15 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t">
-        <div className="bg-muted/50 rounded-lg p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium">Privacy First</span>
+      {/* Footer */}
+      <div className="p-4 border-t border-border/50">
+        <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg p-3 border border-primary/10">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Privacy First</span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            All processing happens locally - your data never leaves your device!
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            All data processing happens locally on your device. Your music data never leaves your browser.
           </p>
         </div>
       </div>
@@ -230,7 +209,7 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex w-80 bg-card border-r border-border">
+      <div className="hidden lg:flex w-72 border-r border-border/50 bg-card/50">
         <SidebarContent />
       </div>
 
@@ -238,20 +217,22 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
       <Sheet open={isOpen} onOpenChange={onToggle}>
         <SheetContent 
           side="left" 
-          className="p-0 w-80 bg-background border-r border-border"
+          className="p-0 w-72 border-r border-border/50"
         >
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-4 border-b border-border/50">
             <h2 className="text-lg font-semibold">Navigation</h2>
             <Button 
               variant="ghost" 
               size="icon"
               onClick={onToggle}
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-muted/50"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <SidebarContent />
+          <div className="h-[calc(100vh-73px)]">
+            <SidebarContent />
+          </div>
         </SheetContent>
       </Sheet>
     </>

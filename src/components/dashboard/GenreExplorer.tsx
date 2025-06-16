@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Music, Search, TrendingUp, Users, Star, Filter, Grid, List, Loader2 } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { cn } from '@/lib/utils';
 
 export const GenreExplorer = () => {
@@ -20,9 +20,12 @@ export const GenreExplorer = () => {
   const [sortBy, setSortBy] = useState<'popularity' | 'artists' | 'tracks'>('popularity');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
-  const { useTopTracks, useTopArtists } = useSpotifyData();
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 50);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 50);
+  // Use centralized store with full 2000 item dataset
+  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const topTracksData = { items: tracks };
+  const topArtistsData = { items: artists };
+  const tracksLoading = storeLoading;
+  const artistsLoading = storeLoading;
 
   const isLoading = tracksLoading || artistsLoading;
 

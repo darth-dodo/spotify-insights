@@ -10,19 +10,22 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Area, AreaChart } from 'recharts';
 import { Music, TrendingUp, Users, Clock, Disc, Star, Eye, BarChart3, Loader2 } from 'lucide-react';
-import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { useExtendedSpotifyDataStore } from '@/hooks/useExtendedSpotifyDataStore';
 import { cn } from '@/lib/utils';
 import { FunFactsCarousel } from './FunFactsCarousel';
+import { InfoButton } from '@/components/ui/InfoButton';
 
 export const ImprovedGenreAnalysis = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
 
-  const { useTopTracks, useTopArtists } = useSpotifyData();
-  // Use the full 2000 record dataset for all calculations
-  const { data: topTracksData, isLoading: tracksLoading } = useTopTracks(timeRange, 2000);
-  const { data: topArtistsData, isLoading: artistsLoading } = useTopArtists(timeRange, 2000);
+  // Use centralized store with full 2000 item dataset
+  const { tracks, artists, isLoading: storeLoading } = useExtendedSpotifyDataStore();
+  const topTracksData = { items: tracks };
+  const topArtistsData = { items: artists };
+  const tracksLoading = storeLoading;
+  const artistsLoading = storeLoading;
 
   const isLoading = tracksLoading || artistsLoading;
 
@@ -190,7 +193,25 @@ export const ImprovedGenreAnalysis = () => {
       {/* Header with Controls */}
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Genre Analysis</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
+            Genre Analysis
+            <InfoButton
+              title="Genre Analysis System"
+              description="Comprehensive analysis of your musical genre preferences from your complete Spotify library (up to 2000 tracks/artists)."
+              calculation="Genres extracted from artist metadata in your library. Percentages calculated as (genre count / total artist genres) × 100. Popularity scores averaged from all artists in each genre."
+              funFacts={[
+                "Genre analysis reveals your musical identity patterns",
+                "Top 20 genres shown for optimal performance",
+                "Diversity score indicates musical exploration breadth",
+                "Genre evolution tracks taste changes over time"
+              ]}
+              metrics={[
+                { label: "Data Scope", value: "2000 max", description: "Tracks/artists analyzed" },
+                { label: "Genre Limit", value: "Top 20", description: "Genres displayed" },
+                { label: "Time Range", value: getTimeRangeLabel(timeRange), description: "Current analysis period" },
+              ]}
+            />
+          </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Explore your musical taste and genre preferences with enhanced analytics from your full dataset
           </p>

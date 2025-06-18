@@ -1,7 +1,11 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "spotify-insights",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
+  "description": "A sophisticated analytics platform for Spotify users, offering comprehensive insights into listening habits, music library health, and personalized recommendations for musical growth.",
+  "keywords": ["spotify", "analytics", "music", "dashboard", "insights", "health", "visualization"],
+  "author": "Spotify Insights Team",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

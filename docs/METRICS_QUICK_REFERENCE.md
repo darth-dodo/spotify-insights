@@ -1,6 +1,6 @@
 # Metrics Quick Reference Guide
 
-A concise reference for all metric calculations in Spotify Insights.
+A concise reference for all metric calculations in Spotify Insights. **Updated December 2024** with Library Health metrics.
 
 ## 🎤 Artist Metrics
 
@@ -14,6 +14,33 @@ A concise reference for all metric calculations in Spotify Insights.
 | **Replay Value** | `(trackCount * 10) + (avgPop * 0.5) + random(20)` | Max 100 |
 | **Estimated Plays** | `(listeningHours * 60) / 3.5` | Assumes 3.5min avg track |
 | **Followers** | `popularity * 10000 + random(50000)` | Fallback if missing |
+
+## 🏥 Library Health Metrics
+
+| Metric | Formula | Range | Weight |
+|--------|---------|--------|--------|
+| **Genre Diversity** | `Math.min(100, (genreCount / 30) * 100)` | 0-100 | 20% |
+| **Music Freshness** | `(undergroundRatio * 40) + freshnessBias` | 0-100 | 18% |
+| **Artist Balance** | `(utilization * 40) + (concentration * 60)` | 0-100 | 16% |
+| **Mood Variety** | `(moodCount / 5) * 100` | 0-100 | 15% |
+| **Listening Depth** | `(avgDuration * 50) + bonuses` | 0-100 | 15% |
+| **Era Diversity** | `(eraBalance / 3) * 100` | 0-100 | 8% |
+| **Discovery Momentum** | `(discoveryRate * 2) + bonuses` | 0-100 | 8% |
+| **Overall Health** | `Weighted average of all 7 metrics` | 0-100 | 100% |
+
+### Health Mood Categories
+| Category | Criteria |
+|----------|----------|
+| **Energetic** | `energy > 0.7 && valence > 0.6` |
+| **Happy** | `valence > 0.7` |
+| **Chill** | `energy < 0.5 && acousticness > 0.5` |
+| **Melancholic** | `valence < 0.4` |
+| **Danceable** | `danceability > 0.7` |
+
+### Era Classifications
+- **Recent**: Last 3 years (`year >= currentYear - 3`)
+- **Modern**: 3-15 years ago (`year >= currentYear - 15 && year < currentYear - 3`)
+- **Classic**: 15+ years ago (`year < currentYear - 15`)
 
 ## 🎵 Track Metrics
 

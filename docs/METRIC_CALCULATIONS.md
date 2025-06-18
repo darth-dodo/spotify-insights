@@ -182,6 +182,112 @@ const freshness = Math.max(0, 100 - ((currentYear - discoveryYear) * 25));
 
 ---
 
+## 🏥 Library Health Metrics
+
+### 1. Genre Diversity (`genreDiversity`)
+**Purpose**: Measures the breadth of musical genres in the user's library
+```typescript
+const genreCount = new Set(artists.flatMap((a: any) => a.genres || [])).size;
+const genreCoverage = Math.min(100, (genreCount / 30) * 100); // Based on 30 major genres
+const diversityScore = Math.round(genreCoverage);
+```
+**Enhanced Features**:
+- Rare genre detection: Counts genres with only one artist
+- Top genre identification: Lists the 5 most common genres
+- Coverage analysis: Percentage of music spectrum covered
+
+### 2. Music Freshness (`musicFreshness`)
+**Purpose**: Evaluates the balance between underground and mainstream music
+```typescript
+const undergroundRatio = tracks.filter(t => (t.popularity || 0) < 30).length / tracks.length;
+const mainstreamRatio = tracks.filter(t => (t.popularity || 0) > 70).length / tracks.length;
+const freshnessScore = Math.round(
+  (undergroundRatio * 40) + // Underground music bonus
+  ((1 - mainstreamRatio) * 30) + // Avoid too mainstream
+  (Math.max(0, 50 - avgPopularity) * 0.6) // Lower avg popularity bonus
+);
+```
+
+### 3. Artist Balance (`artistBalance`)
+**Purpose**: Measures how evenly listening time is distributed across artists
+```typescript
+const topArtistShare = Math.max(...playCountValues) / tracks.length;
+const top5ArtistShare = playCountValues.sort((a, b) => b - a).slice(0, 5)
+  .reduce((acc, count) => acc + count, 0) / tracks.length;
+const balanceScore = Math.round(
+  (Math.min(uniqueArtists / artists.length, 1) * 40) + // Artist utilization
+  ((1 - topArtistShare) * 30) + // Avoid over-concentration
+  ((1 - top5ArtistShare) * 30) // Distribute across many artists
+);
+```
+
+### 4. Mood Variety (`moodVariety`)
+**Purpose**: Analyzes emotional diversity across 5 mood categories
+```typescript
+const moodCategories = {
+  energetic: tracks.filter(t => energy > 0.7 && valence > 0.6).length,
+  happy: tracks.filter(t => valence > 0.7).length,
+  chill: tracks.filter(t => energy < 0.5 && acousticness > 0.5).length,
+  melancholic: tracks.filter(t => valence < 0.4).length,
+  danceable: tracks.filter(t => danceability > 0.7).length
+};
+const moodCount = Object.values(moodCategories)
+  .filter(count => count > tracks.length * 0.05).length;
+const moodScore = Math.round((moodCount / 5) * 100);
+```
+
+### 5. Listening Depth (`listeningDepth`)
+**Purpose**: Evaluates preference for longer, more immersive tracks
+```typescript
+const avgDuration = trackDurations.reduce((acc, dur) => acc + dur, 0) / trackDurations.length;
+const longTracks = tracks.filter(t => (t.duration_ms || 0) > 300000).length; // > 5 minutes
+const shortTracks = tracks.filter(t => (t.duration_ms || 0) < 120000).length; // < 2 minutes
+const depthScore = Math.round(
+  (Math.min(avgDuration / 240000, 1) * 50) + // Prefer longer tracks
+  ((longTracks / tracks.length) * 30) + // Bonus for long tracks
+  (Math.max(0, 1 - (shortTracks / tracks.length)) * 20) // Penalty for too many short tracks
+);
+```
+
+### 6. Era Diversity (`eraDiversity`)
+**Purpose**: Measures temporal diversity across different musical eras
+```typescript
+const eraDistribution = {
+  recent: tracks.filter(t => year >= currentYear - 3).length,
+  modern: tracks.filter(t => year >= currentYear - 15 && year < currentYear - 3).length,
+  classic: tracks.filter(t => year < currentYear - 15).length
+};
+const eraBalance = Object.values(eraDistribution)
+  .filter(count => count > tracks.length * 0.1).length;
+const eraScore = Math.round((eraBalance / 3) * 100);
+```
+
+### 7. Discovery Momentum (`discoveryMomentum`)
+**Purpose**: Tracks the rate of new music discovery
+```typescript
+const recentDiscoveries = tracks.filter((track, index) => index < tracks.length * 0.2).length;
+const discoveryRate = (recentDiscoveries / tracks.length) * 100;
+const momentumScore = Math.round(
+  (discoveryRate * 2) + // Base discovery rate
+  (Math.min(recentDiscoveries / 50, 1) * 30) + // Absolute discovery count
+  (tracks.length > 500 ? 20 : tracks.length / 25) // Library growth bonus
+);
+```
+
+### 8. Overall Health Score (Weighted)
+**Purpose**: Comprehensive health assessment using weighted metrics
+```typescript
+const weightedScore = Math.round(
+  (genreDiversityScore * 0.20) +     // 20% weight
+  (musicFreshnessScore * 0.18) +     // 18% weight
+  (artistBalanceScore * 0.16) +      // 16% weight
+  (moodVarietyScore * 0.15) +        // 15% weight
+  (listeningDepthScore * 0.15) +     // 15% weight
+  (eraDiversityScore * 0.08) +       // 8% weight
+  (discoveryMomentumScore * 0.08)    // 8% weight
+);
+```
+
 ## 🎭 Genre Metrics
 
 ### 1. Genre Count (`count`)

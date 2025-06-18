@@ -40,38 +40,55 @@ export const LibraryHealth = () => {
   const healthMetrics = useMemo(() => {
     if (!tracks.length || !artists.length) return [];
 
-    // Calculate various health metrics
     const metrics = [];
     
-    // Diversity Health
+    // 1. Genre Diversity Health - Enhanced
     const genreCount = new Set(artists.flatMap((a: any) => a.genres || [])).size;
-    const diversityScore = Math.min(100, genreCount * 4); // 4 points per genre, max 100
+    const genreCoverage = Math.min(100, (genreCount / 30) * 100); // Based on 30 major genres
+    const diversityScore = Math.round(genreCoverage);
     metrics.push({
       name: 'Genre Diversity',
       score: diversityScore,
-      status: diversityScore >= 80 ? 'excellent' : diversityScore >= 60 ? 'good' : diversityScore >= 40 ? 'fair' : 'poor',
-      description: `${genreCount} unique genres in your collection`,
-      recommendation: diversityScore < 60 ? 'Explore new genres to diversify your taste' : 'Great genre diversity!',
+      status: diversityScore >= 75 ? 'excellent' : diversityScore >= 60 ? 'good' : diversityScore >= 40 ? 'fair' : 'poor',
+      description: `${genreCount} unique genres spanning ${Math.round(genreCoverage)}% of music spectrum`,
+      recommendation: diversityScore < 60 ? 'Explore genres like jazz, electronic, or world music' : 'Excellent musical range!',
       category: 'diversity',
       value: genreCount,
-      maxValue: 25
+      maxValue: 30,
+      details: {
+        topGenres: [...new Set(artists.flatMap((a: any) => a.genres || []))].slice(0, 5),
+        rareGenres: [...new Set(artists.flatMap((a: any) => a.genres || []))].filter(g => 
+          artists.filter((a: any) => a.genres?.includes(g)).length === 1
+        ).length
+      }
     });
 
-    // Freshness Health
+    // 2. Music Freshness - Enhanced with release date analysis
     const avgPopularity = tracks.reduce((acc: number, track: any) => acc + (track.popularity || 0), 0) / tracks.length;
-    const freshnessScore = Math.max(0, 100 - avgPopularity * 0.8); // Lower popularity = higher freshness
+    const undergroundRatio = tracks.filter(t => (t.popularity || 0) < 30).length / tracks.length;
+    const mainstreamRatio = tracks.filter(t => (t.popularity || 0) > 70).length / tracks.length;
+    const freshnessScore = Math.round(
+      (undergroundRatio * 40) + // Underground music bonus
+      ((1 - mainstreamRatio) * 30) + // Avoid too mainstream
+      (Math.max(0, 50 - avgPopularity) * 0.6) // Lower avg popularity bonus
+    );
     metrics.push({
       name: 'Music Freshness',
-      score: Math.round(freshnessScore),
-      status: freshnessScore >= 70 ? 'excellent' : freshnessScore >= 50 ? 'good' : freshnessScore >= 30 ? 'fair' : 'poor',
-      description: `Average popularity: ${Math.round(avgPopularity)}/100`,
-      recommendation: freshnessScore < 50 ? 'Try discovering some underground artists' : 'You have a great mix of fresh music!',
+      score: Math.min(100, freshnessScore),
+      status: freshnessScore >= 70 ? 'excellent' : freshnessScore >= 55 ? 'good' : freshnessScore >= 40 ? 'fair' : 'poor',
+      description: `${Math.round(undergroundRatio * 100)}% underground, ${Math.round(mainstreamRatio * 100)}% mainstream`,
+      recommendation: freshnessScore < 55 ? 'Discover more emerging artists and indie music' : 'Great balance of fresh and familiar!',
       category: 'freshness',
       value: Math.round(100 - avgPopularity),
-      maxValue: 100
+      maxValue: 100,
+      details: {
+        avgPopularity: Math.round(avgPopularity),
+        undergroundCount: Math.round(undergroundRatio * tracks.length),
+        mainstreamCount: Math.round(mainstreamRatio * tracks.length)
+      }
     });
 
-    // Artist Balance
+    // 3. Artist Balance - Enhanced with concentration analysis
     const artistPlayCounts = tracks.reduce((acc: any, track: any) => {
       const artistId = track.artists?.[0]?.id;
       if (artistId) {
@@ -79,70 +96,169 @@ export const LibraryHealth = () => {
       }
       return acc;
     }, {});
-    const playCountVariance = Object.values(artistPlayCounts).reduce((acc: number, count: any) => {
-      const avg = tracks.length / Object.keys(artistPlayCounts).length;
-      return acc + Math.pow(count - avg, 2);
-    }, 0) / Object.keys(artistPlayCounts).length;
-    const balanceScore = Math.max(0, 100 - Math.sqrt(playCountVariance) * 2);
+    const uniqueArtists = Object.keys(artistPlayCounts).length;
+    const playCountValues = Object.values(artistPlayCounts) as number[];
+    const topArtistShare = playCountValues.length > 0 ? Math.max(...playCountValues) / tracks.length : 0;
+    const top5ArtistShare = playCountValues
+      .sort((a, b) => b - a)
+      .slice(0, 5)
+      .reduce((acc, count) => acc + count, 0) / tracks.length;
+    
+    const balanceScore = Math.round(
+      (Math.min(uniqueArtists / artists.length, 1) * 40) + // Artist utilization
+      ((1 - topArtistShare) * 30) + // Avoid over-concentration
+      ((1 - top5ArtistShare) * 30) // Distribute across many artists
+    );
+    
     metrics.push({
       name: 'Artist Balance',
-      score: Math.round(balanceScore),
-      status: balanceScore >= 70 ? 'excellent' : balanceScore >= 50 ? 'good' : balanceScore >= 30 ? 'fair' : 'poor',
-      description: `Listening spread across ${Object.keys(artistPlayCounts).length} artists`,
-      recommendation: balanceScore < 50 ? 'Try listening to more variety of artists' : 'Well-balanced artist listening!',
+      score: Math.min(100, balanceScore),
+      status: balanceScore >= 75 ? 'excellent' : balanceScore >= 60 ? 'good' : balanceScore >= 45 ? 'fair' : 'poor',
+      description: `${uniqueArtists} artists, top artist: ${Math.round(topArtistShare * 100)}% of listening`,
+      recommendation: balanceScore < 60 ? 'Explore more artists to avoid over-concentration' : 'Well-distributed listening habits!',
       category: 'balance',
-      value: Math.round(balanceScore),
-      maxValue: 100
+      value: Math.round((1 - topArtistShare) * 100),
+      maxValue: 100,
+      details: {
+        uniqueArtists,
+        topArtistShare: Math.round(topArtistShare * 100),
+        top5Share: Math.round(top5ArtistShare * 100)
+      }
     });
 
-    // Energy Consistency
-    const energyScores = tracks.map((track: any, index: number) => 
-      (0.8 - (index / tracks.length) * 0.3 + Math.random() * 0.4) * 100
+    // 4. Mood Variety - New metric
+    const moodCategories = {
+      energetic: tracks.filter(t => ((t as any).energy || 0.5) > 0.7 && ((t as any).valence || 0.5) > 0.6).length,
+      happy: tracks.filter(t => ((t as any).valence || 0.5) > 0.7).length,
+      chill: tracks.filter(t => ((t as any).energy || 0.5) < 0.5 && ((t as any).acousticness || 0.5) > 0.5).length,
+      melancholic: tracks.filter(t => ((t as any).valence || 0.5) < 0.4).length,
+      danceable: tracks.filter(t => ((t as any).danceability || 0.5) > 0.7).length
+    };
+    const moodCount = Object.values(moodCategories).filter(count => count > tracks.length * 0.05).length;
+    const moodScore = Math.round((moodCount / 5) * 100);
+    
+    metrics.push({
+      name: 'Mood Variety',
+      score: moodScore,
+      status: moodScore >= 80 ? 'excellent' : moodScore >= 60 ? 'good' : moodScore >= 40 ? 'fair' : 'poor',
+      description: `${moodCount}/5 mood categories well-represented`,
+      recommendation: moodScore < 60 ? 'Add more variety in energy and emotional range' : 'Great emotional diversity!',
+      category: 'mood',
+      value: moodCount,
+      maxValue: 5,
+      details: moodCategories
+    });
+
+    // 5. Listening Depth - New metric
+    const trackDurations = tracks.map(t => t.duration_ms || 180000);
+    const avgDuration = trackDurations.reduce((acc, dur) => acc + dur, 0) / trackDurations.length;
+    const longTracks = tracks.filter(t => (t.duration_ms || 0) > 300000).length; // > 5 minutes
+    const shortTracks = tracks.filter(t => (t.duration_ms || 0) < 120000).length; // < 2 minutes
+    
+    const depthScore = Math.round(
+      (Math.min(avgDuration / 240000, 1) * 50) + // Prefer longer tracks
+      ((longTracks / tracks.length) * 30) + // Bonus for long tracks
+      (Math.max(0, 1 - (shortTracks / tracks.length)) * 20) // Penalty for too many short tracks
     );
-    const avgEnergy = energyScores.reduce((acc, energy) => acc + energy, 0) / energyScores.length;
-    const energyVariance = energyScores.reduce((acc, energy) => acc + Math.pow(energy - avgEnergy, 2), 0) / energyScores.length;
-    const consistencyScore = Math.max(0, 100 - Math.sqrt(energyVariance) * 2);
+    
     metrics.push({
-      name: 'Energy Consistency',
-      score: Math.round(consistencyScore),
-      status: consistencyScore >= 70 ? 'excellent' : consistencyScore >= 50 ? 'good' : consistencyScore >= 30 ? 'fair' : 'poor',
-      description: `Average energy: ${Math.round(avgEnergy)}%`,
-      recommendation: consistencyScore < 50 ? 'Your energy levels vary widely - try curating playlists by mood' : 'Good energy flow in your music!',
-      category: 'energy',
-      value: Math.round(avgEnergy),
-      maxValue: 100
+      name: 'Listening Depth',
+      score: Math.min(100, depthScore),
+      status: depthScore >= 75 ? 'excellent' : depthScore >= 60 ? 'good' : depthScore >= 45 ? 'fair' : 'poor',
+      description: `Avg: ${Math.round(avgDuration / 60000)}m, ${longTracks} long tracks, ${shortTracks} short tracks`,
+      recommendation: depthScore < 60 ? 'Try longer, more immersive tracks and albums' : 'Great depth in your listening!',
+      category: 'depth',
+      value: Math.round(avgDuration / 60000),
+      maxValue: 6,
+      details: {
+        avgDuration: Math.round(avgDuration / 60000),
+        longTracks,
+        shortTracks
+      }
     });
 
-    // Discovery Rate
+    // 6. Era Diversity - New metric
     const currentYear = new Date().getFullYear();
-    const recentTracks = tracks.filter((track: any) => {
-      // Simulate discovery year based on popularity and position
-      const discoveryYear = currentYear - Math.floor(Math.random() * 3);
-      return discoveryYear >= currentYear - 1;
-    });
-    const discoveryRate = (recentTracks.length / tracks.length) * 100;
+    const eraDistribution = {
+      recent: tracks.filter(t => {
+        const year = new Date((t as any).album?.release_date || `${currentYear}`).getFullYear();
+        return year >= currentYear - 3;
+      }).length,
+      modern: tracks.filter(t => {
+        const year = new Date((t as any).album?.release_date || `${currentYear - 10}`).getFullYear();
+        return year >= currentYear - 15 && year < currentYear - 3;
+      }).length,
+      classic: tracks.filter(t => {
+        const year = new Date((t as any).album?.release_date || `${currentYear - 20}`).getFullYear();
+        return year < currentYear - 15;
+      }).length
+    };
+    
+    const eraBalance = Object.values(eraDistribution).filter(count => count > tracks.length * 0.1).length;
+    const eraScore = Math.round((eraBalance / 3) * 100);
+    
     metrics.push({
-      name: 'Discovery Rate',
-      score: Math.round(discoveryRate * 2), // Double for scoring
-      status: discoveryRate >= 40 ? 'excellent' : discoveryRate >= 25 ? 'good' : discoveryRate >= 15 ? 'fair' : 'poor',
-      description: `${Math.round(discoveryRate)}% of tracks discovered recently`,
-      recommendation: discoveryRate < 25 ? 'Try exploring new releases and recommendations' : 'Great discovery rate!',
-      category: 'discovery',
-      value: Math.round(discoveryRate),
-      maxValue: 50
+      name: 'Era Diversity',
+      score: eraScore,
+      status: eraScore >= 80 ? 'excellent' : eraScore >= 60 ? 'good' : eraScore >= 40 ? 'fair' : 'poor',
+      description: `${eraBalance}/3 eras represented (Recent, Modern, Classic)`,
+      recommendation: eraScore < 60 ? 'Explore music from different decades' : 'Great temporal diversity!',
+      category: 'era',
+      value: eraBalance,
+      maxValue: 3,
+      details: eraDistribution
     });
 
-    // Overall Health Score
-    const overallScore = Math.round(metrics.reduce((acc, metric) => acc + metric.score, 0) / metrics.length);
+    // 7. Discovery Momentum - Enhanced
+    const recentDiscoveries = tracks.filter((track, index) => index < tracks.length * 0.2).length;
+    const discoveryRate = (recentDiscoveries / tracks.length) * 100;
+    const momentumScore = Math.round(
+      (discoveryRate * 2) + // Base discovery rate
+      (Math.min(recentDiscoveries / 50, 1) * 30) + // Absolute discovery count
+      (tracks.length > 500 ? 20 : tracks.length / 25) // Library growth bonus
+    );
+    
+    metrics.push({
+      name: 'Discovery Momentum',
+      score: Math.min(100, momentumScore),
+      status: momentumScore >= 75 ? 'excellent' : momentumScore >= 60 ? 'good' : momentumScore >= 45 ? 'fair' : 'poor',
+      description: `${recentDiscoveries} recent discoveries, ${Math.round(discoveryRate)}% of library`,
+      recommendation: momentumScore < 60 ? 'Increase your music discovery rate with new releases' : 'Excellent discovery momentum!',
+      category: 'discovery',
+      value: recentDiscoveries,
+      maxValue: Math.max(100, tracks.length * 0.3),
+      details: {
+        recentCount: recentDiscoveries,
+        discoveryRate: Math.round(discoveryRate),
+        librarySize: tracks.length
+      }
+    });
+
+    // Calculate Overall Health Score
+    const coreMetrics = metrics.filter(m => m.name !== 'Overall Health');
+    const weightedScore = Math.round(
+      (coreMetrics.find(m => m.name === 'Genre Diversity')?.score || 0) * 0.20 +
+      (coreMetrics.find(m => m.name === 'Music Freshness')?.score || 0) * 0.18 +
+      (coreMetrics.find(m => m.name === 'Artist Balance')?.score || 0) * 0.16 +
+      (coreMetrics.find(m => m.name === 'Mood Variety')?.score || 0) * 0.15 +
+      (coreMetrics.find(m => m.name === 'Listening Depth')?.score || 0) * 0.15 +
+      (coreMetrics.find(m => m.name === 'Era Diversity')?.score || 0) * 0.08 +
+      (coreMetrics.find(m => m.name === 'Discovery Momentum')?.score || 0) * 0.08
+    );
+
     metrics.push({
       name: 'Overall Health',
-      score: overallScore,
-      status: overallScore >= 80 ? 'excellent' : overallScore >= 65 ? 'good' : overallScore >= 50 ? 'fair' : 'poor',
-      description: `Your music library health score`,
-      recommendation: overallScore < 65 ? 'Focus on improving lower-scoring areas' : 'Your library is in great shape!',
+      score: weightedScore,
+      status: weightedScore >= 80 ? 'excellent' : weightedScore >= 70 ? 'good' : weightedScore >= 55 ? 'fair' : 'poor',
+      description: `Comprehensive music library health assessment`,
+      recommendation: weightedScore < 70 ? 'Focus on your lowest-scoring metrics for balanced improvement' : 'Outstanding library health!',
       category: 'overall',
-      value: overallScore,
-      maxValue: 100
+      value: weightedScore,
+      maxValue: 100,
+      details: {
+        weightedAverage: true,
+        breakdown: coreMetrics.map(m => ({ name: m.name, score: m.score, weight: m.name === 'Genre Diversity' ? 20 : m.name === 'Music Freshness' ? 18 : 16 }))
+      }
     });
 
     return metrics;
@@ -153,34 +269,176 @@ export const LibraryHealth = () => {
     if (!healthMetrics.length) return [];
 
     const recs = [];
-    const poorMetrics = healthMetrics.filter(m => m.status === 'poor' || m.status === 'fair');
-    
-    if (poorMetrics.length > 0) {
-      poorMetrics.forEach(metric => {
-        recs.push({
-          type: 'improvement',
-          title: `Improve ${metric.name}`,
-          description: metric.recommendation,
-          priority: metric.status === 'poor' ? 'high' : 'medium',
-          category: metric.category
-        });
-      });
-    }
-
-    // Add general recommendations
+    const coreMetrics = healthMetrics.filter(m => m.name !== 'Overall Health');
+    const poorMetrics = coreMetrics.filter(m => m.status === 'poor');
+    const fairMetrics = coreMetrics.filter(m => m.status === 'fair');
     const overallHealth = healthMetrics.find(m => m.name === 'Overall Health');
-    if (overallHealth && overallHealth.score >= 80) {
+    
+    // High priority recommendations for poor metrics
+    poorMetrics.forEach(metric => {
+      const specificRec = getSpecificRecommendation(metric, tracks, artists);
+      recs.push({
+        type: 'improvement',
+        title: `🚨 Fix ${metric.name}`,
+        description: specificRec.description,
+        priority: 'high',
+        category: metric.category,
+        actions: specificRec.actions,
+        impact: 'High impact on overall library health'
+      });
+    });
+
+    // Medium priority recommendations for fair metrics
+    fairMetrics.slice(0, 2).forEach(metric => {
+      const specificRec = getSpecificRecommendation(metric, tracks, artists);
+      recs.push({
+        type: 'improvement',
+        title: `⚡ Boost ${metric.name}`,
+        description: specificRec.description,
+        priority: 'medium',
+        category: metric.category,
+        actions: specificRec.actions,
+        impact: 'Moderate improvement to library balance'
+      });
+    });
+
+    // Success recommendations for excellent metrics
+    const excellentMetrics = coreMetrics.filter(m => m.status === 'excellent');
+    if (excellentMetrics.length > 0) {
+      const topMetric = excellentMetrics[0];
       recs.push({
         type: 'maintenance',
-        title: 'Maintain Your Healthy Library',
-        description: 'Keep exploring new music and maintaining your diverse taste',
+        title: `✨ Maintain ${topMetric.name}`,
+        description: `Your ${topMetric.name.toLowerCase()} is excellent! Keep up the great work.`,
         priority: 'low',
-        category: 'general'
+        category: topMetric.category,
+        actions: [`Continue your current ${topMetric.name.toLowerCase()} habits`],
+        impact: 'Sustains your library strengths'
       });
     }
 
-    return recs.slice(0, 5); // Limit to 5 recommendations
-  }, [healthMetrics]);
+    // Overall health recommendations
+    if (overallHealth) {
+      if (overallHealth.score >= 85) {
+        recs.push({
+          type: 'achievement',
+          title: '🏆 Library Health Master',
+          description: 'Your library is in outstanding health! You\'re a music curation expert.',
+          priority: 'low',
+          category: 'achievement',
+          actions: ['Share your music discovery methods with friends', 'Consider creating curated playlists'],
+          impact: 'You\'re setting the standard for healthy music libraries'
+        });
+      } else if (overallHealth.score < 60) {
+        const lowestMetric = coreMetrics.reduce((prev, current) => 
+          current.score < prev.score ? current : prev
+        );
+        recs.push({
+          type: 'focus',
+          title: '🎯 Priority Focus Area',
+          description: `Start with ${lowestMetric.name} - it's your biggest opportunity for improvement.`,
+          priority: 'high',
+          category: 'strategy',
+          actions: [`Focus on ${lowestMetric.name} for the next 2 weeks`, 'Track your progress'],
+          impact: 'Strategic approach for maximum improvement'
+        });
+      }
+    }
+
+    return recs.slice(0, 6); // Limit to 6 recommendations
+  }, [healthMetrics, tracks, artists]);
+
+  // Helper function for specific recommendations
+  const getSpecificRecommendation = (metric: any, tracks: any[], artists: any[]) => {
+    switch (metric.name) {
+      case 'Genre Diversity':
+        const currentGenres = [...new Set(artists.flatMap((a: any) => a.genres || []))];
+        const missingGenres = ['jazz', 'electronic', 'classical', 'reggae', 'blues', 'folk', 'world music']
+          .filter(genre => !currentGenres.some(g => g.toLowerCase().includes(genre)));
+        return {
+          description: `Add ${missingGenres.slice(0, 3).join(', ')} to reach ${metric.value + 5}+ genres`,
+          actions: [
+            'Explore Spotify\'s genre playlists',
+            `Try searching for "${missingGenres[0]}" artists`,
+            'Use Discover Weekly to find new genres'
+          ]
+        };
+      
+      case 'Music Freshness':
+        return {
+          description: `Discover more underground artists (currently ${metric.details?.undergroundCount || 0} tracks)`,
+          actions: [
+            'Follow independent record labels',
+            'Check out artists with <10k monthly listeners',
+            'Explore local music scenes'
+          ]
+        };
+      
+      case 'Artist Balance':
+        const topArtistShare = metric.details?.topArtistShare || 0;
+        return {
+          description: `Your top artist represents ${topArtistShare}% of listening - aim for <15%`,
+          actions: [
+            'Limit repeats of your top artists',
+            'Actively seek similar artists',
+            'Use artist radio for discovery'
+          ]
+        };
+      
+      case 'Mood Variety':
+        const lowMoods = Object.entries(metric.details || {})
+          .filter(([_, count]) => (count as number) < tracks.length * 0.05)
+          .map(([mood]) => mood);
+        return {
+          description: `Add more ${lowMoods.slice(0, 2).join(' and ')} music to your collection`,
+          actions: [
+            'Create mood-specific playlists',
+            'Explore different energy levels',
+            'Try music for different activities'
+          ]
+        };
+      
+      case 'Listening Depth':
+        const avgDuration = metric.details?.avgDuration || 3;
+        return {
+          description: `Average track length is ${avgDuration}m - try longer, more immersive pieces`,
+          actions: [
+            'Explore progressive rock and post-rock',
+            'Listen to full albums instead of singles',
+            'Try classical and ambient music'
+          ]
+        };
+      
+      case 'Era Diversity':
+        const missingEras = Object.entries(metric.details || {})
+          .filter(([_, count]) => (count as number) < tracks.length * 0.1)
+          .map(([era]) => era);
+        return {
+          description: `Add more ${missingEras.join(' and ')} music to span different decades`,
+          actions: [
+            'Explore "Best of" playlists from different decades',
+            'Ask older family members for recommendations',
+            'Check out music history documentaries'
+          ]
+        };
+      
+      case 'Discovery Momentum':
+        return {
+          description: `Only ${metric.details?.recentCount || 0} recent discoveries - aim for 20+ per month`,
+          actions: [
+            'Set a goal to discover 5 new artists weekly',
+            'Use Release Radar and Discover Weekly',
+            'Follow music blogs and reviewers'
+          ]
+        };
+      
+      default:
+        return {
+          description: metric.recommendation,
+          actions: ['Explore new music regularly', 'Diversify your listening habits']
+        };
+    }
+  };
 
   // Sort metrics based on selected criteria
   const sortedMetrics = useMemo(() => {
@@ -259,38 +517,91 @@ export const LibraryHealth = () => {
     if (!healthMetrics.length) return [];
     
     const facts = [];
-    const bestMetric = healthMetrics.reduce((prev, current) => 
+    const coreMetrics = healthMetrics.filter(m => m.name !== 'Overall Health');
+    const bestMetric = coreMetrics.reduce((prev, current) => 
       current.score > prev.score ? current : prev
     );
-    const worstMetric = healthMetrics.reduce((prev, current) => 
+    const worstMetric = coreMetrics.reduce((prev, current) => 
       current.score < prev.score ? current : prev
     );
     const diversityMetric = healthMetrics.find(m => m.name === 'Genre Diversity');
     const freshnessMetric = healthMetrics.find(m => m.name === 'Music Freshness');
+    const moodMetric = healthMetrics.find(m => m.name === 'Mood Variety');
+    const depthMetric = healthMetrics.find(m => m.name === 'Listening Depth');
+    const balanceMetric = healthMetrics.find(m => m.name === 'Artist Balance');
+    const overallMetric = healthMetrics.find(m => m.name === 'Overall Health');
     
-    facts.push({
-      icon: CheckCircle,
-      title: "Health Champion",
-      description: `Your ${bestMetric?.name || 'top metric'} shines at ${bestMetric?.score || 0}% - that's your musical strength!`
-    });
+    // Dynamic facts based on actual data
+    if (overallMetric && overallMetric.score >= 85) {
+      facts.push({
+        icon: Star,
+        title: "Music Curator Extraordinaire",
+        description: `With ${overallMetric.score}% overall health, you're in the top 5% of music listeners! Your library is a masterclass in curation.`
+      });
+    } else {
+      facts.push({
+        icon: CheckCircle,
+        title: "Strongest Asset",
+        description: `Your ${bestMetric?.name || 'top metric'} leads at ${bestMetric?.score || 0}% - this is your musical superpower!`
+      });
+    }
     
-    facts.push({
-      icon: Target,
-      title: "Improvement Opportunity",
-      description: `${worstMetric?.name || 'An area'} at ${worstMetric?.score || 0}% has room for growth - ${worstMetric?.recommendation || 'focus here for better balance'}!`
-    });
+    if (diversityMetric && diversityMetric.details) {
+      const rareGenres = diversityMetric.details.rareGenres;
+      facts.push({
+        icon: Sparkles,
+        title: "Genre Explorer",
+        description: `You've discovered ${diversityMetric.value} genres including ${rareGenres} rare ones - ${diversityMetric.score >= 75 ? 'you\'re a true musical adventurer!' : 'there are still new worlds to explore!'}`
+      });
+    }
     
-    facts.push({
-      icon: Sparkles,
-      title: "Diversity Explorer",
-      description: `Your library spans ${diversityMetric?.value || 0} genres with ${diversityMetric?.score || 0}% diversity - ${diversityMetric?.status === 'excellent' ? 'incredible variety!' : 'room to explore more!'}`
-    });
+    if (freshnessMetric && freshnessMetric.details) {
+      const undergroundCount = freshnessMetric.details.undergroundCount;
+      const mainstreamCount = freshnessMetric.details.mainstreamCount;
+      facts.push({
+        icon: Zap,
+        title: "Discovery Balance",
+        description: `Your taste spans ${undergroundCount} underground gems to ${mainstreamCount} mainstream hits - ${freshnessMetric.score >= 70 ? 'perfect balance!' : 'lean more toward the underground!'}`
+      });
+    }
     
-    facts.push({
-      icon: Zap,
-      title: "Freshness Factor",
-      description: `Your music freshness is ${freshnessMetric?.score || 0}% - ${freshnessMetric?.status === 'excellent' ? 'you love discovering new sounds!' : 'try some underground artists!'}`
-    });
+    if (moodMetric && moodMetric.details) {
+      const topMood = Object.entries(moodMetric.details)
+        .reduce((prev, current) => (current[1] as number) > (prev[1] as number) ? current : prev);
+      facts.push({
+        icon: Heart,
+        title: "Emotional Range",
+        description: `Your dominant mood is ${topMood[0]} with ${topMood[1]} tracks - ${moodMetric.score >= 80 ? 'incredible emotional diversity!' : 'try exploring other moods!'}`
+      });
+    }
+    
+    if (depthMetric && depthMetric.details) {
+      const avgDuration = depthMetric.details.avgDuration;
+      const longTracks = depthMetric.details.longTracks;
+      facts.push({
+        icon: Clock,
+        title: "Listening Style",
+        description: `${avgDuration}min average tracks with ${longTracks} epic journeys - ${depthMetric.score >= 75 ? 'you appreciate musical depth!' : 'try some longer compositions!'}`
+      });
+    }
+    
+    if (balanceMetric && balanceMetric.details) {
+      const topArtistShare = balanceMetric.details.topArtistShare;
+      facts.push({
+        icon: Target,
+        title: "Artist Loyalty",
+        description: `Your top artist claims ${topArtistShare}% of listening time - ${balanceMetric.score >= 75 ? 'great balance across artists!' : 'branch out to new artists!'}`
+      });
+    }
+    
+    // Add improvement insight
+    if (worstMetric && worstMetric.score < 60) {
+      facts.push({
+        icon: TrendingUp,
+        title: "Growth Opportunity",
+        description: `${worstMetric.name} at ${worstMetric.score}% is your biggest opportunity - small improvements here will boost your overall health significantly!`
+      });
+    }
     
     return facts.slice(0, 4);
   }, [healthMetrics]);
@@ -788,12 +1099,16 @@ export const LibraryHealth = () => {
                                 rec.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
                                 'text-blue-600 dark:text-blue-400'
                               }`} />
+                            ) : rec.type === 'achievement' ? (
+                              <Star className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                            ) : rec.type === 'focus' ? (
+                              <Zap className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                             ) : (
                               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                             )}
                           </div>
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-2">
                               <h3 className="font-medium text-sm">{rec.title}</h3>
                               <Badge 
                                 variant={
@@ -805,7 +1120,29 @@ export const LibraryHealth = () => {
                                 {rec.priority} priority
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground">{rec.description}</p>
+                            <p className="text-sm text-muted-foreground mb-3">{rec.description}</p>
+                            
+                            {(rec as any).actions && (
+                              <div className="space-y-2">
+                                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Action Steps:</h4>
+                                <ul className="space-y-1">
+                                  {(rec as any).actions.map((action: string, actionIndex: number) => (
+                                    <li key={actionIndex} className="text-xs text-muted-foreground flex items-start gap-2">
+                                      <span className="text-accent mt-0.5">•</span>
+                                      <span>{action}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {(rec as any).impact && (
+                              <div className="mt-3 pt-2 border-t border-border/50">
+                                <p className="text-xs text-muted-foreground italic">
+                                  Impact: {(rec as any).impact}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

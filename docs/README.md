@@ -1,23 +1,26 @@
-# Spotify Insights Documentation
+# 📚 Spotify Insights Documentation Hub
 
-Welcome to the Spotify Insights documentation! This folder contains comprehensive documentation for understanding, maintaining, and extending the application.
+Welcome to the comprehensive documentation for Spotify Insights! This documentation covers everything from getting started to advanced development, metrics calculation, and system architecture.
 
-## 📚 Documentation Files
+## 🚀 Quick Navigation
 
-### 📊 [METRIC_CALCULATIONS.md](./METRIC_CALCULATIONS.md)
-**Comprehensive metric calculation documentation**
-- Detailed explanations of all metric formulas
-- Data sources and API endpoints
-- Processing pipeline documentation
-- Maintenance guidelines and best practices
-- **Use this when**: You need to understand how any metric is calculated, modify existing calculations, or add new metrics
+### 📊 **Core Analytics Documentation**
 
-### ⚡ [METRICS_QUICK_REFERENCE.md](./METRICS_QUICK_REFERENCE.md)
-**Quick lookup guide for developers**
-- Concise formula tables for all metrics
+#### 📈 [METRIC_CALCULATIONS.md](./METRIC_CALCULATIONS.md)
+**Complete metric calculation reference**
+- 30+ metric formulas with detailed explanations
+- Data sources and Spotify API integration
+- Processing pipeline and data flow
+- **Updated**: Includes new Library Health metrics (7 categories)
+- **Use for**: Understanding calculations, adding new metrics, debugging
+
+#### ⚡ [METRICS_QUICK_REFERENCE.md](./METRICS_QUICK_REFERENCE.md)
+**Developer cheat sheet**
+- Quick formula lookup tables
 - Common patterns and coding standards
 - Time range mappings and mood categories
-- **Use this when**: You need a quick lookup while coding or debugging
+- **Updated**: Includes Library Health formulas
+- **Use for**: Quick lookups during development
 
 ## 🎯 Key Concepts
 
@@ -28,18 +31,98 @@ Spotify API → Data Fetching → Processing → Enhancement → UI Display
   Raw Data    useSpotifyData   useMemo()   Calculations  Components
 ```
 
-### Metric Categories
-- **🎤 Artist Metrics**: Track count, listening hours, song share, popularity, etc.
-- **🎵 Track Metrics**: Listening time, plays, audio features, mood scores, etc.
-- **🎭 Genre Metrics**: Count, percentage, diversity, replay value, etc.
-- **📈 Listening Trends**: Weekly patterns, mood analysis, seasonal variations
-- **📊 Overview Stats**: Totals, averages, recent activity summaries
+### 🏗️ **System & Architecture**
 
-### Important Distinctions
-- **Listening Hours** = Potential time (if all tracks played once)
-- **Play Counts** = Estimated based on ranking algorithms
-- **Freshness/Discovery** = Simulated for demonstration purposes
-- **All calculations** include minimum value protection
+#### 🔧 [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)
+**Technical system overview**
+- Component architecture and data flow
+- API integration patterns
+- State management strategy
+
+#### 🏗️ [ENGINEERING.md](./ENGINEERING.md)
+**Development practices and standards**
+- Code organization and patterns
+- Best practices and conventions
+- Testing and deployment strategies
+
+#### 📊 [EXTENDED_DATA_ARCHITECTURE.md](./EXTENDED_DATA_ARCHITECTURE.md)
+**Data processing and optimization**
+- Data transformation pipelines
+- Performance optimization strategies
+- Caching and state management
+
+### 🎨 **Design & User Experience**
+
+#### 🎨 [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)
+**UI components and design patterns**
+- Component library documentation
+- Design tokens and styling guidelines
+- Responsive design principles
+
+#### 📱 [PRODUCT_DESIGN.md](./PRODUCT_DESIGN.md)
+**User experience and interface design**
+- User journey and interaction patterns
+- Feature specifications and requirements
+- Accessibility and usability guidelines
+
+### 🔒 **Security & Privacy**
+
+#### 🛡️ [SECURITY.md](./SECURITY.md)
+**Security measures and best practices**
+- Authentication and authorization
+- Data protection strategies
+- Security audit and compliance
+
+#### 🔐 [PRIVACY_ARCHITECTURE.md](./PRIVACY_ARCHITECTURE.md)
+**Privacy protection and data handling**
+- Data collection and processing policies
+- User consent and control mechanisms
+- GDPR and privacy compliance
+
+### 📊 **Current Feature Set**
+
+#### **Analytics Components**
+- **🎤 Artist Exploration**: 8 sorting options, detailed insights, artist detail modals
+- **🎵 Track Explorer**: 11 sorting options, mood analysis, audio feature breakdown
+- **🎭 Genre Explorer**: 10 sorting options, diversity metrics, genre analytics
+- **📈 Listening Trends**: Weekly patterns, mood categorization, seasonal analysis
+
+#### **🏥 Library Health (Enhanced)**
+- **7 Health Metrics**: Genre diversity, music freshness, artist balance, mood variety, listening depth, era diversity, discovery momentum
+- **Intelligent Recommendations**: AI-powered suggestions with specific action steps
+- **Weighted Scoring**: Sophisticated health assessment with detailed breakdowns
+- **Personalized Insights**: Dynamic insights based on actual listening patterns
+
+#### **📊 Overview Dashboard**
+- **Real-time Statistics**: Comprehensive metrics with contextual information
+- **Achievement System**: Progress tracking and milestone recognition
+- **Interactive Charts**: Rich data visualization with hover effects
+
+### 🎯 **Data Accuracy & Methodology**
+
+#### **Real Data Sources**
+- ✅ **Track Count**: Direct from Spotify API
+- ✅ **Artist Popularity**: Spotify popularity scores
+- ✅ **Audio Features**: Spotify audio analysis (energy, danceability, valence, etc.)
+- ✅ **Genre Information**: Artist genre classifications
+- ✅ **Release Dates**: Album and track release information
+
+#### **Calculated Metrics**
+- ⚠️ **Listening Hours**: Potential time based on track durations
+- ⚠️ **Play Counts**: Estimated using ranking algorithms
+- ⚠️ **Song Share**: Calculated percentage of total listening time
+- ⚠️ **Health Scores**: Weighted calculations based on multiple factors
+
+#### **Simulated Data**
+- ❌ **Discovery Dates**: Simulated for demonstration purposes
+- ❌ **Freshness Scores**: Estimated based on popularity and position
+- ❌ **Replay Values**: Calculated using popularity and audio features
+
+### 🔧 **Technical Standards**
+- **Minimum Value Protection**: All calculations include safeguards against negative values
+- **Fallback Handling**: Comprehensive error handling for missing data
+- **Type Safety**: Full TypeScript implementation with strict type checking
+- **Performance Optimization**: Efficient data processing with React.useMemo and caching
 
 ## 🔧 For Developers
 

@@ -4,7 +4,7 @@ import { BlurLoader } from '@/components/ui/BlurLoader';
 import { ErrorDialog } from '@/components/auth/ErrorDialog';
 import { spotifyPlaybackSDK } from '@/lib/spotify-playback-sdk';
 import { LandingPage } from '@/components/LandingPage';
-import LoadingScreen from '@/components/ui/LoadingScreen';
+import { DataLoadingScreen } from '@/components/ui/DataLoadingScreen';
 
 interface AuthGuardProps {
   children?: React.ReactNode;
@@ -78,10 +78,10 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     );
   }
 
-  // For dashboard path while authentication is still processing, show loading screen
+  // For dashboard path while authentication is still processing, show data loading screen
   if (window.location.pathname.startsWith('/dashboard') && !user) {
-    console.log('Awaiting authentication on /dashboard, showing loading screen');
-    return <LoadingScreen message="Fetching your profile..." />;
+    console.log('Awaiting authentication on /dashboard, waiting for profile');
+    return null;
   }
 
   // Fallback: show landing page for any other unauthenticated path

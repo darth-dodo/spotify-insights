@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { LoadingProvider } from "@/components/providers/LoadingProvider";
+import { GlobalLoader } from "@/components/ui/GlobalLoader";
 import { ApiErrorBoundary } from "@/components/error-states/ApiErrorBoundary";
 import { Dashboard } from "@/components/Dashboard";
 import { CallbackPage } from "@/components/auth/CallbackPage";
@@ -32,11 +34,13 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
+      <LoadingProvider>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <GlobalLoader />
             <ApiErrorBoundary>
               <Routes>
                 {/* Public landing page */}
@@ -62,6 +66,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
+      </LoadingProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

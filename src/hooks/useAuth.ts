@@ -46,30 +46,30 @@ export const useAuthProvider = () => {
     clearAllUserData
   );
 
-  /*
-   * Detect late arrival of tokens (e.g., after OAuth callback when the app
-   * navigates to /dashboard without a hard reload).  If we have no user but
-   * a real access-token just appeared, fetch the profile and update state.
-   */
+  // Detect token that appears AFTER initial mount (no hard reload)
+  const lateFetchDone = React.useRef(false);
   React.useEffect(() => {
-    if (user || isLoading) return;
+    if (user || lateFetchDone.current) return;
 
     const token = localStorage.getItem('spotify_access_token');
     const isDemoToken = token === 'demo_access_token';
 
     if (token && !isDemoToken) {
+      lateFetchDone.current = true; // avoid loops
       (async () => {
         try {
           setIsLoading(true);
           await fetchAndSetUser();
         } catch (err) {
           console.error('Late auth fetch failed:', err);
+          // allow retry on subsequent effect runs
+          lateFetchDone.current = false;
         } finally {
           setIsLoading(false);
         }
       })();
     }
-  }, [user, isLoading, fetchAndSetUser]);
+  }, [user, fetchAndSetUser, setIsLoading]);
 
   // --- Auto-refresh access token one minute before expiry (skip demo) ---
   React.useEffect(() => {

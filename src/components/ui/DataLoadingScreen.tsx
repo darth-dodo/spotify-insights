@@ -7,14 +7,16 @@ interface DataLoadingScreenProps {
   message?: string;
   error?: string | null;
   onRetry?: () => void;
+  forcedPct?: number;
 }
 
 export const DataLoadingScreen = ({ 
   message = "Loading your comprehensive music data...", 
   error = null,
   onRetry,
+  forcedPct,
 }: DataLoadingScreenProps) => {
-  const [progress, setProgress] = React.useState(0);
+  const [progress, setProgress] = React.useState(forcedPct ?? 0);
   const [currentFactIndex, setCurrentFactIndex] = React.useState(0);
   const [shuffledFacts, setShuffledFacts] = React.useState<string[]>([]);
 
@@ -48,24 +50,32 @@ export const DataLoadingScreen = ({
   }, []);
 
   React.useEffect(() => {
+    // Update progress if controlled externally
+    if (forcedPct !== undefined) {
+      setProgress(forcedPct);
+      return;
+    }
+
+    // Internal auto-increment for standalone usage
     const progressTimer = setInterval(() => {
       setProgress((oldProgress) => {
-        if (oldProgress === 100) {
-          return 0;
+        if (oldProgress >= 100) {
+          return 100;
         }
         const diff = Math.random() * 10;
         return Math.min(oldProgress + diff, 95);
       });
     }, 500);
 
+    return () => clearInterval(progressTimer);
+  }, [forcedPct]);
+
+  // Facts rotation remains regardless of external control
+  React.useEffect(() => {
     const factTimer = setInterval(() => {
       setCurrentFactIndex((prevIndex) => (prevIndex + 1) % shuffledFacts.length);
-    }, 3000); // Change fact every 3 seconds
-
-    return () => {
-      clearInterval(progressTimer);
-      clearInterval(factTimer);
-    };
+    }, 3000);
+    return () => clearInterval(factTimer);
   }, [shuffledFacts.length]);
 
   return (
@@ -106,7 +116,10 @@ export const DataLoadingScreen = ({
 
           {/* Progress Bar */}
           <div className="space-y-2">
-            <Progress value={progress} className="w-full" />
+            <Progress 
+              value={progress} 
+              className="w-full transition-all duration-500 ease-in-out" 
+            />
             <p className="text-xs text-muted-foreground">
               Loading up to 2000 tracks and artists for comprehensive analysis
             </p>

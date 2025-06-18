@@ -81,6 +81,20 @@ To remove a perceptible "flash" and eliminate the need for a full-page reload af
 
 This guarantees a single, continuous instance of `DataLoadingScreen` from the moment OAuth begins until the comprehensive library fetch completes—no duplicate mounts, no visual glitches.
 
+### Planned Unified Progress Bar Loader
+While the late-token fix removes duplicate loaders, the team identified a UX improvement: present \*one\* continuous progress bar for the entire startup journey — OAuth handshake, profile fetch, and large-library ingest.
+
+Proposed implementation (tracked in separate task):
+1. **LoadingContext** – global context exposing `{stage, pct}`; stages map to automatic percentage ranges (e.g. oauth 10 %, profile 30 %, library 30-100 %).
+2. **Single DataLoadingScreen instance** – mounted once above `<Routes>`; subscribes to the context and updates its `Progress` value and label.
+3. **Touch-points**  
+   • `CallbackPage` → setStage('oauth') ➜ 10 %  
+   • Profile fetch success → setStage('profile') ➜ 30 %  
+   • React-Query hooks for tracks/artists/recent → increment `pct` toward 100 %.
+4. Loader auto-hides when `pct === 100`.
+
+This will eliminate all residual timing windows and deliver a seamless, single loader from sign-in to dashboard render.
+
 ---
 
 *Report prepared by*  

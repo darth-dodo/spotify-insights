@@ -17,8 +17,7 @@ import { ImprovedGenreAnalysis } from './dashboard/ImprovedGenreAnalysis';
 import { RefactoredGenreAnalysis } from './dashboard/RefactoredGenreAnalysis';
 import { TrackExplorer } from './dashboard/TrackExplorer';
 import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
-import LoadingScreen from './ui/LoadingScreen';
-import { DataLoadingScreen } from './ui/DataLoadingScreen';
+import { useLoading } from '@/components/providers/LoadingProvider';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 
 export const Dashboard = () => {
@@ -33,6 +32,26 @@ export const Dashboard = () => {
   const { isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
   const { isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
   const dataLoading = tracksLoading || artistsLoading || recentLoading;
+
+  const { setStage, bump, pct } = useLoading();
+
+  // Update global loader stage and progress based on query states
+  React.useEffect(() => {
+    if (!user) return;
+
+    // Initiate library stage once data fetching begins
+    if (dataLoading) {
+      setStage('library');
+    }
+
+    // Calculate completion ratio (0-3) and map to target pct
+    const completed = (tracksLoading ? 0 : 1) + (artistsLoading ? 0 : 1) + (recentLoading ? 0 : 1);
+    const target = completed === 3 ? 100 : 30 + completed * 30; // 30,60,90,100
+
+    if (target > pct) {
+      bump(target - pct);
+    }
+  }, [user, dataLoading, tracksLoading, artistsLoading, recentLoading, pct, setStage, bump]);
 
   const handleSettingsClick = () => {
     setActiveView('privacy');
@@ -54,16 +73,17 @@ export const Dashboard = () => {
   };
 
   if (isLoading) {
-    return <LoadingScreen message="Loading your music data..." />;
+    // Stage update handled elsewhere; just render nothing.
+    return null;
   }
 
   if (!user) {
     return null;
   }
 
-  // Show data loading screen when fetching comprehensive dataset
+  // While library loading, underlying global loader is active; render null until finished
   if (dataLoading) {
-    return <DataLoadingScreen message="Fetching your comprehensive music library (up to 2000 tracks & artists)..." />;
+    return null;
   }
 
   return (

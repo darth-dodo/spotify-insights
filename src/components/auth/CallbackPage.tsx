@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { useToast } from '@/hooks/use-toast';
 import { DataLoadingScreen } from '@/components/ui/DataLoadingScreen';
+import { useLoading } from '@/components/providers/LoadingProvider';
 
 export const CallbackPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setStage } = useLoading();
   const [oauthError, setOauthError] = React.useState<string | null>(null);
 
   useEffect(() => {
@@ -25,6 +27,7 @@ export const CallbackPage = () => {
           throw new Error('Missing authentication parameters');
         }
 
+        setStage('oauth');
         console.log('Processing callback with code and state...');
         await spotifyAuth.handleCallback(code, state);
         
@@ -48,13 +51,15 @@ export const CallbackPage = () => {
           description: "Your Spotify account has been linked.",
         });
 
+        // Profile retrieved; update stage before navigation
+        setStage('profile');
+
         // Smoothly navigate to dashboard without full reload; AuthProvider will
-        // now detect the new token and fetch the user profile.
+        // detect the new token and fetch the user profile.
         setTimeout(() => {
           console.log('Redirecting to dashboard...');
           navigate('/dashboard', { replace: true });
         }, 200);
-        
       } catch (error: any) {
         console.error('Callback error:', error);
         setOauthError(error?.message || 'Authentication failed');
@@ -70,7 +75,7 @@ export const CallbackPage = () => {
     };
 
     handleCallback();
-  }, [navigate, toast]);
+  }, [navigate, toast, setStage]);
 
   const handleRetry = () => {
     window.location.href = '/';

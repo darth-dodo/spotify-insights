@@ -10,7 +10,7 @@ Removing the redundant call fully restored the intended behaviour: after token e
 ---
 
 ### Background & Context
-* Timeline: Bug first noted **YYYY-MM-DD** (see commit `abc1234`).  Multiple routing and auth-guard refactors attempted over the following days.
+* Timeline: Bug first noted **2025-06-14** (see commit `d4f3ff9`).  Multiple routing and auth-guard refactors attempted over the following days.
 * Environment: React 18 + React-Router 6, Spotify OAuth PKCE, local dev served via Vite.
 * Feature flags: Dummy-data sandbox available at `/sandbox`; real auth should land on `/dashboard`.
 
@@ -49,7 +49,7 @@ Commit: `fix: remove duplicate token exchange in CallbackPage (#XYZ)`.
 2. **Instrumentation & Logging** – Inserted temporary `console.log` markers to trace execution flow and confirm that tokens existed in `localStorage`.
 3. **Isolation of Variables** – Verified that manual navigation works, proving routing logic independent of token validity.
 4. **Binary-Search on Call Stack** – Commented out sections in `CallbackPage` to see which lines triggered the unwanted redirect – quickly pinpointed the duplicate call.
-5. **Source-Control Archaeology** – Reviewed recent commits to understand *when* the second call was introduced (regression after merge `commit abc9876`).
+5. **Source-Control Archaeology** – Reviewed recent commits to understand *when* the second call was introduced (regression surfaced after merge `commit 59d8732`).
 6. **Root-Cause Fix over Patch-Fix** – Removed the actual defect instead of adding retries or broader error suppression.
 
 ### Preventive Measures & Next Steps
@@ -71,7 +71,7 @@ After the underlying auth-logic bug was resolved, we noticed a jarring UI transi
 
 Together these changes deliver a seamless hand-off from OAuth to the comprehensive library fetch without exposing unauthenticated UI components.
 
-### Auth Lifecycle Enhancement (2025-MM-DD)
+### Auth Lifecycle Enhancement (2025-06-18)
 To remove a perceptible "flash" and eliminate the need for a full-page reload after OAuth, we refactored authentication state management:
 
 1. **Soft Redirect**  
@@ -108,4 +108,4 @@ The unified overlay now animates 10 → 30 → 60 → 90 → 100 % with CSS `tra
 
 *Report prepared by*  
 Engineering Team – *Spotify-Insights Dashboard*  
-Date: YYYY-MM-DD 
+Date: 2025-06-18 

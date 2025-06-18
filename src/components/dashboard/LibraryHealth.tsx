@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -264,6 +264,103 @@ export const LibraryHealth = () => {
     return metrics;
   }, [tracks, artists]);
 
+  // Helper function for specific recommendations
+  const getSpecificRecommendation = useCallback((metric: any, tracks: any[], artists: any[]) => {
+    switch (metric.name) {
+      case 'Genre Diversity': {
+        const currentGenres = [...new Set(artists.flatMap((a: any) => a.genres || []))];
+        const missingGenres = ['jazz', 'electronic', 'classical', 'reggae', 'blues', 'folk', 'world music']
+          .filter(genre => !currentGenres.some(g => g.toLowerCase().includes(genre)));
+        return {
+          description: `Add ${missingGenres.slice(0, 3).join(', ')} to reach ${metric.value + 5}+ genres`,
+          actions: [
+            'Explore Spotify\'s genre playlists',
+            `Try searching for "${missingGenres[0]}" artists`,
+            'Use Discover Weekly to find new genres'
+          ]
+        };
+      }
+      
+      case 'Music Freshness':
+        return {
+          description: `Discover more underground artists (currently ${metric.details?.undergroundCount || 0} tracks)`,
+          actions: [
+            'Follow independent record labels',
+            'Check out artists with <10k monthly listeners',
+            'Explore local music scenes'
+          ]
+        };
+      
+      case 'Artist Balance': {
+        const topArtistShare = metric.details?.topArtistShare || 0;
+        return {
+          description: `Your top artist represents ${topArtistShare}% of listening - aim for <15%`,
+          actions: [
+            'Limit repeats of your top artists',
+            'Actively seek similar artists',
+            'Use artist radio for discovery'
+          ]
+        };
+      }
+      
+      case 'Mood Variety': {
+        const lowMoods = Object.entries(metric.details || {})
+          .filter(([_, count]) => (count as number) < tracks.length * 0.05)
+          .map(([mood]) => mood);
+        return {
+          description: `Add more ${lowMoods.slice(0, 2).join(' and ')} music to your collection`,
+          actions: [
+            'Create mood-specific playlists',
+            'Explore different energy levels',
+            'Try music for different activities'
+          ]
+        };
+      }
+      
+      case 'Listening Depth': {
+        const avgDuration = metric.details?.avgDuration || 3;
+        return {
+          description: `Average track length is ${avgDuration}m - try longer, more immersive pieces`,
+          actions: [
+            'Explore progressive rock and post-rock',
+            'Listen to full albums instead of singles',
+            'Try classical and ambient music'
+          ]
+        };
+      }
+      
+      case 'Era Diversity': {
+        const missingEras = Object.entries(metric.details || {})
+          .filter(([_, count]) => (count as number) < tracks.length * 0.1)
+          .map(([era]) => era);
+        return {
+          description: `Add more ${missingEras.join(' and ')} music to span different decades`,
+          actions: [
+            'Explore "Best of" playlists from different decades',
+            'Ask older family members for recommendations',
+            'Check out music history documentaries'
+          ]
+        };
+      }
+      
+      case 'Discovery Momentum':
+        return {
+          description: `Only ${metric.details?.recentCount || 0} recent discoveries - aim for 20+ per month`,
+          actions: [
+            'Set a goal to discover 5 new artists weekly',
+            'Use Release Radar and Discover Weekly',
+            'Follow music blogs and reviewers'
+          ]
+        };
+      
+      default:
+        return {
+          description: metric.recommendation,
+          actions: ['Explore new music regularly', 'Diversify your listening habits']
+        };
+    }
+  }, []);
+
   // Process recommendations
   const recommendations = useMemo(() => {
     if (!healthMetrics.length) return [];
@@ -346,99 +443,7 @@ export const LibraryHealth = () => {
     }
 
     return recs.slice(0, 6); // Limit to 6 recommendations
-  }, [healthMetrics, tracks, artists]);
-
-  // Helper function for specific recommendations
-  const getSpecificRecommendation = (metric: any, tracks: any[], artists: any[]) => {
-    switch (metric.name) {
-      case 'Genre Diversity':
-        const currentGenres = [...new Set(artists.flatMap((a: any) => a.genres || []))];
-        const missingGenres = ['jazz', 'electronic', 'classical', 'reggae', 'blues', 'folk', 'world music']
-          .filter(genre => !currentGenres.some(g => g.toLowerCase().includes(genre)));
-        return {
-          description: `Add ${missingGenres.slice(0, 3).join(', ')} to reach ${metric.value + 5}+ genres`,
-          actions: [
-            'Explore Spotify\'s genre playlists',
-            `Try searching for "${missingGenres[0]}" artists`,
-            'Use Discover Weekly to find new genres'
-          ]
-        };
-      
-      case 'Music Freshness':
-        return {
-          description: `Discover more underground artists (currently ${metric.details?.undergroundCount || 0} tracks)`,
-          actions: [
-            'Follow independent record labels',
-            'Check out artists with <10k monthly listeners',
-            'Explore local music scenes'
-          ]
-        };
-      
-      case 'Artist Balance':
-        const topArtistShare = metric.details?.topArtistShare || 0;
-        return {
-          description: `Your top artist represents ${topArtistShare}% of listening - aim for <15%`,
-          actions: [
-            'Limit repeats of your top artists',
-            'Actively seek similar artists',
-            'Use artist radio for discovery'
-          ]
-        };
-      
-      case 'Mood Variety':
-        const lowMoods = Object.entries(metric.details || {})
-          .filter(([_, count]) => (count as number) < tracks.length * 0.05)
-          .map(([mood]) => mood);
-        return {
-          description: `Add more ${lowMoods.slice(0, 2).join(' and ')} music to your collection`,
-          actions: [
-            'Create mood-specific playlists',
-            'Explore different energy levels',
-            'Try music for different activities'
-          ]
-        };
-      
-      case 'Listening Depth':
-        const avgDuration = metric.details?.avgDuration || 3;
-        return {
-          description: `Average track length is ${avgDuration}m - try longer, more immersive pieces`,
-          actions: [
-            'Explore progressive rock and post-rock',
-            'Listen to full albums instead of singles',
-            'Try classical and ambient music'
-          ]
-        };
-      
-      case 'Era Diversity':
-        const missingEras = Object.entries(metric.details || {})
-          .filter(([_, count]) => (count as number) < tracks.length * 0.1)
-          .map(([era]) => era);
-        return {
-          description: `Add more ${missingEras.join(' and ')} music to span different decades`,
-          actions: [
-            'Explore "Best of" playlists from different decades',
-            'Ask older family members for recommendations',
-            'Check out music history documentaries'
-          ]
-        };
-      
-      case 'Discovery Momentum':
-        return {
-          description: `Only ${metric.details?.recentCount || 0} recent discoveries - aim for 20+ per month`,
-          actions: [
-            'Set a goal to discover 5 new artists weekly',
-            'Use Release Radar and Discover Weekly',
-            'Follow music blogs and reviewers'
-          ]
-        };
-      
-      default:
-        return {
-          description: metric.recommendation,
-          actions: ['Explore new music regularly', 'Diversify your listening habits']
-        };
-    }
-  };
+  }, [healthMetrics, tracks, artists, getSpecificRecommendation]);
 
   // Sort metrics based on selected criteria
   const sortedMetrics = useMemo(() => {

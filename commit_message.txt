@@ -1,0 +1,9 @@
+📝 Update documentation dates to June 2025
+
+- Update CHANGELOG.md release date from December 2024 to June 2025
+- Update docs/METRIC_CALCULATIONS.md last updated date
+- Update docs/RECENT_CHANGES.md last updated date  
+- Update docs/METRICS_QUICK_REFERENCE.md dates (header and footer)
+- Update docs/README.md last updated date
+
+Ensures consistent documentation timestamps across all files. 

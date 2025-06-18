@@ -75,7 +75,7 @@ interface ConsistencyMetrics {
 }
 
 export const EnhancedListeningTrends = () => {
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const [timeRange, setTimeRange] = useState('6months');
   const [metric, setMetric] = useState('listening_time');
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -111,16 +111,15 @@ export const EnhancedListeningTrends = () => {
     yearOptions.push({ value: year.toString(), label: year.toString() });
   }
 
-  // Extended time range options with previous years
+  // Standardized time range options to match ArtistExploration
   const timeRanges = [
-    { value: 'week', label: 'This Week' },
-    { value: 'fortnight', label: 'Last 2 Weeks' },
-    { value: 'month', label: 'This Month' },
-    { value: 'three_months', label: 'Last 3 Months' },
-    { value: 'six_months', label: 'Last 6 Months' },
-    { value: 'year', label: 'This Year' },
-    ...yearOptions,
-    { value: 'all_time', label: 'All Time' }
+    { value: '1week', label: 'Last Week' },
+    { value: '1month', label: 'Last Month' },  
+    { value: '3months', label: 'Last Three Months' },
+    { value: '6months', label: 'Last Six Months' },
+    { value: '1year', label: 'Last Year' },
+    { value: '2years', label: 'Last Two Years' },
+    { value: 'alltime', label: 'All Time' }
   ];
 
   // Calculate listening patterns

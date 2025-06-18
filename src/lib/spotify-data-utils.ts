@@ -1,29 +1,64 @@
 // Utility functions for Spotify data processing
 // These replace the methods that were previously in useExtendedSpotifyDataStore
 
-export type TimeDimension = 'week' | 'month' | 'three_months' | 'six_months' | 'year' | 'all_time';
+export type TimeDimension = '1week' | '1month' | '3months' | '6months' | '1year' | '2years' | 'alltime';
+
+// Map UI time ranges to Spotify API time ranges
+export function mapUITimeRangeToAPI(uiTimeRange: string): string {
+  switch (uiTimeRange) {
+    case '1week':
+    case '1month':
+      return 'short_term'; // ~4 weeks
+    case '3months':
+    case '6months':
+      return 'medium_term'; // ~6 months
+    case '1year':
+    case '2years':
+    case 'alltime':
+      return 'long_term'; // several years
+    default:
+      return 'medium_term';
+  }
+}
+
+// Get user-friendly label for time range
+export function getTimeRangeLabel(range: string): string {
+  const labels = {
+    '1week': 'Last Week',
+    '1month': 'Last Month',
+    '3months': 'Last Three Months',
+    '6months': 'Last Six Months',
+    '1year': 'Last Year',
+    '2years': 'Last Two Years',
+    'alltime': 'All Time'
+  };
+  return labels[range] || 'This Period';
+}
 
 export function getTimeRangeForDimension(dimension: TimeDimension): { start: Date; end: Date } {
   const end = new Date();
   const start = new Date();
 
   switch (dimension) {
-    case 'week':
+    case '1week':
       start.setDate(end.getDate() - 7);
       break;
-    case 'month':
+    case '1month':
       start.setMonth(end.getMonth() - 1);
       break;
-    case 'three_months':
+    case '3months':
       start.setMonth(end.getMonth() - 3);
       break;
-    case 'six_months':
+    case '6months':
       start.setMonth(end.getMonth() - 6);
       break;
-    case 'year':
+    case '1year':
       start.setFullYear(end.getFullYear() - 1);
       break;
-    case 'all_time':
+    case '2years':
+      start.setFullYear(end.getFullYear() - 2);
+      break;
+    case 'alltime':
       start.setFullYear(2000); // Spotify's launch year
       break;
   }
@@ -42,7 +77,7 @@ export function filterDataByTimeDimension(data: any[], dimension: TimeDimension)
   });
 }
 
-export function calculateStats(tracks: any[], artists: any[], recentlyPlayed: any[], dimension: TimeDimension = 'all_time') {
+export function calculateStats(tracks: any[], artists: any[], recentlyPlayed: any[], dimension: TimeDimension = 'alltime') {
   if (!tracks?.length && !artists?.length) {
     return {
       totalTracks: 0,
@@ -97,7 +132,7 @@ export function calculateStats(tracks: any[], artists: any[], recentlyPlayed: an
   };
 }
 
-export function calculateGenreAnalysis(artists: any[], dimension: TimeDimension = 'all_time') {
+export function calculateGenreAnalysis(artists: any[], dimension: TimeDimension = 'alltime') {
   if (!artists?.length) return [];
 
   // First pass: count unique genres and collect artist data
@@ -146,7 +181,7 @@ export function calculateGenreAnalysis(artists: any[], dimension: TimeDimension 
     .sort((a, b) => b.count - a.count);
 }
 
-export function getTracksByGenre(tracks: any[], artists: any[], genre: string, limit: number = 5, dimension: TimeDimension = 'all_time') {
+export function getTracksByGenre(tracks: any[], artists: any[], genre: string, limit: number = 5, dimension: TimeDimension = 'alltime') {
   if (!tracks?.length || !artists?.length) return [];
 
   const { start, end } = getTimeRangeForDimension(dimension);
@@ -167,7 +202,7 @@ export function getTracksByGenre(tracks: any[], artists: any[], genre: string, l
     .slice(0, limit);
 }
 
-export function getTopTracks(tracks: any[], limit: number = 10, dimension: TimeDimension = 'all_time') {
+export function getTopTracks(tracks: any[], limit: number = 10, dimension: TimeDimension = 'alltime') {
   if (!tracks?.length) return [];
   
   const filteredTracks = filterDataByTimeDimension(tracks, dimension);
@@ -186,7 +221,7 @@ export function getTopTracks(tracks: any[], limit: number = 10, dimension: TimeD
     }));
 }
 
-export function getTopArtists(artists: any[], limit: number = 10, dimension: TimeDimension = 'all_time') {
+export function getTopArtists(artists: any[], limit: number = 10, dimension: TimeDimension = 'alltime') {
   if (!artists?.length) return [];
   
   const filteredArtists = filterDataByTimeDimension(artists, dimension);
@@ -204,7 +239,7 @@ export function getTopArtists(artists: any[], limit: number = 10, dimension: Tim
     }));
 }
 
-export function getRecentlyPlayed(tracks: any[], limit: number = 10, dimension: TimeDimension = 'all_time') {
+export function getRecentlyPlayed(tracks: any[], limit: number = 10, dimension: TimeDimension = 'alltime') {
   if (!tracks?.length) return [];
   
   const filteredTracks = filterDataByTimeDimension(tracks, dimension);

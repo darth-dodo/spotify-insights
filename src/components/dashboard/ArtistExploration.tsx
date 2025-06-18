@@ -8,36 +8,42 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { Users, Music, TrendingUp, ExternalLink, Play, Heart, Calendar, Clock, Info, Album, Sparkles, Target, Zap } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { mapUITimeRangeToAPI, getTimeRangeLabel } from '@/lib/spotify-data-utils';
 import { ArtistDetailModal } from './artist/ArtistDetailModal';
 import { InfoButton } from '@/components/ui/InfoButton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export const ArtistExploration = () => {
   const [timeRange, setTimeRange] = useState('6months');
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
   const [showArtistModal, setShowArtistModal] = useState(false);
+  const [sortBy, setSortBy] = useState('listeningHours');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [isFiltering, setIsFiltering] = useState(false);
 
   const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
-  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
-  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const apiTimeRange = mapUITimeRangeToAPI(timeRange);
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks(apiTimeRange, 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists(apiTimeRange, 2000);
   const isLoading = tracksLoading || artistsLoading;
+
+  // Handle filtering state when time range changes
+  React.useEffect(() => {
+    setIsFiltering(true);
+    const timer = setTimeout(() => {
+      setIsFiltering(false);
+    }, 800); // Show filtering for 800ms to give visual feedback
+
+    return () => clearTimeout(timer);
+  }, [timeRange, sortBy, sortOrder]);
 
   // Process extended artist data with time filtering simulation
   const processedArtists = useMemo(() => {
     if (!artists.length || !tracks.length) return [];
     
-    // Simulate time filtering by adjusting the dataset size
-    const timeMultiplier = {
-      '1week': 0.1,
-      '1month': 0.2,
-      '3months': 0.4,
-      '6months': 0.7,
-      '1year': 0.85,
-      '2years': 0.95,
-      '3years': 0.98,
-      'alltime': 1.0
-    }[timeRange] || 0.7;
-    
-    const filteredArtists = artists.slice(0, Math.floor(artists.length * timeMultiplier));
+    // Use all artists without any filtering multipliers
+    // Time range filtering is handled by the API layer
+    const filteredArtists = artists;
     
     return filteredArtists.map((artist: any, index: number) => {
       // Get tracks by this artist
@@ -80,21 +86,78 @@ export const ArtistExploration = () => {
         image: artist.images?.[0]?.url,
         external_urls: artist.external_urls
       };
-    }).sort((a, b) => b.listeningHours - a.listeningHours);
+    });
   }, [artists, tracks, timeRange]);
+
+  // Separate sorting logic for better performance and flexibility
+  const sortedArtists = useMemo(() => {
+    const sorted = [...processedArtists].sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'listeningHours':
+          aValue = a.listeningHours;
+          bValue = b.listeningHours;
+          break;
+        case 'tracksCount':
+          aValue = a.tracksCount;
+          bValue = b.tracksCount;
+          break;
+        case 'avgPopularity':
+          aValue = a.avgPopularity;
+          bValue = b.avgPopularity;
+          break;
+        case 'freshness':
+          aValue = a.freshness;
+          bValue = b.freshness;
+          break;
+        case 'replayValue':
+          aValue = a.replayValue;
+          bValue = b.replayValue;
+          break;
+        case 'songShare':
+          aValue = a.songShare;
+          bValue = b.songShare;
+          break;
+        case 'discoveryYear':
+          aValue = a.discoveryYear;
+          bValue = b.discoveryYear;
+          break;
+        default:
+          aValue = a.listeningHours;
+          bValue = b.listeningHours;
+      }
+      
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      }
+      
+      return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+    
+    // Update ranks after sorting
+    return sorted.map((artist, index) => ({
+      ...artist,
+      rank: index + 1
+    }));
+  }, [processedArtists, sortBy, sortOrder]);
 
   // Generate fun facts
   const funFacts = useMemo(() => {
-    if (!processedArtists.length) return [];
+    if (!sortedArtists.length) return [];
     
     const facts = [];
-    const topArtist = processedArtists[0];
-    const totalHours = processedArtists.reduce((acc, artist) => acc + artist.listeningHours, 0);
-    const avgHoursPerArtist = totalHours / processedArtists.length;
-    const freshestArtist = processedArtists.reduce((prev, current) => 
+    const topArtist = sortedArtists[0];
+    const totalHours = sortedArtists.reduce((acc, artist) => acc + artist.listeningHours, 0);
+    const avgHoursPerArtist = totalHours / sortedArtists.length;
+    const freshestArtist = sortedArtists.reduce((prev, current) => 
       current.freshness > prev.freshness ? current : prev
     );
-    const mostReplayed = processedArtists.reduce((prev, current) => 
+    const mostReplayed = sortedArtists.reduce((prev, current) => 
       current.replayValue > prev.replayValue ? current : prev
     );
     
@@ -119,10 +182,10 @@ export const ArtistExploration = () => {
     facts.push({
       icon: Clock,
       title: "Artist Diversity",
-      description: `You spend an average of ${Math.round(avgHoursPerArtist * 10) / 10} hours per artist across ${processedArtists.length} different artists.`
+      description: `You spend an average of ${Math.round(avgHoursPerArtist * 10) / 10} hours per artist across ${sortedArtists.length} different artists.`
     });
     
-    const topGenres = [...new Set(processedArtists.flatMap(a => a.genres || []))].slice(0, 3);
+    const topGenres = [...new Set(sortedArtists.flatMap(a => a.genres || []))].slice(0, 3);
     if (topGenres.length > 0) {
       facts.push({
         icon: Music,
@@ -132,29 +195,29 @@ export const ArtistExploration = () => {
     }
     
     return facts.slice(0, 4);
-  }, [processedArtists]);
+  }, [sortedArtists]);
 
   // Chart data generation
   const songShareData = useMemo(() => {
-    return processedArtists.slice(0, 8).map(artist => ({
+    return sortedArtists.slice(0, 8).map(artist => ({
       name: artist.name.length > 12 ? artist.name.substring(0, 12) + '...' : artist.name,
       fullName: artist.name,
       share: artist.songShare,
       hours: artist.listeningHours
     }));
-  }, [processedArtists]);
+  }, [sortedArtists]);
 
   const replayValueData = useMemo(() => {
-    return processedArtists.slice(0, 10).map(artist => ({
+    return sortedArtists.slice(0, 10).map(artist => ({
       name: artist.name.length > 10 ? artist.name.substring(0, 10) + '...' : artist.name,
       fullName: artist.name,
       replay: artist.replayValue,
       tracks: artist.tracksCount
     }));
-  }, [processedArtists]);
+  }, [sortedArtists]);
 
   const freshnessData = useMemo(() => {
-    return processedArtists.slice(0, 6).map(artist => ({
+    return sortedArtists.slice(0, 6).map(artist => ({
       artist: artist.name.length > 8 ? artist.name.substring(0, 8) + '...' : artist.name,
       fullName: artist.name,
       freshness: artist.freshness,
@@ -163,19 +226,19 @@ export const ArtistExploration = () => {
       replay: artist.replayValue,
       hours: artist.listeningHours
     }));
-  }, [processedArtists]);
+  }, [sortedArtists]);
 
   // Calculate real statistics
   const calculateStats = () => {
-    const totalHours = processedArtists.reduce((acc, artist) => acc + artist.listeningHours, 0);
-    const totalTracks = processedArtists.reduce((acc, artist) => acc + artist.tracksCount, 0);
-    const avgPopularity = processedArtists.length > 0 ? 
-      processedArtists.reduce((acc, artist) => acc + artist.avgPopularity, 0) / processedArtists.length : 0;
-    const avgFreshness = processedArtists.length > 0 ? 
-      processedArtists.reduce((acc, artist) => acc + artist.freshness, 0) / processedArtists.length : 0;
+    const totalHours = sortedArtists.reduce((acc, artist) => acc + artist.listeningHours, 0);
+    const totalTracks = sortedArtists.reduce((acc, artist) => acc + artist.tracksCount, 0);
+    const avgPopularity = sortedArtists.length > 0 ? 
+      sortedArtists.reduce((acc, artist) => acc + artist.avgPopularity, 0) / sortedArtists.length : 0;
+    const avgFreshness = sortedArtists.length > 0 ? 
+      sortedArtists.reduce((acc, artist) => acc + artist.freshness, 0) / sortedArtists.length : 0;
     
     return {
-      totalArtists: processedArtists.length,
+      totalArtists: sortedArtists.length,
       totalHours: Math.round(totalHours * 10) / 10,
       totalTracks,
       avgPopularity: Math.round(avgPopularity),
@@ -191,24 +254,14 @@ export const ArtistExploration = () => {
     freshness: { label: "Freshness", color: "hsl(217, 91%, 60%)" },
   };
 
-  const getTimeRangeLabel = (range: string) => {
-    const labels = {
-      '1week': 'Last Week',
-      '1month': 'Last Month', 
-      '3months': 'Last Three Months',
-      '6months': 'Last Six Months',
-      '1year': 'Last Year',
-      '2years': 'Last Two Years',
-      'alltime': 'All Time'
-    };
-    return labels[range] || 'This Period';
-  };
+  // Using centralized getTimeRangeLabel from spotify-data-utils
 
   const handleArtistClick = (artist: any) => {
     setSelectedArtist(artist);
     setShowArtistModal(true);
   };
 
+  // Enhanced loading screen for initial load
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -216,12 +269,35 @@ export const ArtistExploration = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Artist Exploration</h1>
           <p className="text-muted-foreground">Loading your extended artist data...</p>
         </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin h-8 w-8 border-2 border-accent rounded-full border-t-transparent" />
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <div className="relative">
+            <div className="animate-spin h-12 w-12 border-4 border-accent/20 rounded-full border-t-accent" />
+            <div className="absolute inset-0 animate-ping h-12 w-12 border-4 border-accent/10 rounded-full" />
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-sm font-medium">Analyzing your music library</p>
+            <p className="text-xs text-muted-foreground">Processing up to 2000 artists for optimal insights</p>
+          </div>
         </div>
       </div>
     );
   }
+
+  // Filtering overlay for when user changes filters
+  const FilteringOverlay = () => (
+    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+      <div className="flex flex-col items-center space-y-3 p-6 bg-card rounded-lg shadow-lg border">
+        <div className="relative">
+          <div className="animate-spin h-8 w-8 border-3 border-accent/30 rounded-full border-t-accent" />
+          <div className="absolute inset-0 animate-pulse h-8 w-8 border-3 border-accent/10 rounded-full" />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-medium">Filtering artists</p>
+          <p className="text-xs text-muted-foreground">{getTimeRangeLabel(timeRange)}</p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -232,6 +308,11 @@ export const ArtistExploration = () => {
           <p className="text-sm md:text-base text-muted-foreground">
             Deep insights from your extended artist collection • Click any artist for detailed info
           </p>
+          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+            <span>Total Dataset: {artists.length} artists</span>
+            <span>•</span>
+            <span>Filtered ({getTimeRangeLabel(timeRange)}): {sortedArtists.length} artists</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">
@@ -249,6 +330,40 @@ export const ArtistExploration = () => {
               <SelectItem value="alltime">All Time</SelectItem>
             </SelectContent>
           </Select>
+          
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="listeningHours">Listening Hours</SelectItem>
+              <SelectItem value="name">Artist Name</SelectItem>
+              <SelectItem value="tracksCount">Track Count</SelectItem>
+              <SelectItem value="avgPopularity">Popularity</SelectItem>
+              <SelectItem value="freshness">Freshness</SelectItem>
+              <SelectItem value="replayValue">Replay Value</SelectItem>
+              <SelectItem value="songShare">Song Share</SelectItem>
+              <SelectItem value="discoveryYear">Discovery Year</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="px-3"
+                >
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Sort {sortOrder === 'asc' ? 'Ascending' : 'Descending'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -387,7 +502,7 @@ export const ArtistExploration = () => {
       )}
 
       {/* Show message if no data */}
-      {!processedArtists.length ? (
+      {!sortedArtists.length ? (
         <Card>
           <CardContent className="p-8 text-center">
             <Music className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -398,6 +513,8 @@ export const ArtistExploration = () => {
           </CardContent>
         </Card>
       ) : (
+        <div className="relative">
+          {isFiltering && <FilteringOverlay />}
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -419,7 +536,7 @@ export const ArtistExploration = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {processedArtists.slice(0, 15).map((artist, index) => (
+                  {sortedArtists.slice(0, 15).map((artist, index) => (
                     <div 
                       key={artist.id} 
                       className="flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-accent/5 border hover:border-accent/20"
@@ -492,7 +609,7 @@ export const ArtistExploration = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-                  {processedArtists.slice(0, 20).map((artist) => (
+                  {sortedArtists.slice(0, 20).map((artist) => (
                     <Card 
                       key={artist.id} 
                       className="hover:shadow-md transition-shadow cursor-pointer"
@@ -509,27 +626,49 @@ export const ArtistExploration = () => {
                           </div>
                         </div>
                         
-                        {artist.image && (
-                          <div className="mb-3">
+                        {artist.image ? (
+                          <div className="mb-3 relative group">
                             <img 
                               src={artist.image} 
                               alt={artist.name}
-                              className="w-full h-24 object-cover rounded-lg"
+                              className="w-full h-32 sm:h-36 object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-200"
                             />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                            <div className="absolute bottom-2 left-2 right-2">
+                              <div className="bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <p className="text-xs font-medium truncate">{artist.name}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mb-3 h-32 sm:h-36 bg-gradient-to-br from-accent/20 to-primary/20 rounded-lg flex items-center justify-center">
+                            <div className="text-center">
+                              <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                              <p className="text-xs text-muted-foreground font-medium">{artist.name}</p>
+                            </div>
                           </div>
                         )}
                         
                         <div className="space-y-2">
-                          <h3 className="font-semibold text-sm truncate">{artist.name}</h3>
+                          <div className="flex items-start justify-between">
+                            <h3 className="font-semibold text-sm truncate flex-1 pr-2">{artist.name}</h3>
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              {artist.avgPopularity}/100
+                            </Badge>
+                          </div>
                           
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="text-center p-1 bg-muted/20 rounded">
+                          <div className="grid grid-cols-3 gap-1 text-xs">
+                            <div className="text-center p-2 bg-accent/10 rounded">
                               <div className="text-xs text-muted-foreground">Share</div>
-                              <div className="font-medium">{artist.songShare}%</div>
+                              <div className="font-medium text-accent">{artist.songShare}%</div>
                             </div>
-                            <div className="text-center p-1 bg-muted/20 rounded">
+                            <div className="text-center p-2 bg-primary/10 rounded">
                               <div className="text-xs text-muted-foreground">Replay</div>
-                              <div className="font-medium">{artist.replayValue}%</div>
+                              <div className="font-medium text-primary">{artist.replayValue}%</div>
+                            </div>
+                            <div className="text-center p-2 bg-green-500/10 rounded">
+                              <div className="text-xs text-muted-foreground">Hours</div>
+                              <div className="font-medium text-green-600">{artist.listeningHours}h</div>
                             </div>
                           </div>
                           
@@ -724,6 +863,7 @@ export const ArtistExploration = () => {
             </div>
           </TabsContent>
         </Tabs>
+        </div>
       )}
 
       {/* Artist Detail Modal */}

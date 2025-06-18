@@ -95,6 +95,15 @@ Proposed implementation (tracked in separate task):
 
 This will eliminate all residual timing windows and deliver a seamless, single loader from sign-in to dashboard render.
 
+### Final Loader Polish (2025-06-18)
+| Date (2025) | Commit | Note |
+|-------------|--------|------|
+| 06-18 18:02 | d4f3ff9 | Removed duplicate token exchange, soft redirect, late-token detector |
+| 06-18 18:45 | 247197e | Introduced LoadingProvider + GlobalLoader; single overlay loader |
+| 06-18 19:05 | 666ffa5 | Progress bar animation & overlay fade-out |
+
+The unified overlay now animates 10 → 30 → 60 → 90 → 100 % with CSS `transition`, then fades out over 300 ms, providing a polished, uninterrupted experience from OAuth to dashboard render.
+
 ---
 
 *Report prepared by*  

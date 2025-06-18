@@ -503,7 +503,7 @@ export const LibraryHealth = () => {
     const poorCount = healthMetrics.filter(m => m.status === 'poor').length;
     const improvementAreas = fairCount + poorCount;
     const avgScore = Math.round(healthMetrics.reduce((acc, m) => acc + m.score, 0) / healthMetrics.length);
-    
+
     return {
       overallScore,
       excellentCount,
@@ -957,7 +957,7 @@ export const LibraryHealth = () => {
                                   <p className="text-xs text-muted-foreground">
                                     Score: {data.score}% ({data.status})
                                   </p>
-                                </div>
+      </div>
                               );
                             }
                             return null;
@@ -970,18 +970,18 @@ export const LibraryHealth = () => {
               </Card>
 
               {/* Status Distribution */}
-              <Card>
-                <CardHeader>
+      <Card>
+        <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
                     Status Distribution
-                  </CardTitle>
+          </CardTitle>
                   <CardDescription>
                     Breakdown of your health metrics by status
                   </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
                     <div className="h-[200px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -1012,7 +1012,7 @@ export const LibraryHealth = () => {
                           <span className="text-sm font-medium">{status.status}</span>
                           <Badge variant="outline" className="text-xs">
                             {status.count}
-                          </Badge>
+              </Badge>
                         </div>
                       ))}
                     </div>
@@ -1138,7 +1138,7 @@ export const LibraryHealth = () => {
                                     </li>
                                   ))}
                                 </ul>
-                              </div>
+              </div>
                             )}
                             
                             {(rec as any).impact && (
@@ -1146,11 +1146,11 @@ export const LibraryHealth = () => {
                                 <p className="text-xs text-muted-foreground italic">
                                   Impact: {(rec as any).impact}
                                 </p>
-                              </div>
+                </div>
                             )}
-                          </div>
-                        </div>
-                      </div>
+              </div>
+            </div>
+          </div>
                     ))}
                   </div>
                 ) : (
@@ -1162,8 +1162,8 @@ export const LibraryHealth = () => {
                     </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+        </CardContent>
+      </Card>
           </TabsContent>
         </Tabs>
       </div>

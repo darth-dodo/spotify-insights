@@ -1,6 +1,6 @@
 # Metrics Quick Reference Guide
 
-A concise reference for all metric calculations in Spotify Insights. **Updated December 2024** with Library Health metrics.
+A concise reference for all metric calculations in Spotify Insights. **Updated June 2025** with Library Health metrics.
 
 ## 🎤 Artist Metrics
 
@@ -134,4 +134,4 @@ const safeProperty = item.property || defaultValue;
 
 ---
 
-*Quick Reference v1.0 - December 2024* 
+*Quick Reference v1.0 - June 2025* 

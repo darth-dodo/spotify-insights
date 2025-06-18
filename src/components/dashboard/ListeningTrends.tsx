@@ -210,8 +210,8 @@ export const ListeningTrends = () => {
       
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-      }
-      
+        }
+
       return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
     });
     
@@ -328,9 +328,9 @@ export const ListeningTrends = () => {
   );
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col gap-2">
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-foreground">Listening Trends</h1>
           <p className="text-muted-foreground">Loading your listening patterns...</p>
         </div>
@@ -415,12 +415,12 @@ export const ListeningTrends = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4">
-        <Card>
+          <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 md:h-5 md:w-5 text-accent" />
               <span className="text-xs md:text-sm font-medium">Total Hours</span>
-              <InfoButton
+                <InfoButton
                 title="Total Listening Hours"
                 description="Total hours spent listening during the selected time period."
                 funFacts={[
@@ -429,7 +429,7 @@ export const ListeningTrends = () => {
                   "Each hour represents musical dedication"
                 ]}
               />
-            </div>
+                  </div>
             <div className="text-lg md:text-2xl font-bold">{stats.totalHours}</div>
             <div className="text-xs text-muted-foreground">{getTimeRangeLabel(timeRange)}</div>
           </CardContent>
@@ -450,7 +450,7 @@ export const ListeningTrends = () => {
                   "Weekly patterns reveal musical routine"
                 ]}
               />
-            </div>
+                </div>
             <div className="text-lg md:text-2xl font-bold">{stats.avgWeeklyHours}</div>
             <div className="text-xs text-muted-foreground">Hours per week</div>
           </CardContent>
@@ -469,7 +469,7 @@ export const ListeningTrends = () => {
                   "Track variety shows exploration depth",
                   "More tracks indicate diverse listening"
                 ]}
-              />
+                      />
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.totalTracks}</div>
             <div className="text-xs text-muted-foreground">Total played</div>
@@ -496,7 +496,7 @@ export const ListeningTrends = () => {
           </CardContent>
         </Card>
 
-        <Card>
+                      <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
@@ -514,10 +514,10 @@ export const ListeningTrends = () => {
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.avgEnergy}</div>
             <div className="text-xs text-muted-foreground">Energy level</div>
-          </CardContent>
-        </Card>
+                        </CardContent>
+                      </Card>
 
-        <Card>
+                      <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <Heart className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
@@ -535,10 +535,10 @@ export const ListeningTrends = () => {
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.avgMood}</div>
             <div className="text-xs text-muted-foreground">Mood score</div>
-          </CardContent>
-        </Card>
+                        </CardContent>
+                      </Card>
 
-        <Card>
+                      <Card>
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
@@ -556,23 +556,23 @@ export const ListeningTrends = () => {
             </div>
             <div className="text-lg md:text-2xl font-bold">{stats.avgDiversity}</div>
             <div className="text-xs text-muted-foreground">Diversity score</div>
-          </CardContent>
-        </Card>
-      </div>
+                        </CardContent>
+                      </Card>
+                    </div>
 
       {/* Fun Facts Section */}
       {funFacts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5" />
               Fun Facts About Your Listening Trends
-            </CardTitle>
-            <CardDescription>
+              </CardTitle>
+              <CardDescription>
               Interesting insights from your listening pattern analysis
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {funFacts.map((fact, index) => (
                 <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
@@ -582,10 +582,10 @@ export const ListeningTrends = () => {
                     <p className="text-xs text-muted-foreground mt-1">{fact.description}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                    ))}
+                  </div>
+            </CardContent>
+          </Card>
       )}
 
       {/* Main Content Tabs */}
@@ -599,17 +599,17 @@ export const ListeningTrends = () => {
 
           <TabsContent value="overview" className="space-y-4 md:space-y-6">
             {/* Weekly Trends Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
                   Weekly Listening Trends - {getTimeRangeLabel(timeRange)}
-                </CardTitle>
-                <CardDescription>
+              </CardTitle>
+              <CardDescription>
                   Your listening patterns over the past 12 weeks
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
                 <ChartContainer config={chartConfig} className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trendData}>
@@ -629,7 +629,7 @@ export const ListeningTrends = () => {
                                 <p className="text-xs text-muted-foreground">
                                   Energy: {data.avgEnergy}% | Mood: {data.avgMood}% | Diversity: {data.diversity}%
                                 </p>
-                              </div>
+                  </div>
                             );
                           }
                           return null;
@@ -645,12 +645,12 @@ export const ListeningTrends = () => {
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
-              </CardContent>
-            </Card>
+                      </CardContent>
+                    </Card>
 
             {/* Mood Analysis */}
-            <Card>
-              <CardHeader>
+                    <Card>
+                      <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Heart className="h-5 w-5" />
                   Mood Distribution
@@ -658,8 +658,8 @@ export const ListeningTrends = () => {
                 <CardDescription>
                   Your emotional listening patterns
                 </CardDescription>
-              </CardHeader>
-              <CardContent>
+                      </CardHeader>
+                      <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     {moodAnalysis.map((mood, index) => (
@@ -703,23 +703,23 @@ export const ListeningTrends = () => {
                     </ResponsiveContainer>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
           <TabsContent value="detailed" className="space-y-4 md:space-y-6">
             {/* Detailed Weekly Breakdown */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
                   Weekly Breakdown - {getTimeRangeLabel(timeRange)}
-                </CardTitle>
-                <CardDescription>
+              </CardTitle>
+              <CardDescription>
                   Detailed analysis of each week's listening patterns
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
                 <div className="space-y-2">
                   {sortedTrends.map((week, index) => (
                     <div key={week.week} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
@@ -750,12 +750,12 @@ export const ListeningTrends = () => {
                         <div className="text-xs text-muted-foreground">Date</div>
                         <div className="text-sm font-bold text-accent">{week.date}</div>
                       </div>
-                    </div>
-                  ))}
+                      </div>
+                    ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4 md:space-y-6">
             {/* Analytics Charts */}
@@ -891,7 +891,7 @@ export const ListeningTrends = () => {
               </Card>
             </div>
           </TabsContent>
-        </Tabs>
+      </Tabs>
       </div>
     </div>
   );

@@ -47,7 +47,7 @@ export const Footer = () => {
         
         <div className="border-t mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-foreground">
-            © 2024 Spotify Analytics Dashboard. This project is not affiliated with Spotify AB.
+            © 2025 Spotify Analytics Dashboard. This project is not affiliated with Spotify AB.
           </p>
           <div className="flex items-center gap-4">
             <p className="text-xs text-muted-foreground flex items-center gap-1">

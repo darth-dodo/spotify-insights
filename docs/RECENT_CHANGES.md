@@ -1,6 +1,6 @@
 # 🔄 Recent Changes & Updates
 
-**Last Updated: December 2024**
+**Last Updated: June 2025**
 
 This document tracks the most recent significant changes and improvements to the Spotify Insights application, focusing on the major Library Health system release and comprehensive component enhancements.
 

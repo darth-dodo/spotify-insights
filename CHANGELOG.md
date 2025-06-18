@@ -2,7 +2,7 @@
 
 All notable changes to Spotify Insights are documented in this file.
 
-## [2.0.0] - December 2024
+## [2.0.0] - June 2025
 
 ### 🎯 Major Features
 

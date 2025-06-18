@@ -208,4 +208,4 @@ When making changes to metric calculations:
 ---
 
 *Documentation maintained by the Spotify Insights development team*
-*Last updated: December 2024* 
+*Last updated: June 2025* 

@@ -5,9 +5,15 @@ import { Music, Users, Clock, Database } from 'lucide-react';
 
 interface DataLoadingScreenProps {
   message?: string;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
-export const DataLoadingScreen = ({ message = "Loading your comprehensive music data..." }: DataLoadingScreenProps) => {
+export const DataLoadingScreen = ({ 
+  message = "Loading your comprehensive music data...", 
+  error = null,
+  onRetry,
+}: DataLoadingScreenProps) => {
   const [progress, setProgress] = React.useState(0);
   const [currentFactIndex, setCurrentFactIndex] = React.useState(0);
   const [shuffledFacts, setShuffledFacts] = React.useState<string[]>([]);
@@ -105,6 +111,23 @@ export const DataLoadingScreen = ({ message = "Loading your comprehensive music 
               Loading up to 2000 tracks and artists for comprehensive analysis
             </p>
           </div>
+
+          {/* OAuth Error Handling */}
+          {error && (
+            <div className="text-center space-y-3">
+              <p className="text-sm text-destructive font-medium">
+                {error}
+              </p>
+              {onRetry && (
+                <button
+                  className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                  onClick={onRetry}
+                >
+                  Retry
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Feature Highlights */}
           <div className="grid grid-cols-3 gap-4 pt-4">

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,19 +39,23 @@ const App = () => (
           <BrowserRouter>
             <ApiErrorBoundary>
               <Routes>
+                {/* Public landing page */}
+                <Route path="/" element={<Index />} />
+
+                {/* Authenticated dashboard */}
+                <Route 
+                  path="/dashboard" 
+                  element={<AuthGuard dashboardComponent={<Dashboard />} />} 
+                />
+
+                {/* Legacy /index route for backward compatibility */}
                 <Route path="/index" element={<Index />} />
+
+                {/* Other routes */}
                 <Route path="/sandbox" element={<SandboxMode />} />
                 <Route path="/callback" element={<CallbackPage />} />
                 <Route path="/help" element={<HelpPage />} />
                 <Route path="/legal" element={<LegalPage />} />
-                <Route 
-                  path="/" 
-                  element={
-                    <AuthGuard 
-                      dashboardComponent={<Dashboard />}
-                    />
-                  } 
-                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ApiErrorBoundary>

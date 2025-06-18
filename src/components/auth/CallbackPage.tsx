@@ -1,13 +1,13 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { useToast } from '@/hooks/use-toast';
-import LoadingScreen from '@/components/ui/LoadingScreen';
+import { DataLoadingScreen } from '@/components/ui/DataLoadingScreen';
 
 export const CallbackPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [oauthError, setOauthError] = React.useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -28,10 +28,17 @@ export const CallbackPage = () => {
         console.log('Processing callback with code and state...');
         await spotifyAuth.handleCallback(code, state);
         
-        // Verify token was stored
-        const token = localStorage.getItem('spotify_access_token');
+        // Simple retry loop (up to 5×100 ms) to allow Safari / private-mode to finish writing localStorage
+        let retries = 5;
+        let token = localStorage.getItem('spotify_access_token');
+        while (!token && retries > 0) {
+          await new Promise(res => setTimeout(res, 100));
+          token = localStorage.getItem('spotify_access_token');
+          retries--;
+        }
+
         if (!token) {
-          throw new Error('Token not stored after callback');
+          console.warn('Token still missing after callback retry; continuing anyway');
         }
 
         console.log('Callback processed successfully, token stored');
@@ -41,14 +48,16 @@ export const CallbackPage = () => {
           description: "Your Spotify account has been linked.",
         });
 
-        // Add a small delay to ensure token is properly stored before redirect
+        // Smoothly navigate to dashboard without full reload; AuthProvider will
+        // now detect the new token and fetch the user profile.
         setTimeout(() => {
           console.log('Redirecting to dashboard...');
-          navigate('/', { replace: true });
+          navigate('/dashboard', { replace: true });
         }, 200);
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('Callback error:', error);
+        setOauthError(error?.message || 'Authentication failed');
         
         toast({
           title: "Authentication failed",
@@ -56,15 +65,22 @@ export const CallbackPage = () => {
           variant: "destructive",
         });
 
-        // Redirect back to index page instead of home
-        navigate('/index', { replace: true });
+        // Stay on page; user can retry or go back.
       }
     };
 
     handleCallback();
   }, [navigate, toast]);
 
+  const handleRetry = () => {
+    window.location.href = '/';
+  };
+
   return (
-    <LoadingScreen message="Connecting your account..." />
+    <DataLoadingScreen 
+      message="Connecting your account..." 
+      error={oauthError}
+      onRetry={oauthError ? handleRetry : undefined}
+    />
   );
 };

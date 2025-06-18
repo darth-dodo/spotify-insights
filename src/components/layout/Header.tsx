@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,7 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { Menu, LogOut, Settings, User, Home, Shield, HelpCircle, FileText } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface HeaderProps {
@@ -18,13 +17,12 @@ interface HeaderProps {
 export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
 
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/index', { replace: true });
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -40,12 +38,12 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
       localStorage.removeItem('spotify_user');
       localStorage.removeItem('spotify_token_expires_at');
       // Navigate to landing page and replace history
-      navigate('/index', { replace: true });
+      navigate('/', { replace: true });
       // Force page reload to ensure clean state
       window.location.reload();
     } else {
-      // If user is not logged in, go to index page
-      navigate('/index', { replace: true });
+      // If user is not logged in, go to landing page
+      navigate('/', { replace: true });
     }
   };
 

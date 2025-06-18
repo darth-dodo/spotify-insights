@@ -1,4 +1,3 @@
-
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { sanitizeUserData } from '@/lib/data-utils';
 import type { User } from './useAuthState';
@@ -29,7 +28,8 @@ export const useAuthHelpers = (
         'spotify_refresh_token', 
         'spotify_token_expiry',
         'user_profile',
-        'user_profile_image'
+        'user_profile_image',
+        'auth_state_list'
       ];
       
       keysToRemove.forEach(key => {

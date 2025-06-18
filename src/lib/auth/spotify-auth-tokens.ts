@@ -1,4 +1,3 @@
-
 import { isDemoMode, getClientId, getRedirectUri } from './spotify-auth-core';
 
 export const handleCallback = async (code: string, state: string): Promise<void> => {
@@ -6,12 +5,20 @@ export const handleCallback = async (code: string, state: string): Promise<void>
     throw new Error('Callback should not be called in demo/sandbox mode');
   }
 
-  const storedState = localStorage.getItem('auth_state');
-  const codeVerifier = localStorage.getItem('code_verifier');
+  const storedListRaw = localStorage.getItem('auth_state_list');
+  const storedList: string[] = storedListRaw ? JSON.parse(storedListRaw) : [];
 
-  if (state !== storedState) {
+  if (!storedList.includes(state)) {
     throw new Error('State mismatch error');
   }
+
+  const updatedList = storedList.filter(s => s !== state);
+  localStorage.setItem('auth_state_list', JSON.stringify(updatedList));
+
+  localStorage.removeItem('auth_state');
+
+  const codeVerifierKey = `code_verifier_${state}`;
+  const codeVerifier = localStorage.getItem(codeVerifierKey);
 
   if (!codeVerifier) {
     throw new Error('Code verifier not found');
@@ -44,8 +51,7 @@ export const handleCallback = async (code: string, state: string): Promise<void>
   localStorage.setItem('spotify_refresh_token', tokens.refresh_token);
   localStorage.setItem('spotify_token_expiry', (Date.now() + tokens.expires_in * 1000).toString());
 
-  localStorage.removeItem('code_verifier');
-  localStorage.removeItem('auth_state');
+  localStorage.removeItem(codeVerifierKey);
 };
 
 export const refreshAccessToken = async (refreshToken: string): Promise<any> => {
@@ -86,8 +92,7 @@ export const logout = async (): Promise<void> => {
   localStorage.removeItem('spotify_token_expiry');
   localStorage.removeItem('user_profile');
   localStorage.removeItem('user_profile_image');
-  localStorage.removeItem('code_verifier');
-  localStorage.removeItem('auth_state');
+  localStorage.removeItem('auth_state_list');
   
   console.log('All authentication data cleared from logout');
 };

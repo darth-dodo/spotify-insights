@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import type { User } from './useAuthState';
 
@@ -38,7 +37,6 @@ export const useAuthInitialization = (
 
         // If we're on root path without any token, enter demo mode
         if (isOnRootPath && !token) {
-          console.log('No token found on root path, entering demo mode');
           setIsLoading(false);
           return;
         }

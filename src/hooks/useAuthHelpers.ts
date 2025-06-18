@@ -1,6 +1,6 @@
-
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { sanitizeUserData } from '@/lib/data-utils';
+import { useLoading } from '@/components/providers/LoadingProvider';
 import type { User } from './useAuthState';
 
 const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
@@ -9,6 +9,8 @@ export const useAuthHelpers = (
   setUser: (user: User | null) => void,
   setError: (error: string | null) => void
 ) => {
+  const { setStage } = useLoading();
+
   // Helper function to safely store profile image
   const storeProfileImage = (userData: any) => {
     try {
@@ -29,7 +31,8 @@ export const useAuthHelpers = (
         'spotify_refresh_token', 
         'spotify_token_expiry',
         'user_profile',
-        'user_profile_image'
+        'user_profile_image',
+        'auth_state_list'
       ];
       
       keysToRemove.forEach(key => {
@@ -52,6 +55,7 @@ export const useAuthHelpers = (
       setUser(sanitizedUser);
       localStorage.setItem('user_profile', JSON.stringify(sanitizedUser));
       storeProfileImage(userData);
+      setStage('profile');
       
       console.log('User data fetched and stored successfully:', sanitizedUser);
       return sanitizedUser;

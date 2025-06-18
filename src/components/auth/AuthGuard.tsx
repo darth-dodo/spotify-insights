@@ -1,10 +1,10 @@
-
 import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { BlurLoader } from '@/components/ui/BlurLoader';
 import { ErrorDialog } from '@/components/auth/ErrorDialog';
 import { spotifyPlaybackSDK } from '@/lib/spotify-playback-sdk';
 import { LandingPage } from '@/components/LandingPage';
+import { DataLoadingScreen } from '@/components/ui/DataLoadingScreen';
 
 interface AuthGuardProps {
   children?: React.ReactNode;
@@ -61,7 +61,7 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     return dashboardComponent || children;
   }
 
-  // For root path without authentication, show landing page with blur loader
+  // Root (public) path without authentication → Landing page
   if (window.location.pathname === '/' && !user) {
     console.log('No authentication on root path, showing landing page');
     return (
@@ -78,7 +78,13 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     );
   }
 
-  // For other paths or explicit login, show landing page with blur loader
+  // For dashboard path while authentication is still processing, show data loading screen
+  if (window.location.pathname.startsWith('/dashboard') && !user) {
+    console.log('Awaiting authentication on /dashboard, waiting for profile');
+    return null;
+  }
+
+  // Fallback: show landing page for any other unauthenticated path
   console.log('User not authenticated, showing landing page');
   return (
     <BlurLoader isLoading={isLoading}>

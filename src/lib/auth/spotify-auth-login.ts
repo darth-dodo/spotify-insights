@@ -1,4 +1,3 @@
-
 import { isDemoMode, getClientId, getRedirectUri, getScopes } from './spotify-auth-core';
 import { generateRandomString, sha256, base64encode } from './spotify-auth-crypto';
 
@@ -22,8 +21,13 @@ export const login = async (): Promise<void> => {
   const codeChallenge = base64encode(hashed);
   const state = generateRandomString(16);
 
-  localStorage.setItem('code_verifier', codeVerifier);
-  localStorage.setItem('auth_state', state);
+  // Store verifier keyed by state to support parallel auth attempts
+  localStorage.setItem(`code_verifier_${state}`, codeVerifier);
+  // Support multiple parallel auth requests (e.g., accidental double-click)
+  const existingStatesRaw = localStorage.getItem('auth_state_list');
+  const stateList: string[] = existingStatesRaw ? JSON.parse(existingStatesRaw) : [];
+  stateList.push(state);
+  localStorage.setItem('auth_state_list', JSON.stringify(stateList));
 
   const authUrl = new URL('https://accounts.spotify.com/authorize');
   const params = {

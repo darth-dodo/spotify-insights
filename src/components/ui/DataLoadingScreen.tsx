@@ -5,10 +5,18 @@ import { Music, Users, Clock, Database } from 'lucide-react';
 
 interface DataLoadingScreenProps {
   message?: string;
+  error?: string | null;
+  onRetry?: () => void;
+  forcedPct?: number;
 }
 
-export const DataLoadingScreen = ({ message = "Loading your comprehensive music data..." }: DataLoadingScreenProps) => {
-  const [progress, setProgress] = React.useState(0);
+export const DataLoadingScreen = ({ 
+  message = "Loading your comprehensive music data...", 
+  error = null,
+  onRetry,
+  forcedPct,
+}: DataLoadingScreenProps) => {
+  const [progress, setProgress] = React.useState(forcedPct ?? 0);
   const [currentFactIndex, setCurrentFactIndex] = React.useState(0);
   const [shuffledFacts, setShuffledFacts] = React.useState<string[]>([]);
 
@@ -42,24 +50,32 @@ export const DataLoadingScreen = ({ message = "Loading your comprehensive music 
   }, []);
 
   React.useEffect(() => {
+    // Update progress if controlled externally
+    if (forcedPct !== undefined) {
+      setProgress(forcedPct);
+      return;
+    }
+
+    // Internal auto-increment for standalone usage
     const progressTimer = setInterval(() => {
       setProgress((oldProgress) => {
-        if (oldProgress === 100) {
-          return 0;
+        if (oldProgress >= 100) {
+          return 100;
         }
         const diff = Math.random() * 10;
         return Math.min(oldProgress + diff, 95);
       });
     }, 500);
 
+    return () => clearInterval(progressTimer);
+  }, [forcedPct]);
+
+  // Facts rotation remains regardless of external control
+  React.useEffect(() => {
     const factTimer = setInterval(() => {
       setCurrentFactIndex((prevIndex) => (prevIndex + 1) % shuffledFacts.length);
-    }, 3000); // Change fact every 3 seconds
-
-    return () => {
-      clearInterval(progressTimer);
-      clearInterval(factTimer);
-    };
+    }, 3000);
+    return () => clearInterval(factTimer);
   }, [shuffledFacts.length]);
 
   return (
@@ -100,11 +116,31 @@ export const DataLoadingScreen = ({ message = "Loading your comprehensive music 
 
           {/* Progress Bar */}
           <div className="space-y-2">
-            <Progress value={progress} className="w-full" />
+            <Progress 
+              value={progress} 
+              className="w-full transition-all duration-500 ease-in-out" 
+            />
             <p className="text-xs text-muted-foreground">
               Loading up to 2000 tracks and artists for comprehensive analysis
             </p>
           </div>
+
+          {/* OAuth Error Handling */}
+          {error && (
+            <div className="text-center space-y-3">
+              <p className="text-sm text-destructive font-medium">
+                {error}
+              </p>
+              {onRetry && (
+                <button
+                  className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                  onClick={onRetry}
+                >
+                  Retry
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Feature Highlights */}
           <div className="grid grid-cols-3 gap-4 pt-4">

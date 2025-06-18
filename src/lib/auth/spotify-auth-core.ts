@@ -1,4 +1,3 @@
-
 import { spotifyAPI } from '../spotify-api';
 
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
@@ -18,8 +17,13 @@ export const getClientId = () => CLIENT_ID;
 export const getRedirectUri = () => REDIRECT_URI;
 
 export const isDemoMode = (): boolean => {
-  return window.location.pathname === '/sandbox' || 
-    (window.location.pathname === '/' && !localStorage.getItem('spotify_access_token'));
+  const envDemo = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
+  const onSandbox = window.location.pathname === '/sandbox';
+
+  // Demo mode is active only when explicitly enabled via env flag or when the user
+  // is on the dedicated /sandbox route. The root landing page is no longer treated
+  // as implicit demo mode now that we have a separate /dashboard route.
+  return envDemo || onSandbox;
 };
 
 export const isAuthenticated = (): boolean => {

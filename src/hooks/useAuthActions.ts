@@ -1,5 +1,5 @@
-
 import { spotifyAuth } from '@/lib/spotify-auth';
+import { spotifyPlaybackSDK } from '@/lib/spotify-playback-sdk';
 import type { User } from './useAuthState';
 
 const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
@@ -30,6 +30,11 @@ export const useAuthActions = (
           console.log('Dummy data login completed, fetching user data...');
           await fetchAndSetUser();
           console.log('User data set successfully after dummy login');
+
+          // Redirect directly to dashboard for demo mode
+          if (window.location.pathname !== '/dashboard') {
+            window.location.assign('/dashboard');
+          }
         }
       }
       // For real auth, the redirect will handle the rest and the useEffect will pick up the changes
@@ -55,6 +60,13 @@ export const useAuthActions = (
       console.log('Logging out user...');
       setUser(null);
       setError(null);
+      
+      // Disconnect playback SDK first to avoid lingering connections
+      try {
+        spotifyPlaybackSDK.disconnect();
+      } catch (sdkError) {
+        console.warn('Playback SDK disconnect error:', sdkError);
+      }
       
       // Use the enhanced logout from spotifyAuth
       await spotifyAuth.logout();

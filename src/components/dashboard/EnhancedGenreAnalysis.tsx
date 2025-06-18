@@ -10,24 +10,23 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts';
 import { Music, TrendingUp, Users, Clock, Disc, Star, Eye, BarChart3 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
-import { calculateGenreAnalysis } from '@/lib/spotify-data-utils';
+import { calculateGenreAnalysis, mapUITimeRangeToAPI, getTimeRangeLabel } from '@/lib/spotify-data-utils';
 
 export const EnhancedGenreAnalysis = () => {
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const [timeRange, setTimeRange] = useState('6months');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
 
   // Use centralized store with full 2000 item dataset
   const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
-  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
-  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
-  const storeLoading = tracksLoading || artistsLoading;
+  const apiTimeRange = mapUITimeRangeToAPI(timeRange);
+  const { data: tracks = [], isLoading: enhancedTracksLoading } = useEnhancedTopTracks(apiTimeRange, 2000);
+  const { data: artists = [], isLoading: enhancedArtistsLoading } = useEnhancedTopArtists(apiTimeRange, 2000);
+  const storeLoading = enhancedTracksLoading || enhancedArtistsLoading;
   const topTracksData = { items: tracks };
   const topArtistsData = { items: artists };
-  const tracksLoading = storeLoading;
-  const artistsLoading = storeLoading;
 
-  const isLoading = tracksLoading || artistsLoading;
+  const isLoading = storeLoading;
 
   // Process genre data from API response
   const genreAnalysis = useMemo(() => {
@@ -160,9 +159,13 @@ export const EnhancedGenreAnalysis = () => {
                 <SelectValue placeholder="Time range" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="short_term">Last 4 Weeks</SelectItem>
-                <SelectItem value="medium_term">Last 6 Months</SelectItem>
-                <SelectItem value="long_term">All Time</SelectItem>
+                              <SelectItem value="1week">Last Week</SelectItem>
+              <SelectItem value="1month">Last Month</SelectItem>
+              <SelectItem value="3months">Last Three Months</SelectItem>
+              <SelectItem value="6months">Last Six Months</SelectItem>
+              <SelectItem value="1year">Last Year</SelectItem>
+              <SelectItem value="2years">Last Two Years</SelectItem>
+              <SelectItem value="alltime">All Time</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell } from 'recharts';
 import { Music, TrendingUp, Clock, Star, Info, Play, Album, Calendar, Sparkles, Target, Zap, Heart, Volume2 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { mapUITimeRangeToAPI, getTimeRangeLabel } from '@/lib/spotify-data-utils';
 import { cn } from '@/lib/utils';
 import { InfoButton } from '@/components/ui/InfoButton';
 
@@ -170,14 +171,15 @@ const TrackDetailModal = ({ track, isOpen, onClose }: TrackDetailModalProps) => 
 };
 
 export const TrackExplorer = () => {
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const [timeRange, setTimeRange] = useState('6months');
   const [selectedTrack, setSelectedTrack] = useState<any>(null);
   const [showTrackModal, setShowTrackModal] = useState(false);
 
   // Use proper Spotify data hooks that handle user vs sandbox mode
   const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
-  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, 2000);
-  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists(timeRange, 2000);
+  const apiTimeRange = mapUITimeRangeToAPI(timeRange);
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks(apiTimeRange, 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists(apiTimeRange, 2000);
 
   const isLoading = tracksLoading || artistsLoading;
 
@@ -185,14 +187,9 @@ export const TrackExplorer = () => {
   const trackAnalysis = useMemo(() => {
     if (!tracks.length || !artists.length) return [];
     
-    // Simulate time filtering by adjusting the dataset size
-    const timeMultiplier = {
-      'short_term': 0.3,
-      'medium_term': 0.7,
-      'long_term': 1.0
-    }[timeRange] || 0.7;
-    
-    const filteredTracks = tracks.slice(0, Math.floor(tracks.length * timeMultiplier));
+    // Use all tracks without any filtering multipliers
+    // Time range filtering is handled by the API layer
+    const filteredTracks = tracks;
     
     return filteredTracks.map((track: any, index: number) => {
       const artist = artists.find((a: any) => 
@@ -394,9 +391,13 @@ export const TrackExplorer = () => {
               <SelectValue placeholder="Time range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="short_term">Last 4 Weeks</SelectItem>
-              <SelectItem value="medium_term">Last 6 Months</SelectItem>
-              <SelectItem value="long_term">All Time</SelectItem>
+              <SelectItem value="1week">Last Week</SelectItem>
+              <SelectItem value="1month">Last Month</SelectItem>
+              <SelectItem value="3months">Last Three Months</SelectItem>
+              <SelectItem value="6months">Last Six Months</SelectItem>
+              <SelectItem value="1year">Last Year</SelectItem>
+              <SelectItem value="2years">Last Two Years</SelectItem>
+              <SelectItem value="alltime">All Time</SelectItem>
             </SelectContent>
           </Select>
         </div>

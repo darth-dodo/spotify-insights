@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { 
   AreaChart, 
@@ -43,7 +44,7 @@ interface HeatmapData {
 
 export const ListeningActivity = () => {
   const { useEnhancedTopTracks, useEnhancedTopArtists, useRecentlyPlayed } = useSpotifyData();
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const [timeRange, setTimeRange] = useState('6months');
   const [limit, setLimit] = useState(1000);
 
   const { data: topTracks = [], isLoading: tracksLoading } = useEnhancedTopTracks(timeRange, limit);
@@ -144,29 +145,20 @@ export const ListeningActivity = () => {
           <CardDescription>Adjust the time range for your listening data</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              variant={timeRange === 'short_term' ? 'default' : 'outline'} 
-              size="sm" 
-              onClick={() => setTimeRange('short_term')}
-            >
-              Last Month
-            </Button>
-            <Button 
-              variant={timeRange === 'medium_term' ? 'default' : 'outline'} 
-              size="sm" 
-              onClick={() => setTimeRange('medium_term')}
-            >
-              Last 6 Months
-            </Button>
-            <Button 
-              variant={timeRange === 'long_term' ? 'default' : 'outline'} 
-              size="sm" 
-              onClick={() => setTimeRange('long_term')}
-            >
-              All Time
-            </Button>
-          </div>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1week">Last Week</SelectItem>
+              <SelectItem value="1month">Last Month</SelectItem>
+              <SelectItem value="3months">Last Three Months</SelectItem>
+              <SelectItem value="6months">Last Six Months</SelectItem>
+              <SelectItem value="1year">Last Year</SelectItem>
+              <SelectItem value="2years">Last Two Years</SelectItem>
+              <SelectItem value="alltime">All Time</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 

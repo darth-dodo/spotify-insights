@@ -10,19 +10,20 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Music, Search, TrendingUp, Users, Star, Filter, Grid, List, Loader2 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
-import { calculateGenreAnalysis, getTopTracks, getTopArtists, getTracksByGenre } from '@/lib/spotify-data-utils';
+import { calculateGenreAnalysis, getTopTracks, getTopArtists, getTracksByGenre, mapUITimeRangeToAPI, getTimeRangeLabel } from '@/lib/spotify-data-utils';
 import { cn } from '@/lib/utils';
 
 export const GenreExplorer = () => {
-  const [timeRange, setTimeRange] = useState('medium_term');
+  const [timeRange, setTimeRange] = useState('6months');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'popularity' | 'artists' | 'tracks'>('popularity');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   const { useEnhancedTopTracks, useEnhancedTopArtists } = useSpotifyData();
-  const { data: tracksData, isLoading: tracksLoading } = useEnhancedTopTracks(timeRange);
-  const { data: artistsData, isLoading: artistsLoading } = useEnhancedTopArtists(timeRange);
+  const apiTimeRange = mapUITimeRangeToAPI(timeRange);
+  const { data: tracksData, isLoading: tracksLoading } = useEnhancedTopTracks(apiTimeRange, 2000);
+  const { data: artistsData, isLoading: artistsLoading } = useEnhancedTopArtists(apiTimeRange, 2000);
 
   const isLoading = tracksLoading || artistsLoading || !tracksData || !artistsData;
 
@@ -128,9 +129,13 @@ export const GenreExplorer = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="short_term">Last 4 Weeks</SelectItem>
-                <SelectItem value="medium_term">Last 6 Months</SelectItem>
-                <SelectItem value="long_term">All Time</SelectItem>
+                              <SelectItem value="1week">Last Week</SelectItem>
+              <SelectItem value="1month">Last Month</SelectItem>
+              <SelectItem value="3months">Last Three Months</SelectItem>
+              <SelectItem value="6months">Last Six Months</SelectItem>
+              <SelectItem value="1year">Last Year</SelectItem>
+              <SelectItem value="2years">Last Two Years</SelectItem>
+              <SelectItem value="alltime">All Time</SelectItem>
               </SelectContent>
             </Select>
           </div>

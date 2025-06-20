@@ -137,10 +137,10 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
           link: '/help'
         },
         {
-          id: 'stats-nerds',
-          title: 'Stats for Nerds',
+          id: 'calculations',
+          title: 'Calculations Explained',
           icon: BarChart3,
-          link: '/stats-nerds'
+          link: '/calculations'
         }
       ]
     }

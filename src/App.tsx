@@ -15,7 +15,7 @@ import { SandboxMode } from "@/components/SandboxMode";
 import { HelpPage } from "@/pages/HelpPage";
 import { LegalPage } from "@/pages/LegalPage";
 import { DataQualityPage } from "@/pages/DataQualityPage";
-import { StatsNerdsPage } from "@/pages/StatsNerdsPage";
+import { MetricCalculationsPage } from "@/pages/MetricCalculationsPage";
 import Index from "@/pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -63,7 +63,7 @@ const App = () => (
                 <Route path="/help" element={<HelpPage />} />
                 <Route path="/legal" element={<LegalPage />} />
                 <Route path="/data-quality" element={<DataQualityPage />} />
-                <Route path="/stats-nerds" element={<StatsNerdsPage />} />
+                <Route path="/calculations" element={<MetricCalculationsPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ApiErrorBoundary>

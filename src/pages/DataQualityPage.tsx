@@ -109,8 +109,8 @@ export const DataQualityPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate('/stats-nerds')}>
-              View Full Formula Reference
+            <Button onClick={() => navigate('/calculations')}>
+              Learn How Metrics Are Calculated
             </Button>
           </CardContent>
         </Card>

@@ -4,23 +4,30 @@ Welcome to the comprehensive documentation for Spotify Insights! This documentat
 
 ## 🚀 Quick Navigation
 
-### 📊 **Core Analytics Documentation**
+Below is an ordered index of the most relevant documentation. Each link jumps to the referenced markdown file in this `docs/` folder.
 
-#### 📈 [METRIC_CALCULATIONS.md](./METRIC_CALCULATIONS.md)
-**Complete metric calculation reference**
-- 30+ metric formulas with detailed explanations
-- Data sources and Spotify API integration
-- Processing pipeline and data flow
-- **Updated**: Includes new Library Health metrics (7 categories)
-- **Use for**: Understanding calculations, adding new metrics, debugging
+1. **Core Analytics**
+   - 📈 **[Metric Calculations](./METRIC_CALCULATIONS.md)** – full formula reference & data-flow explanations.
+   - ⚡ **[Metrics Quick Reference](./METRICS_QUICK_REFERENCE.md)** – cheat-sheet tables for fast lookup.
 
-#### ⚡ [METRICS_QUICK_REFERENCE.md](./METRICS_QUICK_REFERENCE.md)
-**Developer cheat sheet**
-- Quick formula lookup tables
-- Common patterns and coding standards
-- Time range mappings and mood categories
-- **Updated**: Includes Library Health formulas
-- **Use for**: Quick lookups during development
+2. **System & Architecture**
+   - 🏗️ **[System Architecture](./SYSTEM_ARCHITECTURE.md)** – high-level component & data-flow overview.
+   - 🛠️ **[Engineering](./ENGINEERING.md)** – coding standards, testing, CI/CD.
+   - 🗄️ **[Extended Data Architecture](./EXTENDED_DATA_ARCHITECTURE.md)** – pipelines, caching, performance.
+
+3. **Design & UX**
+   - 🎨 **[Design System](./DESIGN_SYSTEM.md)** – component library, tokens & patterns.
+   - 📱 **[Product Design](./PRODUCT_DESIGN.md)** – user-journeys & accessibility.
+
+4. **Security & Privacy**
+   - 🛡️ **[Security](./SECURITY.md)** – auth, threat-model, best practices.
+   - 🔐 **[Privacy Architecture](./PRIVACY_ARCHITECTURE.md)** – GDPR compliance & user-control.
+
+5. **Guides & References**
+   - 📊 **[Metrics Quick Reference](./METRICS_QUICK_REFERENCE.md)** – (duplicate shortcut for convenience).
+   - ❓ **[Help / FAQ](../README.md)** – root-level readme for high-level project info.
+
+---
 
 ## 🎯 Key Concepts
 
@@ -89,7 +96,7 @@ Spotify API → Data Fetching → Processing → Enhancement → UI Display
 
 #### **🏥 Library Health (Enhanced)**
 - **7 Health Metrics**: Genre diversity, music freshness, artist balance, mood variety, listening depth, era diversity, discovery momentum
-- **Intelligent Recommendations**: AI-powered suggestions with specific action steps
+- **Smart Recommendations**: Contextual suggestions with specific action steps
 - **Weighted Scoring**: Sophisticated health assessment with detailed breakdowns
 - **Personalized Insights**: Dynamic insights based on actual listening patterns
 
@@ -208,4 +215,4 @@ When making changes to metric calculations:
 ---
 
 *Documentation maintained by the Spotify Insights development team*
-*Last updated: June 2025* 
+*Last updated: 20 June 2025* 

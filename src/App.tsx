@@ -14,6 +14,8 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { SandboxMode } from "@/components/SandboxMode";
 import { HelpPage } from "@/pages/HelpPage";
 import { LegalPage } from "@/pages/LegalPage";
+import { DataQualityPage } from "@/pages/DataQualityPage";
+import { MetricCalculationsPage } from "@/pages/MetricCalculationsPage";
 import Index from "@/pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -60,6 +62,8 @@ const App = () => (
                 <Route path="/callback" element={<CallbackPage />} />
                 <Route path="/help" element={<HelpPage />} />
                 <Route path="/legal" element={<LegalPage />} />
+                <Route path="/data-quality" element={<DataQualityPage />} />
+                <Route path="/calculations" element={<MetricCalculationsPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ApiErrorBoundary>

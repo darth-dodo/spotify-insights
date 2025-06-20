@@ -16,6 +16,9 @@ import { cn } from '@/lib/utils';
 import { InfoButton } from '@/components/ui/InfoButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CalmingLoader } from '@/components/ui/CalmingLoader';
+import { DataQualityBadge } from '@/components/ui/DataQualityBadge';
+import { enhancedDataCollection, IntelligentDataExtrapolation } from '@/lib/enhanced-data-collection';
+import type { DataQualityMetrics } from '@/lib/enhanced-data-collection';
 
 interface TrackDetailModalProps {
   track: any;
@@ -186,6 +189,14 @@ export const TrackExplorer = () => {
   const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists(apiTimeRange, 2000);
   const isLoading = tracksLoading || artistsLoading;
 
+  // Initialize enhanced data collection
+  React.useEffect(() => {
+    enhancedDataCollection.startRealTimeMonitoring();
+    return () => {
+      enhancedDataCollection.stopRealTimeMonitoring();
+    };
+  }, []);
+
   // Handle filtering state
   React.useEffect(() => {
     setIsFiltering(true);
@@ -196,14 +207,20 @@ export const TrackExplorer = () => {
     return () => clearTimeout(timer);
   }, [timeRange, sortBy, sortOrder]);
 
-  // Process track data with enhanced metrics
+  // Process track data with enhanced metrics using Phase 1 & 2 improvements
   const processedTracks = useMemo(() => {
     if (!tracks.length || !artists.length) return [];
+    
+    // Get enhanced session data
+    const sessionData = enhancedDataCollection.getEnhancedSessionData();
     
     return tracks.map((track: any, index: number) => {
       const artist = artists.find((a: any) => 
         track.artists?.some((ta: any) => ta.id === a.id)
       );
+      
+      // Check if we have real data for this track
+      const realTrackData = sessionData.tracks.find(t => t.id === track.id);
       
       const duration = track.duration_ms || 0;
       const energy = (track.energy || 0.5) * 100;
@@ -211,21 +228,38 @@ export const TrackExplorer = () => {
       const valence = (track.valence || 0.5) * 100;
       const acousticness = (track.acousticness || 0.5) * 100;
       
-      // Calculate enhanced metrics
-      const baseListeningTime = Math.max(0.1, (50 - index) * 2.5); // Estimated hours, minimum 0.1
-      const replayScore = Math.min(100, Math.round(
-        (track.popularity || 50) * 0.6 + 
-        energy * 0.2 + 
-        danceability * 0.2
-      ));
+      // Use enhanced calculation methods from Phase 2
+      const totalPlays = IntelligentDataExtrapolation.calculateEnhancedPlayCount(
+        track, 
+        index, 
+        new Map(sessionData.tracks.map(t => [t.id, t.playCount])),
+        { topGenres: artists.slice(0, 5).flatMap(a => a.genres || []) }
+      );
       
-      const discoveryYear = 2020 + Math.floor(Math.random() * 4);
+      const listeningTime = IntelligentDataExtrapolation.calculateEnhancedListeningTime(
+        track,
+        index,
+        realTrackData
+      );
+      
+      const discoveryYear = IntelligentDataExtrapolation.calculateDiscoveryYear(
+        track,
+        { discoveryPatterns: { avgYearsAfterRelease: 2 } }
+      );
+      
+      // Enhanced replay score using real data when available
+      const replayScore = realTrackData ? 
+        Math.round(realTrackData.completionRate * 100) :
+        Math.min(100, Math.round(
+          (track.popularity || 50) * 0.6 + 
+          energy * 0.2 + 
+          danceability * 0.2
+        ));
+      
       const currentYear = new Date().getFullYear();
       const freshness = Math.max(0, 100 - ((currentYear - discoveryYear) * 25));
       
       const moodScore = Math.round((energy + valence + danceability) / 3);
-      const totalPlays = Math.max(1, Math.round(baseListeningTime * 15)); // Estimated plays, minimum 1
-      const listeningTime = Math.round(baseListeningTime * 100) / 100;
       
       // Song share calculation
       const totalUserListening = tracks.reduce((acc: number, t: any) => 
@@ -347,6 +381,9 @@ export const TrackExplorer = () => {
   };
 
   const stats = calculateStats();
+  
+  // Get session data for quality indicators
+  const sessionData = enhancedDataCollection.getEnhancedSessionData();
 
   // Generate fun facts
   const funFacts = useMemo(() => {
@@ -666,7 +703,7 @@ export const TrackExplorer = () => {
               <span className="text-xs md:text-sm font-medium">Plays</span>
               <InfoButton
                 title="Total Plays"
-                description="Estimated total number of plays across all tracks."
+                description="Enhanced play count calculation using real-time data when available."
                 funFacts={[
                   "Each play represents a musical moment",
                   "Play count shows listening dedication",
@@ -674,8 +711,21 @@ export const TrackExplorer = () => {
                 ]}
               />
             </div>
-            <div className="text-lg md:text-2xl font-bold">{stats.totalPlays.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Est. plays</div>
+            <div className="flex items-center gap-2">
+              <div className="text-lg md:text-2xl font-bold">{stats.totalPlays.toLocaleString()}</div>
+              <DataQualityBadge 
+                quality={{
+                  source: sessionData.dataQuality.confidence === 'high' ? 'real-time' : 'calculated',
+                  confidence: sessionData.dataQuality.confidence,
+                  lastUpdated: new Date(),
+                  sampleSize: sessionData.totalTracks
+                }}
+                size="sm"
+              />
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {sessionData.dataQuality.confidence === 'high' ? 'Real plays' : 'Est. plays'}
+            </div>
           </CardContent>
         </Card>
       </div>

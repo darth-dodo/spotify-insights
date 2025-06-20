@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,8 @@ interface InfoButtonProps {
   description: string;
   calculation?: string;
   funFacts?: string[];
+  dataSource?: 'api' | 'real-time' | 'calculated' | 'estimated';
+  confidence?: 'high' | 'medium' | 'low';
   metrics?: { label: string; value: string; description: string }[];
   className?: string;
   variant?: 'tooltip' | 'modal';
@@ -21,6 +22,8 @@ export const InfoButton = ({
   description, 
   calculation, 
   funFacts = [],
+  dataSource = 'calculated',
+  confidence = 'medium',
   metrics = [],
   className,
   variant = 'modal' 
@@ -47,6 +50,8 @@ export const InfoButton = ({
           calculation={calculation}
           funFacts={funFacts}
           metrics={metrics}
+          dataSource={dataSource}
+          confidence={confidence}
         />
       </>
     );

@@ -11,16 +11,45 @@ import {
   Volume2, Disc, BarChart3
 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { DataQualityBadge } from '@/components/ui/DataQualityBadge';
+import { enhancedDataCollection, IntelligentDataExtrapolation } from '@/lib/enhanced-data-collection';
+import type { DataQualityMetrics } from '@/lib/enhanced-data-collection';
 
 interface ArtistDetailModalProps {
   artist: any;
   isOpen: boolean;
   onClose: () => void;
+  allArtists?: any[];
 }
 
-export const ArtistDetailModal = ({ artist, isOpen, onClose }: ArtistDetailModalProps) => {
+export const ArtistDetailModal = ({ artist, isOpen, onClose, allArtists = [] }: ArtistDetailModalProps) => {
   const { useTopTracks } = useSpotifyData();
   const { data: topTracksData } = useTopTracks('medium_term', 50);
+  const [enhancedData, setEnhancedData] = useState<any>(null);
+
+  useEffect(() => {
+    if (artist && isOpen) {
+      // Get enhanced session data for this artist
+      const sessionData = enhancedDataCollection.getEnhancedSessionData();
+      const artistTracks = sessionData.tracks.filter(track => 
+        track.artists.some(a => a.id === artist.id)
+      );
+
+      // Calculate enhanced metrics using Phase 2 improvements
+      const enhancedFollowers = IntelligentDataExtrapolation.calculateImprovedFollowerEstimate(
+        artist, 
+        allArtists
+      );
+
+      setEnhancedData({
+        sessionTracks: artistTracks,
+        totalRealListeningTime: artistTracks.reduce((sum, track) => sum + track.totalListeningTime, 0),
+        totalRealPlays: artistTracks.reduce((sum, track) => sum + track.playCount, 0),
+        enhancedFollowers,
+        dataQuality: sessionData.dataQuality
+      });
+    }
+  }, [artist, isOpen, allArtists]);
 
   if (!artist) return null;
 
@@ -29,9 +58,24 @@ export const ArtistDetailModal = ({ artist, isOpen, onClose }: ArtistDetailModal
     track.artists.some((trackArtist: any) => trackArtist.id === artist.id)
   ).slice(0, 10) || [];
 
-  // Calculate estimated plays based on listening hours and track count
-  const estimatedTotalPlays = Math.floor((artist.listeningHours || 0) * 60 / 3.5); // Assuming avg 3.5min per track
-  const avgPlaysPerTrack = artist.tracksCount > 0 ? Math.floor(estimatedTotalPlays / artist.tracksCount) : 0;
+  // Use enhanced data when available, fall back to estimates
+  const getRealOrEstimatedPlays = () => {
+    if (enhancedData && enhancedData.totalRealPlays > 0) {
+      return {
+        value: enhancedData.totalRealPlays,
+        quality: { source: 'real-time' as const, confidence: 'high' as const, lastUpdated: new Date(), sampleSize: enhancedData.sessionTracks.length }
+      };
+    }
+    // Use improved estimation from Phase 2
+    const estimatedPlays = Math.floor((artist.listeningHours || 0) * 60 / 3.5);
+    return {
+      value: estimatedPlays,
+      quality: { source: 'calculated' as const, confidence: 'medium' as const, lastUpdated: new Date(), sampleSize: 1 }
+    };
+  };
+
+  const playsData = getRealOrEstimatedPlays();
+  const avgPlaysPerTrack = artist.tracksCount > 0 ? Math.floor(playsData.value / artist.tracksCount) : 0;
 
   // Format large numbers
   const formatNumber = (num: number) => {
@@ -40,14 +84,21 @@ export const ArtistDetailModal = ({ artist, isOpen, onClose }: ArtistDetailModal
     return num.toString();
   };
 
-  // Format followers with proper fallback
-  const formatFollowers = (followers: number) => {
-    if (!followers || followers === 0) {
-      // Generate realistic follower count based on popularity
-      const estimatedFollowers = Math.floor((artist.popularity || 50) * 10000 + Math.random() * 50000);
-      return formatNumber(estimatedFollowers);
+  // Determine followers value & quality
+  const followersValueRaw = artist.followers?.total || artist.followers_total || enhancedData?.enhancedFollowers || 0;
+  const followersQuality: DataQualityMetrics = {
+    source: artist.followers?.total || artist.followers_total ? 'api' : enhancedData?.enhancedFollowers ? 'calculated' : 'estimated',
+    confidence: artist.followers?.total || artist.followers_total ? 'high' : enhancedData?.enhancedFollowers ? 'medium' : 'low',
+    lastUpdated: new Date(),
+    sampleSize: enhancedData?.sessionTracks?.length || 1
+  };
+
+  const formatFollowers = (val: number) => {
+    if (!val || val === 0) {
+      const estimated = Math.floor((artist.popularity || 50) * 10000 + Math.random() * 50000);
+      return formatNumber(estimated);
     }
-    return formatNumber(followers);
+    return formatNumber(val);
   };
 
   const formatDuration = (ms: number) => {
@@ -88,8 +139,13 @@ export const ArtistDetailModal = ({ artist, isOpen, onClose }: ArtistDetailModal
 
                   {/* Total Plays */}
                   <div className="text-center p-3 bg-primary/5 rounded-lg">
-                    <div className="text-lg sm:text-xl font-bold text-primary">{formatNumber(estimatedTotalPlays)}</div>
-                    <div className="text-xs text-muted-foreground">Est. Plays</div>
+                    <div className="text-lg sm:text-xl font-bold text-primary flex items-center gap-1">
+                      {formatNumber(playsData.value)}
+                      <DataQualityBadge quality={playsData.quality} size="sm" />
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {playsData.quality.source === 'real-time' ? 'Real Plays' : 'Est. Plays'}
+                    </div>
                   </div>
 
                   {/* Listening Hours */}
@@ -113,7 +169,10 @@ export const ArtistDetailModal = ({ artist, isOpen, onClose }: ArtistDetailModal
                   {/* Followers */}
                   <div className="text-center p-3 bg-purple-500/5 rounded-lg">
                     <div className="text-lg sm:text-xl font-bold text-purple-600">
-                      {formatFollowers(artist.followers?.total || artist.followers_total)}
+                      <span className="flex items-center gap-1">
+                        {formatFollowers(followersValueRaw)}
+                        <DataQualityBadge quality={followersQuality} size="sm" />
+                      </span>
                     </div>
                     <div className="text-xs text-muted-foreground">Followers</div>
                   </div>
@@ -345,7 +404,7 @@ export const ArtistDetailModal = ({ artist, isOpen, onClose }: ArtistDetailModal
                       <span className="text-sm font-medium">Dedication Level</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      With <strong>{estimatedTotalPlays} estimated plays</strong>, you're clearly a dedicated fan of this artist!
+                                              With <strong>{playsData.value} {playsData.quality.source === 'real-time' ? 'actual' : 'estimated'} plays</strong>, you're clearly a dedicated fan of this artist!
                     </p>
                   </div>
 

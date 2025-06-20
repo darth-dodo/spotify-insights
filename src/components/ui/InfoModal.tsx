@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Info, TrendingUp, Clock, Music, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface InfoModalProps {
   isOpen: boolean;
@@ -12,6 +12,8 @@ interface InfoModalProps {
   calculation?: string;
   funFacts?: string[];
   metrics?: { label: string; value: string; description: string }[];
+  dataSource?: 'api' | 'real-time' | 'calculated' | 'estimated';
+  confidence?: 'high' | 'medium' | 'low';
 }
 
 export const InfoModal = ({ 
@@ -21,11 +23,13 @@ export const InfoModal = ({
   description, 
   calculation, 
   funFacts = [],
-  metrics = []
+  metrics = [],
+  dataSource = 'calculated',
+  confidence = 'medium'
 }: InfoModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Info className="h-5 w-5 text-accent" />
@@ -80,8 +84,39 @@ export const InfoModal = ({
               </div>
             </div>
           )}
+          
+          {/* Data Source */}
+          <div className="p-3 bg-muted/30 rounded-lg border">
+            <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Data Quality
+            </h4>
+            <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
+              We classify every metric by <em>source</em> and <em>confidence</em>.
+              This one is based on <strong>{getSourceLabel(dataSource)}</strong> and currently carries a
+              <strong> {confidence.toUpperCase()}</strong> confidence score.
+              Confidence rises automatically as more real-time data becomes available.
+            </p>
+          </div>
+          <Link to="/data-quality" className="text-xs text-primary underline" onClick={onClose}>
+            Learn more about Data Quality
+          </Link>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
+
+// helper
+function getSourceLabel(src: string) {
+  switch (src) {
+    case 'api':
+      return 'direct Spotify API values';
+    case 'real-time':
+      return 'live session tracking';
+    case 'calculated':
+      return 'advanced calculations (live + historical)';
+    default:
+      return 'heuristic estimates';
+  }
+}

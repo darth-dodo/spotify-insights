@@ -602,5 +602,52 @@ if (!data.length || !otherRequiredData.length) return [];
 
 ---
 
+## 🎯 Quick Formula Reference (Stats for Nerds)
+
+```ts
+// 1. Play Count
+if (realPlayDataAvailable) {
+  playCount = realPlayCount;
+} else {
+  const rankFactor = Math.max(1, 100 - index);
+  const popularity   = (track.popularity ?? 50) / 100;
+  const durationFactor = Math.min(1.5, 240000 / (track.duration_ms || 240000));
+  const genreMultiplier = getGenrePlayabilityFactor(track.genres);
+  const recent = recentPlays.get(track.id) || 0;
+  const userPref = calculateUserPreferenceFactor(track, userPatterns);
+  const base = rankFactor * 0.3 + popularity * 30 * 0.25 + durationFactor * 20 * 0.15 + recent * 5 * 0.15 + userPref * 20 * 0.15;
+  playCount = Math.max(1, Math.round(base * genreMultiplier));
+}
+
+// 2. Listening Time  (hours)
+if (realListeningMs) {
+  listeningHours = Math.round(realListeningMs / 1000 / 60 / 60 * 10) / 10;
+} else {
+  const base = Math.max(0.1, (100 - index) * 1.5);
+  const popularityBonus = (track.popularity ?? 50) / 100 * 0.5;
+  const durationFactor  = Math.min(1.2, (track.duration_ms || 180000) / 180000);
+  listeningHours = Math.round(base * (1 + popularityBonus) * durationFactor * 10) / 10;
+}
+
+// 3. Follower Estimate
+const base10 = 10 ** (3 + (artist.popularity ?? 50) / 100 * 3); // 1K–1M
+const followers = Math.floor(base10 * genreMultiplier * Math.max(0.5, 2 - relativeRank));
+
+// 4. Discovery Year
+if (actualDiscoveryDate) {
+  year = actualDiscoveryDate.getFullYear();
+} else {
+  const avgDelay = userPatterns?.avgYearsAfterRelease ?? 2;
+  year = Math.min(currentYear, releaseYear + avgDelay);
+}
+
+// 5. Confidence Score
+if (observations >= 100) confidence = 'high';
+else if (observations >= 20) confidence = 'medium';
+else confidence = 'low';
+```
+
+---
+
 *Last Updated: June 2025*
 *Version: 1.0* 

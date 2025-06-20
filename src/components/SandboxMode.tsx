@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Dashboard } from '@/components/Dashboard';
@@ -9,6 +8,7 @@ import { DismissibleProjectDisclaimer } from '@/components/ui/DismissibleProject
 import { Footer } from '@/components/layout/Footer';
 import { CyclingTips } from '@/components/ui/CyclingTips';
 import { TestMarker } from '@/components/ui/TestMarker';
+import { clearLocalUserData } from '@/lib/clear-user-data';
 
 // Create a sandbox auth context using the strategy pattern
 const sandboxAuthStrategy = new SandboxAuthStrategy();
@@ -24,6 +24,10 @@ const sandboxAuthContext = {
 };
 
 export const SandboxMode = () => {
+  React.useEffect(() => {
+    clearLocalUserData();
+  }, []);
+
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-background">

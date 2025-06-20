@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Menu, LogOut, Settings, User, Home, Shield, HelpCircle, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { clearLocalUserData } from '@/lib/clear-user-data';
 
 interface HeaderProps {
   user: any;
@@ -30,19 +31,11 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
 
   const handleHomeNavigation = () => {
     if (user) {
-      // Clear all React Query cache
       queryClient.clear();
-      // Clear any stored tokens/data
-      localStorage.removeItem('spotify_access_token');
-      localStorage.removeItem('spotify_refresh_token');
-      localStorage.removeItem('spotify_user');
-      localStorage.removeItem('spotify_token_expires_at');
-      // Navigate to landing page and replace history
+      clearLocalUserData();
       navigate('/', { replace: true });
-      // Force page reload to ensure clean state
       window.location.reload();
     } else {
-      // If user is not logged in, go to landing page
       navigate('/', { replace: true });
     }
   };
@@ -157,10 +150,10 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
             
             <DropdownMenuItem 
               className="flex items-center gap-2 cursor-pointer"
-              onClick={() => navigate('/help')}
+              onClick={() => navigate('/data-quality')}
             >
               <HelpCircle className="h-4 w-4" />
-              Help & Security
+              Data Quality Guide
             </DropdownMenuItem>
             
             <DropdownMenuItem 

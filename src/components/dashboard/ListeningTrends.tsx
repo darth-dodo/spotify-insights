@@ -890,7 +890,7 @@ export const ListeningTrends = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+        </TabsContent>
       </Tabs>
       </div>
     </div>

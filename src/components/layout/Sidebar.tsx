@@ -15,10 +15,13 @@ import {
   Heart,
   Sparkles,
   BarChart3,
-  Gamepad2
+  Gamepad2,
+  Info,
+  Shield
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { clearLocalUserData } from '@/lib/clear-user-data';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -32,26 +35,24 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
   const queryClient = useQueryClient();
 
   const handleBackNavigation = () => {
-    // Clear all React Query cache
+    // Clear caches and local data
     queryClient.clear();
-    // Clear any stored tokens/data
-    localStorage.removeItem('spotify_access_token');
-    localStorage.removeItem('spotify_refresh_token');
-    localStorage.removeItem('spotify_user');
-    // Clear any other cached data
-    localStorage.removeItem('spotify_token_expires_at');
+    clearLocalUserData();
     // Navigate back to landing page and replace history
     navigate('/', { replace: true });
     // Force page reload to ensure clean state
     window.location.reload();
   };
 
-  const handleNavigation = (viewId: string) => {
-    onViewChange(viewId);
-    // Close mobile sidebar immediately
-    if (window.innerWidth < 1024) {
-      onToggle();
+  const handleNavigation = (item: any) => {
+    if (item.link) {
+      navigate(item.link);
+    } else {
+      onViewChange(item.id);
     }
+
+    // Close mobile sidebar on mobile
+    if (window.innerWidth < 1024) onToggle();
   };
 
   // Organized navigation sections
@@ -117,6 +118,31 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
           icon: Settings
         }
       ]
+    },
+    {
+      id: 'info',
+      title: 'Info',
+      icon: Info,
+      items: [
+        {
+          id: 'data-quality',
+          title: 'Data Quality',
+          icon: Shield,
+          link: '/data-quality'
+        },
+        {
+          id: 'data-privacy',
+          title: 'Data Privacy',
+          icon: Shield,
+          link: '/help'
+        },
+        {
+          id: 'stats-nerds',
+          title: 'Stats for Nerds',
+          icon: BarChart3,
+          link: '/stats-nerds'
+        }
+      ]
     }
   ];
 
@@ -172,7 +198,7 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
                           ],
                           item.primary && !isActive && "font-medium"
                         )}
-                        onClick={() => handleNavigation(item.id)}
+                        onClick={() => handleNavigation(item)}
                       >
                         <Icon className={cn(
                           "h-4 w-4 mr-3 transition-colors",

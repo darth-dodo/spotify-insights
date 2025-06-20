@@ -602,7 +602,14 @@ if (!data.length || !otherRequiredData.length) return [];
 
 ---
 
-## 🎯 Quick Formula Reference (Stats for Nerds)
+## 🎯 Quick Formula Reference (Developer)
+
+> Looking for a **friendly explanation** instead of raw code? Visit the in-app "Calculations Explained" page at `/calculations` (Sidebar → Info).
+
+---
+
+*Last Updated: June 2025*
+*Version: 1.0* 
 
 ```ts
 // 1. Play Count
@@ -645,9 +652,4 @@ if (actualDiscoveryDate) {
 if (observations >= 100) confidence = 'high';
 else if (observations >= 20) confidence = 'medium';
 else confidence = 'low';
-```
-
----
-
-*Last Updated: June 2025*
-*Version: 1.0* 
+``` 

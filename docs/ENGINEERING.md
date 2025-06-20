@@ -1,4 +1,3 @@
-
 # Spotify Analytics Dashboard - Engineering Documentation
 
 ## Table of Contents
@@ -792,7 +791,7 @@ const monitorExtendedDataHealth = () => {
 5. **Offline Support**: Cache extended data for offline analysis
 
 #### Artist Exploration Roadmap
-1. **Machine Learning Insights**: AI-powered artist recommendations
+1. **Smart Insights**: Contextual artist recommendations based on listening patterns
 2. **Social Features**: Compare artist exploration data with friends
 3. **Historical Tracking**: Track how artist preferences change over time
 4. **Advanced Analytics**: Mood-based artist grouping and analysis

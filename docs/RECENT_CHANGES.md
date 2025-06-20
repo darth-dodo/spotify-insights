@@ -260,7 +260,7 @@ This document tracks the most recent significant changes and improvements to the
 ### **Data Insights**
 - **Advanced Metrics**: 30+ sophisticated calculations for comprehensive analysis
 - **Health Assessment**: Intelligent scoring system for library quality
-- **Personalized Recommendations**: AI-powered suggestions based on listening patterns
+- **Personalized Recommendations**: Context-aware suggestions based on listening patterns
 - **Rich Visualization**: Interactive charts and professional data presentation
 
 ---

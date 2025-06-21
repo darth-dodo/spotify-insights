@@ -80,13 +80,6 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     return (
       <BlurLoader isLoading={isLoading}>
         <LandingPage />
-        <ErrorDialog
-          open={errorDialogOpen}
-          onOpenChange={setErrorDialogOpen}
-          title="Authentication Error"
-          message={error || 'An error occurred during authentication'}
-          onRetry={handleRetryAuth}
-        />
       </BlurLoader>
     );
   }

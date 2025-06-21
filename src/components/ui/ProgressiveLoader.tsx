@@ -36,19 +36,70 @@ export const ProgressiveLoader = ({
   const [showFunFact, setShowFunFact] = useState(true);
   const [currentFunFactIndex, setCurrentFunFactIndex] = useState(0);
 
-  // Engaging fun facts to keep users interested
-  const funFacts = [
-    "🎵 Analyzing up to 2000 tracks from your library.",
-    "🔍 Identifying listening trends in your music history.",
-    "⚡ Processing data – this usually takes about 20 seconds.",
-    "🎨 Compiling your musical profile with key statistics.",
-    "🌟 Listeners discover around five new songs each month on average.",
-    "🎧 Checking audio features such as energy and tempo.",
-    "📊 Preparing summary charts for your dashboard.",
-    "📅 Comparing data across recent and long-term listening.",
-    "🚀 Almost finished – setting up final dashboard elements.",
-    "✅ Loading complete – thanks for your patience."
+  // Curated factual statements (shuffled once per mount)
+  const rawFacts = [
+    "🎵 Analyzing up to 2 000 tracks from your library.",
+    "🔍 Identifying listening trends over multiple time ranges.",
+    "🎼 Detecting your most played artists and genres.",
+    "📊 Evaluating average track popularity across your collection.",
+    "🎧 Calculating total listening hours recorded by Spotify.",
+    "📅 Determining your busiest listening day of the week.",
+    "🕰️ Measuring average track duration in your top list.",
+    "🔁 Assessing replay frequency for favourite songs.",
+    "🎚️ Reviewing audio features such as energy and tempo.",
+    "🌍 Counting unique countries represented by your artists.",
+    "🎙️ Noting the earliest release year in your library.",
+    "🚀 Computing year-over-year changes in discovery habits.",
+    "💽 Looking for hidden gems among lower-popularity tracks.",
+    "🖼️ Gathering album artwork for summary cards.",
+    "📈 Preparing visual charts for the dashboard.",
+    "🎯 Ranking genres by total listening time.",
+    "🧭 Mapping artist collaborations in your collection.",
+    "🎹 Spotting instrumental favourites in your top tracks.",
+    "🗓️ Collating tracks added in the last 30 days.",
+    "🌗 Estimating average track loudness levels.",
+    "📐 Calculating diversity across musical eras.",
+    "🔗 Matching tracks that share common songwriters.",
+    "🎺 Reviewing presence of live recordings.",
+    "📚 Cross-checking metadata completeness.",
+    "🧮 Summarising median track popularity.",
+    "🖋️ Listing most recurrent lyrical themes (beta).",
+    "💡 Highlighting notable growth in new artist plays.",
+    "🗺️ Charting listening distribution by continent.",
+    "⏱️ Tracking average time between track skips.",
+    "📎 Consolidating duplicate releases.",
+    "🎞️ Flagging soundtrack contributions in your history.",
+    "🔊 Measuring dynamic range trends.",
+    "🎷 Counting jazz-influenced tracks in recent plays.",
+    "🌦️ Comparing mood features between seasons.",
+    "🎤 Checking for emerging artists in top charts.",
+    "🖼️ Selecting representative cover art for each genre.",
+    "🍿 Noting soundtrack prominence in recent listening.",
+    "🎛️ Reviewing production styles across decades.",
+    "📡 Fetching additional metadata from Spotify API.",
+    "📝 Compiling headline statistics for overview cards.",
+    "🔒 Processing takes place entirely in your browser.",
+    "🎚️ Computing average danceability score.",
+    "🎺 Identifying presence of brass instruments tags.",
+    "🏷️ Resolving ambiguous genre labels.",
+    "📰 Checking for newly released singles.",
+    "♻️ Updating cached results where applicable.",
+    "🖇️ Linking tracks to primary artist profiles.",
+    "📡 Verifying request quota limits remain healthy.",
+    "🔖 Sorting tracks by release date.",
+    "📂 Organising analysis results for fast retrieval.",
+    "✅ Final integrity checks before rendering data."
   ];
+
+  // Shuffle once to keep ordering fresh every load
+  const [funFacts] = useState(() => {
+    const copy = [...rawFacts];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  });
 
   // Update elapsed time and rotate fun facts
   useEffect(() => {
@@ -129,6 +180,8 @@ export const ProgressiveLoader = ({
     const currentStepContribution = (progress / steps.length);
     return Math.min(100, baseProgress + currentStepContribution);
   };
+
+  const indicatorCount = Math.min(10, funFacts.length);
 
   return (
     <Card className={cn("w-full max-w-lg mx-auto shadow-lg", className)}>
@@ -279,9 +332,9 @@ export const ProgressiveLoader = ({
           <div className="bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg p-4 border border-accent/20">
             <div className="flex items-center gap-2 mb-3">
               <div className="p-1 bg-accent/20 rounded-full">
-                <Sparkles className="h-4 w-4 text-accent animate-spin" />
+                <Sparkles className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-sm font-semibold text-accent">Keep You Entertained</span>
+              <span className="text-sm font-semibold text-accent">Fun Facts</span>
             </div>
             <div className="min-h-[3rem] flex items-center">
               <p className="text-sm text-foreground/80 leading-relaxed animate-fade-in-up">
@@ -290,12 +343,12 @@ export const ProgressiveLoader = ({
             </div>
             <div className="flex justify-center mt-3">
               <div className="flex gap-1">
-                {funFacts.map((_, index) => (
+                {Array.from({ length: indicatorCount }).map((_, index) => (
                   <div
                     key={index}
                     className={cn(
                       "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                      index === currentFunFactIndex 
+                      index === (currentFunFactIndex % indicatorCount) 
                         ? "bg-accent scale-125" 
                         : "bg-muted-foreground/30"
                     )}

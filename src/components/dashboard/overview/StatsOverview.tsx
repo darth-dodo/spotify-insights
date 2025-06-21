@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,12 +13,12 @@ interface StatsOverviewProps {
 
 export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps) => {
   const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
-  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('3months' as TimeDimension, 2000);
-  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('3months' as TimeDimension, 2000);
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
   const { data: recentlyPlayed = [], isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
   const isLoading = tracksLoading || artistsLoading || recentLoading;
 
-  const stats = calculateStats(tracks, artists, recentlyPlayed, '3months');
+  const stats = calculateStats(tracks, artists, recentlyPlayed, 'medium_term' as any);
 
   // Calculate enhanced stats from the full 2000 item dataset
   const calculateEnhancedStats = () => {

@@ -65,7 +65,7 @@ export const OnboardingTour = ({
       disableScrolling={false}
       disableScrollParentFix={false}
       disableOverlay={false}
-      spotlightClicks={false}
+      spotlightClicks={true}
       spotlightPadding={6}
       scrollDuration={300}
       debug={false}
@@ -143,7 +143,7 @@ export const OnboardingTour = ({
             : '0 0 0 2px rgba(59, 130, 246, 0.1)',
         },
         overlay: {
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backgroundColor: 'rgba(0, 0, 0, 0.15)',
           mixBlendMode: 'normal',
         },
         overlayLegacy: {

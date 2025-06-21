@@ -11,7 +11,8 @@ export const GlobalLoader = () => {
 
   // Determine visibility
   useEffect(() => {
-    const shouldShow = (pct > 0 && pct < 100) || authLoading;
+    const onIndex = window.location.pathname === '/';
+    const shouldShow = ((pct > 0 && pct < 100) || authLoading) && !onIndex;
     if (shouldShow && !visible) setVisible(true);
     if (!shouldShow && visible && pct >= 100) {
       const t = setTimeout(() => setVisible(false), 500);

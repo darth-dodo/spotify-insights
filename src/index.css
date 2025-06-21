@@ -185,6 +185,10 @@
   animation: scaleIn 0.3s ease-out;
 }
 
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
 /* Joyride Tour Improvements */
 .__floater {
   z-index: 10001 !important;

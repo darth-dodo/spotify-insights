@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Circle, Music, Users, Clock, Database, Sparkles } from 'lucide-react';
+import { CheckCircle, Circle, Music, Users, Clock, Database, Sparkles, Zap, TrendingUp, Heart, Star, Headphones, Disc } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LoadingStep {
@@ -11,6 +11,8 @@ interface LoadingStep {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   estimatedTime: number; // in seconds
+  funFact?: string;
+  color?: string;
 }
 
 interface ProgressiveLoaderProps {
@@ -31,15 +33,36 @@ export const ProgressiveLoader = ({
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [startTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [showFunFact, setShowFunFact] = useState(true);
+  const [currentFunFactIndex, setCurrentFunFactIndex] = useState(0);
 
-  // Update elapsed time
+  // Engaging fun facts to keep users interested
+  const funFacts = [
+    "🎵 Analyzing up to 2000 tracks from your library.",
+    "🔍 Identifying listening trends in your music history.",
+    "⚡ Processing data – this usually takes about 20 seconds.",
+    "🎨 Compiling your musical profile with key statistics.",
+    "🌟 Listeners discover around five new songs each month on average.",
+    "🎧 Checking audio features such as energy and tempo.",
+    "📊 Preparing summary charts for your dashboard.",
+    "📅 Comparing data across recent and long-term listening.",
+    "🚀 Almost finished – setting up final dashboard elements.",
+    "✅ Loading complete – thanks for your patience."
+  ];
+
+  // Update elapsed time and rotate fun facts
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedTime(Date.now() - startTime);
+      
+      // Rotate fun facts every 4 seconds
+      if (Math.floor((Date.now() - startTime) / 1000) % 4 === 0) {
+        setCurrentFunFactIndex(prev => (prev + 1) % funFacts.length);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [startTime]);
+  }, [startTime, funFacts.length]);
 
   // Mark steps as completed based on progress
   useEffect(() => {
@@ -59,7 +82,35 @@ export const ProgressiveLoader = ({
 
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    if (minutes > 0) {
+      return `${minutes}m ${seconds % 60}s`;
+    }
     return `${seconds}s`;
+  };
+
+  const getEstimatedTimeRemaining = () => {
+    const remainingSteps = steps.slice(currentStep);
+    const estimatedSeconds = remainingSteps.reduce((acc, step) => acc + step.estimatedTime, 0);
+    const progressFactor = currentStep < steps.length ? (1 - progress / 100) : 0;
+    const currentStepTime = currentStep < steps.length ? steps[currentStep].estimatedTime * progressFactor : 0;
+    
+    return Math.max(0, estimatedSeconds - steps[currentStep]?.estimatedTime + currentStepTime);
+  };
+
+  const getMotivationalMessage = () => {
+    const progressPercent = getOverallProgress();
+    if (progressPercent < 25) {
+      return "Starting analysis…";
+    } else if (progressPercent < 50) {
+      return "Processing data…";
+    } else if (progressPercent < 75) {
+      return "More than halfway there…";
+    } else if (progressPercent < 95) {
+      return "Wrapping up…";
+    } else {
+      return "Complete. Loading dashboard…";
+    }
   };
 
   const getStepStatus = (index: number) => {
@@ -80,35 +131,57 @@ export const ProgressiveLoader = ({
   };
 
   return (
-    <Card className={cn("w-full max-w-md mx-auto", className)}>
+    <Card className={cn("w-full max-w-lg mx-auto shadow-lg", className)}>
       <CardContent className="p-6 space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-full">
-              <Database className="h-5 w-5 text-primary animate-pulse" />
+        <div className="text-center space-y-3">
+          <div className="flex items-center justify-center gap-3">
+            <div className="relative">
+              <div className="p-3 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full">
+                <Database className="h-6 w-6 text-primary animate-pulse" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-ping" />
             </div>
-            <h3 className="text-lg font-semibold">Loading Your Music Data</h3>
+            <div>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Loading Your Music Universe
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {getMotivationalMessage()}
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Analyzing your Spotify library for insights
-          </p>
         </div>
 
         {/* Overall Progress */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium">Overall Progress</span>
-            <span className="text-muted-foreground">
-              {Math.round(getOverallProgress())}%
-            </span>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-base">Overall Progress</span>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="font-mono">
+                {Math.round(getOverallProgress())}%
+              </Badge>
+              <Zap className="h-4 w-4 text-accent animate-pulse" />
+            </div>
           </div>
-          <Progress value={getOverallProgress()} className="h-2" />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Elapsed: {formatTime(elapsedTime)}</span>
-            <span>
+          <div className="relative">
+            <Progress value={getOverallProgress()} className="h-3 bg-muted/50" />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full opacity-50" />
+          </div>
+          <div className="flex justify-between text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>Elapsed: {formatTime(elapsedTime)}</span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <TrendingUp className="h-3 w-3" />
+              <span>~{Math.round(getEstimatedTimeRemaining())}s remaining</span>
+            </div>
+          </div>
+          <div className="text-center">
+            <Badge variant="outline" className="text-xs">
               Step {Math.min(currentStep + 1, steps.length)} of {steps.length}
-            </span>
+            </Badge>
           </div>
         </div>
 
@@ -201,18 +274,36 @@ export const ProgressiveLoader = ({
           })}
         </div>
 
-        {/* Fun Facts or Tips */}
+        {/* Engaging Fun Facts */}
         <div className="pt-4 border-t border-border/50">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-accent" />
-            <span className="text-xs font-medium text-accent">Did you know?</span>
+          <div className="bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg p-4 border border-accent/20">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1 bg-accent/20 rounded-full">
+                <Sparkles className="h-4 w-4 text-accent animate-spin" />
+              </div>
+              <span className="text-sm font-semibold text-accent">Keep You Entertained</span>
+            </div>
+            <div className="min-h-[3rem] flex items-center">
+              <p className="text-sm text-foreground/80 leading-relaxed animate-fade-in-up">
+                {funFacts[currentFunFactIndex]}
+              </p>
+            </div>
+            <div className="flex justify-center mt-3">
+              <div className="flex gap-1">
+                {funFacts.map((_, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                      index === currentFunFactIndex 
+                        ? "bg-accent scale-125" 
+                        : "bg-muted-foreground/30"
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {currentStep < steps.length 
-              ? `We're fetching up to 2000 tracks for comprehensive analysis. This gives you the most detailed insights into your music taste!`
-              : `Your music data has been successfully loaded and is ready for analysis!`
-            }
-          </p>
         </div>
       </CardContent>
     </Card>
@@ -223,30 +314,38 @@ export const ProgressiveLoader = ({
 export const spotifyLoadingSteps: LoadingStep[] = [
   {
     id: 'profile',
-    title: 'Loading Profile',
-    description: 'Fetching your Spotify profile information',
+    title: 'Connecting Profile',
+    description: 'Authenticating and loading your Spotify profile',
     icon: Users,
-    estimatedTime: 2
+    estimatedTime: 3,
+    funFact: "Setting up your personalized music universe!",
+    color: "text-blue-500"
   },
   {
     id: 'tracks',
-    title: 'Analyzing Tracks',
-    description: 'Getting your top tracks and favorites',
+    title: 'Analyzing Music Library',
+    description: 'Fetching up to 2000 of your top tracks for comprehensive analysis',
     icon: Music,
-    estimatedTime: 5
+    estimatedTime: 8,
+    funFact: "Discovering patterns in your musical preferences!",
+    color: "text-green-500"
   },
   {
     id: 'artists',
-    title: 'Discovering Artists',
-    description: 'Loading your favorite artists and genres',
-    icon: Users,
-    estimatedTime: 4
+    title: 'Mapping Artist Universe',
+    description: 'Loading artists, genres, and musical relationships',
+    icon: Star,
+    estimatedTime: 5,
+    funFact: "Building your artist constellation map!",
+    color: "text-purple-500"
   },
   {
     id: 'recent',
-    title: 'Recent Activity',
-    description: 'Analyzing your recent listening history',
-    icon: Clock,
-    estimatedTime: 3
+    title: 'Processing Activity',
+    description: 'Calculating listening patterns, genre diversity, and personalized insights',
+    icon: TrendingUp,
+    estimatedTime: 4,
+    funFact: "Finalizing your musical insights dashboard!",
+    color: "text-orange-500"
   }
 ]; 

@@ -189,16 +189,16 @@ const musicFacts = [
   "Harmonic series explains why some note combinations sound consonant or dissonant.",
   
   // Future & Innovation
-  "AI is now composing music that can fool human listeners.",
+      "Digital music production has revolutionized how we create and consume music.",
   "Virtual reality concerts are creating new immersive musical experiences.",
   "Haptic technology lets deaf people feel music through vibrations.",
   "Binaural beats claim to alter brainwave states through specific frequencies.",
   "3D audio creates spatial sound experiences with regular headphones.",
-  "Genetic algorithms are being used to evolve new musical compositions.",
+      "Computer programs are being used to generate new musical compositions.",
   "Brain-computer interfaces may one day let us compose music with thought alone.",
   "Quantum computing could revolutionize music synthesis and analysis.",
   "Smart speakers are changing how we discover and interact with music.",
-  "Machine learning personalizes music recommendations with increasing accuracy.",
+      "Streaming platforms use sophisticated algorithms to personalize music recommendations.",
   
   // Fun & Quirky
   "The longest piano piece ever composed is Vexations by Erik Satie, meant to be played 840 times.",
@@ -254,9 +254,9 @@ const musicFacts = [
   "The vocoder, invented in 1938, was originally designed for telephone encryption.",
   "Sampling rates of 44.1 kHz were chosen for CDs to match video equipment standards.",
   "Compression algorithms like MP3 remove sounds the human ear can't perceive.",
-  "Artificial intelligence can now master audio tracks with professional quality.",
+      "Modern software can master audio tracks with professional quality.",
   "Spatial audio creates 3D soundscapes that move around the listener.",
-  "Machine learning algorithms can separate individual instruments from mixed recordings.",
+      "Advanced software can separate individual instruments from mixed recordings.",
   "Blockchain technology is being explored for music rights management.",
   "5G networks enable real-time collaborative music creation across the globe.",
   

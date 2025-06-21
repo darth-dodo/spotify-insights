@@ -18,7 +18,7 @@ This document tracks the most recent significant changes and improvements to the
 - Evaluates balance between underground and mainstream music
 - Analyzes underground ratio (popularity < 30) vs mainstream ratio (popularity > 70)
 - Rewards discovery of lesser-known artists and avoids over-mainstream libraries
-- Sophisticated scoring algorithm balancing discovery and accessibility
+- Advanced scoring system balancing discovery and accessibility
 
 #### **3. Artist Balance**
 - Measures how evenly listening time is distributed across artists
@@ -90,7 +90,7 @@ This document tracks the most recent significant changes and improvements to the
 #### **Enhanced Artist Detail Modal**
 - **Complete Mobile Responsive Design**: Adaptive grids and layouts for all screen sizes
 - **Play Metrics Integration**: Estimated total plays and average plays per track
-- **Intelligent Follower Estimation**: Fallback calculation when Spotify data missing
+- **Smart Follower Estimation**: Fallback calculation when Spotify data missing
 - **Rich Visual Design**: Progress bars, color-coded metrics, professional styling
 - **Contextual Insights**: Fun facts and personalized information based on listening patterns
 

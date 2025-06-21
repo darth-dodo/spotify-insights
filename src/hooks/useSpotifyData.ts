@@ -105,7 +105,7 @@ export const useSpotifyData = () => {
         }
       },
       staleTime: 1000 * 60 * 5,
-      enabled: true,
+      enabled: !!token,
       retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
@@ -122,10 +122,12 @@ export const useSpotifyData = () => {
         }
       },
       staleTime: 1000 * 60 * 5,
-      enabled: true,
+      enabled: !!token,
       retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
+
+  const token = getAccessToken();
 
   const useExtendedTopTracks = (timeRange: string = 'medium_term', totalLimit: number = 1000) => {
     return useQuery({
@@ -139,7 +141,7 @@ export const useSpotifyData = () => {
         }
       },
       staleTime: 1000 * 60 * 15,
-      enabled: true,
+      enabled: !!token,
       retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
@@ -156,7 +158,7 @@ export const useSpotifyData = () => {
         }
       },
       staleTime: 1000 * 60 * 15,
-      enabled: true,
+      enabled: !!token,
       retry: false, // Disable retry in demo mode to prevent 401 loops
     });
   };
@@ -173,7 +175,7 @@ export const useSpotifyData = () => {
         }
       },
       staleTime: 1000 * 60 * 1,
-      enabled: true,
+      enabled: !!token,
       retry: false, // Don't retry frequently updated data, especially in demo mode
     });
   };

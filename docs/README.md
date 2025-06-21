@@ -23,7 +23,12 @@ Below is an ordered index of the most relevant documentation. Each link jumps to
    - 🛡️ **[Security](./SECURITY.md)** – auth, threat-model, best practices.
    - 🔐 **[Privacy Architecture](./PRIVACY_ARCHITECTURE.md)** – GDPR compliance & user-control.
 
-5. **Guides & References**
+5. **Loading Experience & UX**
+   - 🚀 **[Loading Experience Overhaul](./LOADING_EXPERIENCE_OVERHAUL.md)** – product reasoning & user psychology behind enhanced loading.
+   - 🛠️ **[Loading System Implementation](./LOADING_SYSTEM_IMPLEMENTATION.md)** – technical guide for developers.
+   - ⚡ **[Loading System Quick Reference](./LOADING_SYSTEM_QUICK_REFERENCE.md)** – developer cheat sheet for common patterns.
+
+6. **Guides & References**
    - 📊 **[Metrics Quick Reference](./METRICS_QUICK_REFERENCE.md)** – (duplicate shortcut for convenience).
    - ❓ **[Help / FAQ](../README.md)** – root-level readme for high-level project info.
 
@@ -71,6 +76,18 @@ Spotify API → Data Fetching → Processing → Enhancement → UI Display
 - User journey and interaction patterns
 - Feature specifications and requirements
 - Accessibility and usability guidelines
+
+#### 🚀 [LOADING_EXPERIENCE_OVERHAUL.md](./LOADING_EXPERIENCE_OVERHAUL.md)
+**Enhanced loading experience design**
+- Product strategy and user psychology
+- Loading journey mapping and content strategy
+- Performance metrics and success criteria
+
+#### 🛠️ [LOADING_SYSTEM_IMPLEMENTATION.md](./LOADING_SYSTEM_IMPLEMENTATION.md)
+**Loading system technical implementation**
+- Component API reference and integration patterns
+- Customization guide and performance optimization
+- Testing strategies and troubleshooting
 
 ### 🔒 **Security & Privacy**
 

@@ -81,6 +81,8 @@ export const useAuthInitialization = (
             try {
               const parsedUser = JSON.parse(cachedUser);
               console.log('Using cached user data');
+              // Clear any previous auth error
+              setError(null);
               setUser(parsedUser);
               setIsLoading(false);
               return;
@@ -92,6 +94,7 @@ export const useAuthInitialization = (
 
           // No cached user data, fetch fresh data
           await fetchAndSetUser();
+          setError(null);
         } else {
           console.log('No token found, user not authenticated');
           setIsLoading(false);

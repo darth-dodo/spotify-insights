@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type LoadingStage = 'idle' | 'oauth' | 'profile' | 'library';
 
@@ -20,6 +20,16 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [pct, setPct] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // Reset loading state when navigating to homepage
+  useEffect(() => {
+    if (window.location.pathname === '/') {
+      setStageState('idle');
+      setPct(0);
+      setError(null);
+      setIsLoadingData(false);
+    }
+  }, []);
 
   const setStage = (s: LoadingStage) => {
     setStageState(s);

@@ -33,7 +33,8 @@ export class SpotifyEventHandler {
     });
 
     player.addListener('authentication_error', ({ message }: { message: string }) => {
-      console.error('Failed to authenticate:', message);
+      console.warn('Playback authentication error (this is normal without Premium):', message);
+      // Don't throw errors for playback auth issues - they're expected without Premium
     });
 
     player.addListener('account_error', ({ message }: { message: string }) => {

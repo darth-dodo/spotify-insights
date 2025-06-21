@@ -1,5 +1,6 @@
 import React from 'react';
 import { EnhancedLoadingScreen } from './EnhancedLoadingScreen';
+import { EnhancedLoadingScreen } from './EnhancedLoadingScreen';
 import { useLoading } from '@/components/providers/LoadingProvider';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -71,6 +72,13 @@ export const GlobalLoader = () => {
   const stepProgress = Math.max(0, Math.min(100, (pct - (currentStep * 25)) * 4));
 
   return (
+    <div className="fixed inset-0 z-[2000] transition-opacity duration-500" style={{ opacity: pct >= 100 ? 0 : 1 }}>
+      <EnhancedLoadingScreen
+        currentStep={currentStep}
+        progress={stepProgress}
+        onComplete={() => setVisible(false)}
+        showTips={true}
+      />
     <div className="fixed inset-0 z-[2000] transition-opacity duration-500" style={{ opacity: pct >= 100 ? 0 : 1 }}>
       <EnhancedLoadingScreen
         currentStep={currentStep}

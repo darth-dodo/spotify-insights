@@ -27,7 +27,7 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     path: window.location.pathname 
   });
 
-  // Show error dialog if there's an auth error, but not during loading, data loading, or on dashboard paths
+  // Show error dialog if there's an auth error, but not during loading, data loading, or on dashboard paths, but not during loading or on dashboard paths
   useEffect(() => {
     const shouldShowError = error && 
       !isLoading && 
@@ -35,12 +35,14 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
       !window.location.pathname.startsWith('/dashboard') &&
       window.location.pathname !== '/';
       
-    if (shouldShowError) {
+    if (shouldShowError && !isLoading && !window.location.pathname.startsWith('/dashboard')) {
       setErrorDialogOpen(true);
     } else if (!error) {
       setErrorDialogOpen(false);
+    } else if (!error) {
+      setErrorDialogOpen(false);
     }
-  }, [error, isLoading, isLoadingData]);
+  }, [error, isLoading, isLoadingData, isLoading]);
 
   // Clean up Spotify SDK in demo mode
   useEffect(() => {

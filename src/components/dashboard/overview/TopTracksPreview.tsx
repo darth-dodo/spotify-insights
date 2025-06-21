@@ -85,7 +85,7 @@ export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
   }
 
   return (
-    <Card>
+    <Card data-tour="top-tracks" id="top-tracks-section">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Music className="h-5 w-5" />

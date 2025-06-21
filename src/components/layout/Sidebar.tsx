@@ -191,17 +191,17 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
                         variant="ghost"
                         className={cn(
                           "w-full justify-start p-3 h-auto transition-all duration-200",
-                          "hover:bg-muted/50 hover:translate-x-1",
+                          "hover:bg-muted/50 hover:translate-x-1 group",
                           isActive && [
                             "bg-primary/10 text-primary border-r-2 border-primary",
-                            "hover:bg-primary/15 shadow-sm"
+                            "hover:bg-primary/15 shadow-sm animate-scaleIn"
                           ],
                           item.primary && !isActive && "font-medium"
                         )}
                         onClick={() => handleNavigation(item)}
                       >
                         <Icon className={cn(
-                          "h-4 w-4 mr-3 transition-colors",
+                          "h-4 w-4 mr-3 transition-all duration-200 group-hover:scale-110",
                           isActive ? "text-primary" : "text-muted-foreground"
                         )} />
                         <span className={cn(

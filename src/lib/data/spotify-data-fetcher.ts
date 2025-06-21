@@ -29,30 +29,32 @@ export const fetchRecentlyPlayedData = async (limit: number = 200): Promise<any[
   }
 
   const token = localStorage.getItem('spotify_access_token');
-  if (!token) {
-    throw new Error('No access token available. Please authenticate with Spotify to view your listening data.');
+  if (!token || token === 'demo_access_token') {
+    console.warn('No valid access token available for recently played data');
+    return [];
   }
 
-  let apiTracks: any[] = [];
-  let nextUrl = null;
-  let totalFetched = 0;
+  try {
+    let apiTracks: any[] = [];
+    let nextUrl = null;
+    let totalFetched = 0;
 
-  do {
-    const response = await spotifyAPI.getRecentlyPlayed(token, Math.min(50, limit - totalFetched));
-    if (response?.items) {
-      apiTracks.push(...response.items);
-      nextUrl = response.next;
-      totalFetched += response.items.length;
-    } else {
-      break;
-    }
-  } while (nextUrl && totalFetched < limit);
+    do {
+      const response = await spotifyAPI.getRecentlyPlayed(token, Math.min(50, limit - totalFetched));
+      if (response?.items) {
+        apiTracks.push(...response.items);
+        nextUrl = response.next;
+        totalFetched += response.items.length;
+      } else {
+        break;
+      }
+    } while (nextUrl && totalFetched < limit);
 
-  if (apiTracks.length === 0) {
-    throw new Error('No recently played tracks found. Start listening to music on Spotify to see your activity here.');
+    return apiTracks;
+  } catch (error) {
+    console.warn('Failed to fetch recently played data:', error);
+    return [];
   }
-
-  return apiTracks;
 };
 
 export const fetchTopTracksData = async (timeRange: string, totalLimit: number): Promise<any> => {
@@ -61,11 +63,17 @@ export const fetchTopTracksData = async (timeRange: string, totalLimit: number):
   }
 
   const token = localStorage.getItem('spotify_access_token');
-  if (!token) {
-    throw new Error('No access token available. Please authenticate with Spotify to view your top tracks.');
+  if (!token || token === 'demo_access_token') {
+    console.warn('No valid access token available for top tracks data');
+    return { items: [] };
   }
 
-  return spotifyAPI.getExtendedTopTracks(token, timeRange, totalLimit);
+  try {
+    return await spotifyAPI.getExtendedTopTracks(token, timeRange, totalLimit);
+  } catch (error) {
+    console.warn('Failed to fetch top tracks data:', error);
+    return { items: [] };
+  }
 };
 
 export const fetchTopArtistsData = async (timeRange: string, totalLimit: number): Promise<any> => {
@@ -74,9 +82,15 @@ export const fetchTopArtistsData = async (timeRange: string, totalLimit: number)
   }
 
   const token = localStorage.getItem('spotify_access_token');
-  if (!token) {
-    throw new Error('No access token available. Please authenticate with Spotify to view your top artists.');
+  if (!token || token === 'demo_access_token') {
+    console.warn('No valid access token available for top artists data');
+    return { items: [] };
   }
 
-  return spotifyAPI.getExtendedTopArtists(token, timeRange, totalLimit);
+  try {
+    return await spotifyAPI.getExtendedTopArtists(token, timeRange, totalLimit);
+  } catch (error) {
+    console.warn('Failed to fetch top artists data:', error);
+    return { items: [] };
+  }
 };

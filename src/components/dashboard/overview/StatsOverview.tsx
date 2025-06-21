@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Zap, Clock, Users, Heart, Trophy, Star } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
-import { calculateStats } from '@/lib/spotify-data-utils';
+import { calculateStats, TimeDimension } from '@/lib/spotify-data-utils';
 
 interface StatsOverviewProps {
   selectedCard: string | null;
@@ -14,12 +14,12 @@ interface StatsOverviewProps {
 
 export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps) => {
   const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
-  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
-  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('3months' as TimeDimension, 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('3months' as TimeDimension, 2000);
   const { data: recentlyPlayed = [], isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
   const isLoading = tracksLoading || artistsLoading || recentLoading;
 
-  const stats = calculateStats(tracks, artists, recentlyPlayed, 'medium_term');
+  const stats = calculateStats(tracks, artists, recentlyPlayed, '3months');
 
   // Calculate enhanced stats from the full 2000 item dataset
   const calculateEnhancedStats = () => {
@@ -35,11 +35,23 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
       recentTracks,
       listeningTime: Math.round(listeningTime),
       uniqueGenres: stats?.uniqueGenres || 0,
-      avgPopularity: stats?.avgPopularity || 0
+      avgPopularity: stats?.averagePopularity || 0
     };
   };
 
   const enhancedStats = calculateEnhancedStats();
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('StatsOverview debug:', {
+      tracksLength: tracks.length,
+      artistsLength: artists.length,
+      recentlyPlayedLength: recentlyPlayed.length,
+      enhancedStats,
+      stats,
+      isLoading
+    });
+  }, [tracks, artists, recentlyPlayed, enhancedStats, stats, isLoading]);
 
   const achievements = {
     level: Math.min(Math.floor(enhancedStats.totalTracks / 20) + 1, 50),
@@ -50,7 +62,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
   };
 
   // Check if we have any data at all
-  const hasData = stats?.hasSpotifyData && (enhancedStats.totalTracks > 0 || enhancedStats.totalArtists > 0);
+  const hasData = (enhancedStats.totalTracks > 0 || enhancedStats.totalArtists > 0);
 
   const statCards = [
     {
@@ -157,7 +169,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" data-tour="stats-overview" id="stats-overview-loading">
         {statCards.map((card) => {
           const Icon = card.icon;
           
@@ -182,7 +194,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" data-tour="stats-overview" id="stats-overview-section">
       {statCards.map((card, index) => {
         const Icon = card.icon;
         const isSelected = selectedCard === card.id;

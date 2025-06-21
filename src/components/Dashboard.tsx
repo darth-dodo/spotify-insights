@@ -19,12 +19,14 @@ import { TrackExplorer } from './dashboard/TrackExplorer';
 import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
 import { useLoading } from '@/components/providers/LoadingProvider';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
+import { OnboardingTour, useOnboarding, dashboardTourSteps } from '@/components/ui/OnboardingTour';
 
 export const Dashboard = () => {
   const { user, isLoading, error, clearError, refreshToken } = useAuth();
   const { theme } = useTheme();
   const [activeView, setActiveView] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { showTour, completeTour, skipTour, restartTour } = useOnboarding();
   
   // Check if comprehensive data is loading
   const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
@@ -97,6 +99,7 @@ export const Dashboard = () => {
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           activeView={activeView}
           onViewChange={handleViewChange}
+          data-tour="sidebar"
         />
         
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -104,6 +107,8 @@ export const Dashboard = () => {
             user={user}
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
             onSettingsClick={handleSettingsClick}
+            onTourRestart={restartTour}
+            data-tour="profile-menu"
           />
           
           <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
@@ -147,6 +152,14 @@ export const Dashboard = () => {
           </main>
         </div>
       </div>
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        isOpen={showTour}
+        onComplete={completeTour}
+        onSkip={skipTour}
+        steps={dashboardTourSteps}
+      />
     </div>
   );
 };

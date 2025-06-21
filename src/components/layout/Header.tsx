@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
-import { Menu, LogOut, Settings, User, Home, Shield, HelpCircle, FileText } from 'lucide-react';
+import { Menu, LogOut, Settings, User, Home, Shield, HelpCircle, FileText, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearLocalUserData } from '@/lib/clear-user-data';
@@ -13,9 +13,10 @@ interface HeaderProps {
   user: any;
   onMenuToggle: () => void;
   onSettingsClick?: () => void;
+  onTourRestart?: () => void;
 }
 
-export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => {
+export const Header = ({ user, onMenuToggle, onSettingsClick, onTourRestart }: HeaderProps) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -106,7 +107,7 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full" data-tour="profile-menu">
               <Avatar className="h-9 w-9">
                 <AvatarImage 
                   src={getUserProfileImage()} 
@@ -155,6 +156,16 @@ export const Header = ({ user, onMenuToggle, onSettingsClick }: HeaderProps) => 
               <HelpCircle className="h-4 w-4" />
               Data Quality Guide
             </DropdownMenuItem>
+            
+            {onTourRestart && (
+              <DropdownMenuItem 
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={onTourRestart}
+              >
+                <Play className="h-4 w-4" />
+                Take Tour Again
+              </DropdownMenuItem>
+            )}
             
             <DropdownMenuItem 
               className="flex items-center gap-2 cursor-pointer"

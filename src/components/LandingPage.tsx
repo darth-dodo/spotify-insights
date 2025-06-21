@@ -94,16 +94,18 @@ export const LandingPage = () => {
               size="lg" 
               onClick={handleLoginClick}
               disabled={isLoading}
-              className="flex items-center gap-2 text-lg px-8 py-3"
+              className="flex items-center gap-2 text-lg px-8 py-3 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl animate-fadeInUp"
+              style={{ animationDelay: '0.3s' }}
             >
-              <LogIn className="h-5 w-5" />
+              <LogIn className={`h-5 w-5 ${isLoading ? 'animate-pulse' : ''}`} />
               {isLoading ? 'Connecting...' : 'Connect Spotify Account'}
             </Button>
             <Button 
               variant="outline" 
               size="lg"
               onClick={handleSandboxClick}
-              className="flex items-center gap-2 text-lg px-8 py-3"
+              className="flex items-center gap-2 text-lg px-8 py-3 hover:bg-accent/10 hover:text-accent transition-all duration-300 transform hover:scale-105 animate-fadeInUp"
+              style={{ animationDelay: '0.4s' }}
             >
               <Eye className="h-5 w-5" />
               Try Sandbox Mode
@@ -127,17 +129,21 @@ export const LandingPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {features.map((feature, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow border-accent/10">
+            <Card 
+              key={index} 
+              className="hover:shadow-lg transition-all duration-300 border-accent/10 transform hover:scale-105 hover:-translate-y-1 group animate-fadeInUp"
+              style={{ animationDelay: `${0.5 + index * 0.1}s` }}
+            >
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-accent/10 rounded-lg text-accent">
+                  <div className="p-2 bg-accent/10 rounded-lg text-accent group-hover:bg-accent/20 transition-colors duration-300 group-hover:scale-110 transform">
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">{feature.title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-base">
+                <CardDescription className="text-base group-hover:text-foreground/80 transition-colors duration-300">
                   {feature.description}
                 </CardDescription>
               </CardContent>
@@ -146,35 +152,35 @@ export const LandingPage = () => {
         </div>
 
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-foreground mb-8">How It Works</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-8 animate-fadeInUp" style={{ animationDelay: '0.9s' }}>How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-accent">1</span>
+            {[
+              {
+                step: "1",
+                title: "Connect Securely",
+                description: "Authorize through Spotify's official OAuth - we never see your credentials"
+              },
+              {
+                step: "2", 
+                title: "Analyze Locally",
+                description: "Your data stays in your browser - all processing happens on your device"
+              },
+              {
+                step: "3",
+                title: "Discover Insights", 
+                description: "Explore beautiful charts and discover patterns in your musical journey"
+              }
+            ].map((item, index) => (
+              <div key={index} className="text-center group animate-fadeInUp" style={{ animationDelay: `${1.0 + index * 0.2}s` }}>
+                <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/20 transition-all duration-300 transform group-hover:scale-110 shadow-md group-hover:shadow-lg">
+                  <span className="text-2xl font-bold text-accent group-hover:text-accent/90 transition-colors duration-300">{item.step}</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 group-hover:text-accent transition-colors duration-300">{item.title}</h3>
+                <p className="text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+                  {item.description}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Connect Securely</h3>
-              <p className="text-muted-foreground">
-                Authorize through Spotify's official OAuth - we never see your credentials
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-accent">2</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Analyze Locally</h3>
-              <p className="text-muted-foreground">
-                Your data stays in your browser - all processing happens on your device
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-accent">3</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Discover Insights</h3>
-              <p className="text-muted-foreground">
-                Explore beautiful charts and discover patterns in your musical journey
-              </p>
-            </div>
+            ))}
           </div>
         </div>
 

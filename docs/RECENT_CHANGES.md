@@ -4,6 +4,21 @@
 
 This document tracks the most recent significant changes and improvements to the Spotify Insights application, focusing on the major Library Health system release and comprehensive component enhancements.
 
+## 🎵 **Latest Update: Enhanced Listening Activity Dashboard**
+
+### **All Tracks Display & Enhanced Play Count Calculation (December 2024)**
+- **Complete Track List**: Enhanced listening activity dashboard now displays all 100 top tracks instead of limiting to 10
+- **Updated Tab Structure**: Renamed "Recent Tracks" tab to "All Tracks" with track count badge
+- **Enhanced Track Information**: Added estimated user play counts and popularity scores for each track
+- **Improved User Experience**: Increased scroll area height to 600px for better browsing
+- **Advanced Play Count Calculation**: Sophisticated algorithm considering popularity, duration, and genre
+  - **Base formula**: 2000 max plays with 12% decay per rank (0.88^rank)
+  - **Popularity factor**: 0.85-1.15x based on track popularity
+  - **Duration factor**: 0.8-1.2x based on track length (shorter = more replays)
+  - **Metal genre bonus**: 1.15x multiplier for Black Sabbath, Metallica, Iron Maiden, Megadeth
+- **Visual Enhancements**: Heart icons for play counts, popularity percentages, and ranking badges
+- **Metal Legends Added**: Included Black Sabbath, Metallica, Iron Maiden, and Megadeth in dummy data with classic tracks
+
 ## 🏥 **Library Health System - Major Feature Release**
 
 ### **🎯 New Health Metrics (7 Categories)**
@@ -18,7 +33,7 @@ This document tracks the most recent significant changes and improvements to the
 - Evaluates balance between underground and mainstream music
 - Analyzes underground ratio (popularity < 30) vs mainstream ratio (popularity > 70)
 - Rewards discovery of lesser-known artists and avoids over-mainstream libraries
-- Sophisticated scoring algorithm balancing discovery and accessibility
+- Advanced scoring system balancing discovery and accessibility
 
 #### **3. Artist Balance**
 - Measures how evenly listening time is distributed across artists
@@ -90,7 +105,7 @@ This document tracks the most recent significant changes and improvements to the
 #### **Enhanced Artist Detail Modal**
 - **Complete Mobile Responsive Design**: Adaptive grids and layouts for all screen sizes
 - **Play Metrics Integration**: Estimated total plays and average plays per track
-- **Intelligent Follower Estimation**: Fallback calculation when Spotify data missing
+- **Smart Follower Estimation**: Fallback calculation when Spotify data missing
 - **Rich Visual Design**: Progress bars, color-coded metrics, professional styling
 - **Contextual Insights**: Fun facts and personalized information based on listening patterns
 

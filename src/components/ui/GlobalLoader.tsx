@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataLoadingScreen } from './DataLoadingScreen';
+import { EnhancedLoadingScreen } from './EnhancedLoadingScreen';
 import { useLoading } from '@/components/providers/LoadingProvider';
 
 export const GlobalLoader = () => {
@@ -8,7 +8,7 @@ export const GlobalLoader = () => {
 
   React.useEffect(() => {
     if (pct >= 100 && visible) {
-      const t = setTimeout(() => setVisible(false), 300);
+      const t = setTimeout(() => setVisible(false), 500);
       return () => clearTimeout(t);
     }
     if (pct < 100 && !visible) {
@@ -18,16 +18,33 @@ export const GlobalLoader = () => {
 
   if (!visible || pct === 0) return null;
 
-  const messages: Record<string, string> = {
-    oauth: 'Connecting your account…',
-    profile: 'Fetching your profile…',
-    library: 'Building your music universe…',
-    idle: 'Loading…',
+  // Map loading stages to step indices
+  const getStepFromStage = (stage: string, pct: number): number => {
+    switch (stage) {
+      case 'oauth':
+        return 0;
+      case 'profile':
+        return pct < 50 ? 0 : 1;
+      case 'library':
+        if (pct < 40) return 1;
+        if (pct < 70) return 2;
+        return 3;
+      default:
+        return 0;
+    }
   };
 
+  const currentStep = getStepFromStage(stage, pct);
+  const stepProgress = Math.max(0, Math.min(100, (pct - (currentStep * 25)) * 4));
+
   return (
-    <div className="fixed inset-0 z-[2000] transition-opacity duration-300" style={{ opacity: pct >= 100 ? 0 : 1 }}>
-      <DataLoadingScreen message={messages[stage]} forcedPct={pct} />
+    <div className="fixed inset-0 z-[2000] transition-opacity duration-500" style={{ opacity: pct >= 100 ? 0 : 1 }}>
+      <EnhancedLoadingScreen
+        currentStep={currentStep}
+        progress={stepProgress}
+        onComplete={() => setVisible(false)}
+        showTips={true}
+      />
     </div>
   );
 }; 

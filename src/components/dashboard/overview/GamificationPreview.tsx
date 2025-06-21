@@ -94,7 +94,7 @@ export const GamificationPreview = ({ onNavigate, isEnabled = true }: Gamificati
   };
 
   return (
-    <Card className="bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/5">
+    <Card className="bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/5" data-tour="gamification" id="gamification-section">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-accent" />

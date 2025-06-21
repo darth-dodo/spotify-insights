@@ -374,7 +374,7 @@ export class IntelligentDataExtrapolation {
     const releaseYear = new Date(track.album?.release_date || '2020-01-01').getFullYear();
     const currentYear = new Date().getFullYear();
     
-    // More intelligent discovery estimation
+    // More sophisticated discovery estimation
     if (userPatterns && userPatterns.discoveryPatterns) {
       const avgDiscoveryDelay = userPatterns.discoveryPatterns.avgYearsAfterRelease || 2;
       return Math.min(currentYear, releaseYear + avgDiscoveryDelay);

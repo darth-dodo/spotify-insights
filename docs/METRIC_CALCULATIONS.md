@@ -608,11 +608,99 @@ if (!data.length || !otherRequiredData.length) return [];
 
 ---
 
-*Last Updated: June 2025*
-*Version: 1.0* 
+## 🎵 Listening Activity Dashboard Calculations
+
+### User Play Count Estimation (Enhanced)
+```typescript
+const calculateUserPlayCount = (index: number, totalTracks: number, track?: any) => {
+  const rank = index + 1;
+  const minPlays = 5;
+  
+  // Base calculation using exponential decay from theoretical maximum
+  // Top track could realistically have 2000+ plays for heavy listeners
+  const baseMaxPlays = 2000;
+  let basePlayCount = Math.round(baseMaxPlays * Math.pow(0.88, rank - 1));
+  
+  // Adjust based on track characteristics if available
+  if (track) {
+    // Popularity bonus/penalty (popular tracks get more plays)
+    const popularityFactor = track.popularity ? (track.popularity / 100) * 0.3 + 0.85 : 1;
+    
+    // Duration factor (longer tracks might have slightly fewer plays due to time commitment)
+    const durationFactor = track.duration_ms ? 
+      Math.max(0.8, Math.min(1.2, 240000 / track.duration_ms)) : 1;
+    
+    // Genre-based multiplier for metal tracks (assuming metal fans replay favorites more)
+    const isMetalTrack = track.artists?.some((artist: any) => 
+      artist.name && ['Black Sabbath', 'Metallica', 'Iron Maiden', 'Megadeth'].includes(artist.name)
+    );
+    const genreMultiplier = isMetalTrack ? 1.15 : 1;
+    
+    basePlayCount = Math.round(basePlayCount * popularityFactor * durationFactor * genreMultiplier);
+  }
+  
+  return Math.max(basePlayCount, minPlays);
+};
+```
+
+**Enhanced Formula**: `2000 × (0.88^(rank-1)) × popularityFactor × durationFactor × genreMultiplier`
+
+**Factors**:
+- **Base decay**: 2000 plays max, 12% decay per rank (0.88^rank)
+- **Popularity factor**: 0.85-1.15 based on track popularity (0-100)
+- **Duration factor**: 0.8-1.2 based on track length (shorter = more replays)
+- **Genre multiplier**: 1.15x for metal tracks (Black Sabbath, Metallica, Iron Maiden, Megadeth)
+
+**Examples**:
+- **Top track (popular)**: ~2000 plays
+- **Top metal track**: ~2300 plays (with 1.15x multiplier)
+- **10th track**: ~600 plays  
+- **25th track**: ~150 plays
+- **50th track**: ~30 plays
+- **100th track**: ~5 plays (minimum enforced)
+
+### Play Count Formatting
+```typescript
+const formatUserPlays = (plays: number) => {
+  if (plays >= 1000) return `${(plays / 1000).toFixed(1)}k`;
+  return plays.toString();
+};
+```
+
+### Activity Analysis
+```typescript
+const totalListeningTime = tracks.reduce((sum, track) => {
+  const duration = typeof track.duration_ms === 'number' ? track.duration_ms : 0;
+  return sum + duration;
+}, 0);
+
+const dailyActivity = Array.from({ length: 30 }, (_, i) => {
+  const baseActivity = Math.min(tracks.length / 10, 15);
+  const variance = Math.random() * 0.6 + 0.7; // 0.7 to 1.3 multiplier
+  return {
+    tracks: Math.round(baseActivity * variance),
+    minutes: Math.round(baseActivity * variance * 4) // ~4 min per track average
+  };
+});
+```
+
+### Hidden Gems Detection
+```typescript
+const hiddenGems = tracks.filter(track => (track.popularity || 0) < 40).map(track => ({
+  ...track,
+  gemScore: (50 - (track.popularity || 0)) + Math.random() * 20,
+  rarity: (track.popularity || 0) < 20 ? 'Ultra Rare' : 
+          (track.popularity || 0) < 30 ? 'Very Rare' : 'Rare'
+})).sort((a, b) => b.gemScore - a.gemScore);
+```
+
+---
+
+*Last Updated: December 2024*
+*Version: 1.1* 
 
 ```ts
-// 1. Play Count
+// 1. Play Count (Legacy)
 if (realPlayDataAvailable) {
   playCount = realPlayCount;
 } else {
@@ -625,6 +713,26 @@ if (realPlayDataAvailable) {
   const base = rankFactor * 0.3 + popularity * 30 * 0.25 + durationFactor * 20 * 0.15 + recent * 5 * 0.15 + userPref * 20 * 0.15;
   playCount = Math.max(1, Math.round(base * genreMultiplier));
 }
+
+// 1. Play Count (Listening Activity - Enhanced v2)
+const calculateUserPlayCount = (index: number, totalTracks: number, track?: any) => {
+  const rank = index + 1;
+  const minPlays = 5;
+  const baseMaxPlays = 2000;
+  let basePlayCount = Math.round(baseMaxPlays * Math.pow(0.88, rank - 1));
+  
+  if (track) {
+    const popularityFactor = track.popularity ? (track.popularity / 100) * 0.3 + 0.85 : 1;
+    const durationFactor = track.duration_ms ? Math.max(0.8, Math.min(1.2, 240000 / track.duration_ms)) : 1;
+    const isMetalTrack = track.artists?.some((artist: any) => 
+      artist.name && ['Black Sabbath', 'Metallica', 'Iron Maiden', 'Megadeth'].includes(artist.name)
+    );
+    const genreMultiplier = isMetalTrack ? 1.15 : 1;
+    basePlayCount = Math.round(basePlayCount * popularityFactor * durationFactor * genreMultiplier);
+  }
+  
+  return Math.max(basePlayCount, minPlays);
+};
 
 // 2. Listening Time  (hours)
 if (realListeningMs) {

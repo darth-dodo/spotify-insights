@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ interface QuickNavigationProps {
 export const QuickNavigation = ({ onNavigate }: QuickNavigationProps) => {
   const navigationItems = [
     {
-      id: 'enhanced-trends',
+      id: 'listening-activity',
       title: 'Discover Trends',
       description: 'See how your taste evolved',
       icon: TrendingUp,

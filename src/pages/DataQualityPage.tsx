@@ -123,7 +123,7 @@ export const DataQualityPage = () => {
           <CardContent className="space-y-4 text-sm text-muted-foreground">
             <div>
               <h4 className="font-medium text-foreground mb-1">Why can't everything be high confidence?</h4>
-              <p>Spotify's public API doesn't expose certain metrics (eg. total play counts). We fill the gaps with real-time tracking and intelligent estimation.</p>
+              <p>Spotify's public API doesn't expose certain metrics (eg. total play counts). We fill the gaps with real-time tracking and statistical estimation.</p>
             </div>
             <div>
               <h4 className="font-medium text-foreground mb-1">How long until estimates improve?</h4>

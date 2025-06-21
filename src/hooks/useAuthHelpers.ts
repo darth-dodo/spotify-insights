@@ -52,6 +52,8 @@ export const useAuthHelpers = (
       const userData = await spotifyAuth.getCurrentUser();
       const sanitizedUser = sanitizeUserData(userData);
       
+      // Clear any previous authentication errors
+      setError(null);
       setUser(sanitizedUser);
       localStorage.setItem('user_profile', JSON.stringify(sanitizedUser));
       storeProfileImage(userData);

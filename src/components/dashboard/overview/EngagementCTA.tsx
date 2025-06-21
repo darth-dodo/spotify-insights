@@ -11,7 +11,7 @@ interface EngagementCTAProps {
 export const EngagementCTA = ({ onNavigate }: EngagementCTAProps) => {
   const ctaItems = [
     {
-      id: 'enhanced-trends',
+      id: 'listening-activity',
       title: 'Discover Your Music Evolution',
       description: 'See how your taste has changed over time with detailed trend analysis',
       icon: TrendingUp,

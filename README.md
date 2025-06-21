@@ -12,7 +12,7 @@ A sophisticated analytics platform for Spotify users, offering comprehensive ins
 
 ### 🏥 **Library Health Analysis**
 - **7 Health Metrics**: Genre diversity, music freshness, artist balance, mood variety, listening depth, era diversity, and discovery momentum
-- **Intelligent Recommendations**: AI-powered suggestions with specific action steps for library improvement
+- **Smart Recommendations**: Data-driven suggestions with specific action steps for library improvement
 - **Health Scoring**: Weighted scoring system with detailed breakdowns and progress tracking
 - **Personalized Insights**: Dynamic insights based on your actual listening patterns
 

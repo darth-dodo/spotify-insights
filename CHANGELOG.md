@@ -8,8 +8,8 @@ All notable changes to Spotify Insights are documented in this file.
 
 #### 🏥 **Library Health System (New)**
 - **7 Comprehensive Health Metrics**: Genre diversity, music freshness, artist balance, mood variety, listening depth, era diversity, discovery momentum
-- **Intelligent Recommendations**: AI-powered suggestions with specific action steps categorized by priority
-- **Weighted Health Scoring**: Sophisticated algorithm combining all metrics with appropriate weights
+- **Smart Recommendations**: Data-driven suggestions with specific action steps categorized by priority
+- **Weighted Health Scoring**: Advanced scoring system combining all metrics with appropriate weights
 - **Enhanced Insights**: Dynamic fun facts and personalized analysis based on actual listening patterns
 - **Visual Health Dashboard**: Professional UI with progress bars, color-coded metrics, and detailed breakdowns
 

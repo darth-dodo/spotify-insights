@@ -213,6 +213,71 @@ export const dummyTopTracks = {
       duration_ms: 189000,
       popularity: 83,
       preview_url: null
+    },
+    {
+      id: 'track16',
+      name: 'Paranoid',
+      artists: [{ id: 'black-sabbath', name: 'Black Sabbath' }],
+      album: {
+        id: 'album16',
+        name: 'Paranoid',
+        images: [{ url: 'https://picsum.photos/300/300?random=16', height: 300, width: 300 }]
+      },
+      duration_ms: 170000,
+      popularity: 86,
+      preview_url: null
+    },
+    {
+      id: 'track17',
+      name: 'Enter Sandman',
+      artists: [{ id: 'metallica', name: 'Metallica' }],
+      album: {
+        id: 'album17',
+        name: 'Metallica (Black Album)',
+        images: [{ url: 'https://picsum.photos/300/300?random=17', height: 300, width: 300 }]
+      },
+      duration_ms: 331000,
+      popularity: 89,
+      preview_url: null
+    },
+    {
+      id: 'track18',
+      name: 'The Number of the Beast',
+      artists: [{ id: 'iron-maiden', name: 'Iron Maiden' }],
+      album: {
+        id: 'album18',
+        name: 'The Number of the Beast',
+        images: [{ url: 'https://picsum.photos/300/300?random=18', height: 300, width: 300 }]
+      },
+      duration_ms: 292000,
+      popularity: 85,
+      preview_url: null
+    },
+    {
+      id: 'track19',
+      name: 'Peace Sells',
+      artists: [{ id: 'megadeth', name: 'Megadeth' }],
+      album: {
+        id: 'album19',
+        name: 'Peace Sells... but Who\'s Buying?',
+        images: [{ url: 'https://picsum.photos/300/300?random=19', height: 300, width: 300 }]
+      },
+      duration_ms: 242000,
+      popularity: 82,
+      preview_url: null
+    },
+    {
+      id: 'track20',
+      name: 'Iron Man',
+      artists: [{ id: 'black-sabbath', name: 'Black Sabbath' }],
+      album: {
+        id: 'album20',
+        name: 'Paranoid',
+        images: [{ url: 'https://picsum.photos/300/300?random=20', height: 300, width: 300 }]
+      },
+      duration_ms: 356000,
+      popularity: 84,
+      preview_url: null
     }
   ]
 };
@@ -314,6 +379,38 @@ export const dummyTopArtists = {
       images: [{ url: 'https://picsum.photos/300/300?random=31', height: 300, width: 300 }],
       popularity: 87,
       followers: { total: 8500000 }
+    },
+    {
+      id: 'black-sabbath',
+      name: 'Black Sabbath',
+      genres: ['heavy metal', 'doom metal', 'hard rock'],
+      images: [{ url: 'https://picsum.photos/300/300?random=32', height: 300, width: 300 }],
+      popularity: 86,
+      followers: { total: 7200000 }
+    },
+    {
+      id: 'metallica',
+      name: 'Metallica',
+      genres: ['thrash metal', 'heavy metal', 'hard rock'],
+      images: [{ url: 'https://picsum.photos/300/300?random=33', height: 300, width: 300 }],
+      popularity: 89,
+      followers: { total: 12500000 }
+    },
+    {
+      id: 'iron-maiden',
+      name: 'Iron Maiden',
+      genres: ['heavy metal', 'nwobhm', 'hard rock'],
+      images: [{ url: 'https://picsum.photos/300/300?random=34', height: 300, width: 300 }],
+      popularity: 85,
+      followers: { total: 6800000 }
+    },
+    {
+      id: 'megadeth',
+      name: 'Megadeth',
+      genres: ['thrash metal', 'heavy metal', 'speed metal'],
+      images: [{ url: 'https://picsum.photos/300/300?random=35', height: 300, width: 300 }],
+      popularity: 82,
+      followers: { total: 4200000 }
     }
   ]
 };

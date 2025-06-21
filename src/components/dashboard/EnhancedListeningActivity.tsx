@@ -14,13 +14,35 @@ export const EnhancedListeningActivity = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Calculate user-specific play count based on track ranking
-  const calculateUserPlayCount = (index: number, totalTracks: number) => {
-    const maxPlays = 500;
-    const minPlays = 5;
+  // Calculate user-specific play count based on track ranking and characteristics
+  const calculateUserPlayCount = (index: number, totalTracks: number, track?: any) => {
     const rank = index + 1;
-    const playCount = Math.round(maxPlays * Math.pow(0.85, rank - 1));
-    return Math.max(playCount, minPlays);
+    const minPlays = 5;
+    
+    // Base calculation using exponential decay from theoretical maximum
+    // Top track could realistically have 2000+ plays for heavy listeners
+    const baseMaxPlays = 2000;
+    let basePlayCount = Math.round(baseMaxPlays * Math.pow(0.88, rank - 1));
+    
+    // Adjust based on track characteristics if available
+    if (track) {
+      // Popularity bonus/penalty (popular tracks get more plays)
+      const popularityFactor = track.popularity ? (track.popularity / 100) * 0.3 + 0.85 : 1;
+      
+      // Duration factor (longer tracks might have slightly fewer plays due to time commitment)
+      const durationFactor = track.duration_ms ? 
+        Math.max(0.8, Math.min(1.2, 240000 / track.duration_ms)) : 1;
+      
+      // Genre-based multiplier for metal tracks (assuming metal fans replay favorites more)
+      const isMetalTrack = track.artists?.some((artist: any) => 
+        artist.name && ['Black Sabbath', 'Metallica', 'Iron Maiden', 'Megadeth'].includes(artist.name)
+      );
+      const genreMultiplier = isMetalTrack ? 1.15 : 1;
+      
+      basePlayCount = Math.round(basePlayCount * popularityFactor * durationFactor * genreMultiplier);
+    }
+    
+    return Math.max(basePlayCount, minPlays);
   };
 
   const formatUserPlays = (plays: number) => {
@@ -317,7 +339,7 @@ export const EnhancedListeningActivity = () => {
                             <div className="flex items-center gap-1">
                               <Heart className="h-3 w-3 text-muted-foreground" />
                               <span className="text-xs text-muted-foreground">
-                                {formatUserPlays(calculateUserPlayCount(index, tracks.length))} plays
+                                {formatUserPlays(calculateUserPlayCount(index, tracks.length, track))} plays
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -375,7 +397,7 @@ export const EnhancedListeningActivity = () => {
                               <div className="flex items-center gap-1">
                                 <Heart className="h-3 w-3 text-muted-foreground" />
                                 <span className="text-xs text-muted-foreground">
-                                  {formatUserPlays(calculateUserPlayCount(index, tracks.length))} plays
+                                  {formatUserPlays(calculateUserPlayCount(index, tracks.length, track))} plays
                                 </span>
                               </div>
                               <div className="flex items-center gap-1">

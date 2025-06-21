@@ -6,13 +6,18 @@ This document tracks the most recent significant changes and improvements to the
 
 ## 🎵 **Latest Update: Enhanced Listening Activity Dashboard**
 
-### **All Tracks Display (December 2024)**
+### **All Tracks Display & Enhanced Play Count Calculation (December 2024)**
 - **Complete Track List**: Enhanced listening activity dashboard now displays all 100 top tracks instead of limiting to 10
 - **Updated Tab Structure**: Renamed "Recent Tracks" tab to "All Tracks" with track count badge
 - **Enhanced Track Information**: Added estimated user play counts and popularity scores for each track
 - **Improved User Experience**: Increased scroll area height to 600px for better browsing
-- **Play Count Calculation**: Exponential decay formula (top track ~500 plays, decreasing by 15% per rank)
+- **Advanced Play Count Calculation**: Sophisticated algorithm considering popularity, duration, and genre
+  - **Base formula**: 2000 max plays with 12% decay per rank (0.88^rank)
+  - **Popularity factor**: 0.85-1.15x based on track popularity
+  - **Duration factor**: 0.8-1.2x based on track length (shorter = more replays)
+  - **Metal genre bonus**: 1.15x multiplier for Black Sabbath, Metallica, Iron Maiden, Megadeth
 - **Visual Enhancements**: Heart icons for play counts, popularity percentages, and ranking badges
+- **Metal Legends Added**: Included Black Sabbath, Metallica, Iron Maiden, and Megadeth in dummy data with classic tracks
 
 ## 🏥 **Library Health System - Major Feature Release**
 

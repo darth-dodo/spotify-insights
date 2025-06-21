@@ -82,8 +82,11 @@ export const classicArtists = [
   { id: '0du5cEVh5yTK9QJze8zA0C', name: 'Bruno Mars', image: 'https://i.scdn.co/image/ab6761610000e5eb8b32b139c8e8d5b8b8b2b2b2', genres: ['pop', 'funk', 'r&b'] },
   { id: '1vyhD5VmyZ7KMfW5gqLgo5', name: 'J Balvin', image: 'https://i.scdn.co/image/ab6761610000e5eb8b32b139c8e8d5b8b8b2b2b2', genres: ['reggaeton', 'latin', 'pop'] },
   
-  // Classic Rock & Pop Icons
-  { id: '2ye2Wgw4gimLv2eAKyk1NB', name: 'Metallica', image: 'https://i.scdn.co/image/ab6761610000e5eb8b32b139c8e8d5b8b8b2b2b2', genres: ['metal', 'thrash metal', 'hard rock'] },
+  // Metal Legends
+  { id: '2ye2Wgw4gimLv2eAKyk1NB', name: 'Metallica', image: 'https://i.scdn.co/image/ab6761610000e5eb8b32b139c8e8d5b8b8b2b2b2', genres: ['thrash metal', 'heavy metal', 'hard rock'] },
+  { id: '5M52tdBnJaKSvOpJGz8mfZ', name: 'Black Sabbath', image: 'https://i.scdn.co/image/ab6761610000e5eb4f0fd9dad63977146e685700', genres: ['heavy metal', 'doom metal', 'hard rock'] },
+  { id: '1Yox196W7bzVNZI7RBaPnf', name: 'Iron Maiden', image: 'https://i.scdn.co/image/ab6761610000e5eb0d2db66f5d2b7e2b8b2b2b2b', genres: ['heavy metal', 'nwobhm', 'hard rock'] },
+  { id: '1Kg6vYo2JQfyuCjYQpJ5Ej', name: 'Megadeth', image: 'https://i.scdn.co/image/ab6761610000e5eb8b32b139c8e8d5b8b8b2b2b2', genres: ['thrash metal', 'heavy metal', 'speed metal'] },
   { id: '0oSGxfWSnnOXhD2fKuz2Gy', name: 'AC/DC', image: 'https://i.scdn.co/image/ab6761610000e5eb8b32b139c8e8d5b8b8b2b2b2', genres: ['hard rock', 'rock'] },
   { id: '1dfeR4HaWDbWqFHLkxsg1d', name: 'Guns N\' Roses', image: 'https://i.scdn.co/image/ab6761610000e5eb8b32b139c8e8d5b8b8b2b2b2', genres: ['hard rock', 'heavy metal'] },
   { id: '6XyY86QOPPrYVGvF9ch6wz', name: 'Linkin Park', image: 'https://i.scdn.co/image/ab6761610000e5eb8b32b139c8e8d5b8b8b2b2b2', genres: ['nu metal', 'alternative rock'] },
@@ -170,7 +173,32 @@ export const classicTracks = [
   { id: 'track_037', name: 'Start Me Up', artist: 'The Rolling Stones', artistId: '22bE4uQ6baNwSHPVcDxLCe', album: 'Tattoo You', duration: 214000, popularity: 87, year: 1981 },
   { id: 'track_038', name: 'Satisfaction', artist: 'The Rolling Stones', artistId: '22bE4uQ6baNwSHPVcDxLCe', album: 'Out of Our Heads', duration: 223000, popularity: 86, year: 1965 },
   { id: 'track_039', name: 'Angie', artist: 'The Rolling Stones', artistId: '22bE4uQ6baNwSHPVcDxLCe', album: 'Goats Head Soup', duration: 272000, popularity: 85, year: 1973 },
-  { id: 'track_040', name: 'Brown Sugar', artist: 'The Rolling Stones', artistId: '22bE4uQ6baNwSHPVcDxLCe', album: 'Sticky Fingers', duration: 230000, popularity: 84, year: 1971 }
+  { id: 'track_040', name: 'Brown Sugar', artist: 'The Rolling Stones', artistId: '22bE4uQ6baNwSHPVcDxLCe', album: 'Sticky Fingers', duration: 230000, popularity: 84, year: 1971 },
+
+  // Metal Legends tracks
+  { id: 'track_041', name: 'Paranoid', artist: 'Black Sabbath', artistId: '5M52tdBnJaKSvOpJGz8mfZ', album: 'Paranoid', duration: 170000, popularity: 86, year: 1970 },
+  { id: 'track_042', name: 'Iron Man', artist: 'Black Sabbath', artistId: '5M52tdBnJaKSvOpJGz8mfZ', album: 'Paranoid', duration: 356000, popularity: 84, year: 1970 },
+  { id: 'track_043', name: 'War Pigs', artist: 'Black Sabbath', artistId: '5M52tdBnJaKSvOpJGz8mfZ', album: 'Paranoid', duration: 477000, popularity: 82, year: 1970 },
+  { id: 'track_044', name: 'Sweet Leaf', artist: 'Black Sabbath', artistId: '5M52tdBnJaKSvOpJGz8mfZ', album: 'Master of Reality', duration: 327000, popularity: 80, year: 1971 },
+  { id: 'track_045', name: 'Children of the Grave', artist: 'Black Sabbath', artistId: '5M52tdBnJaKSvOpJGz8mfZ', album: 'Master of Reality', duration: 316000, popularity: 78, year: 1971 },
+  
+  { id: 'track_046', name: 'Enter Sandman', artist: 'Metallica', artistId: '2ye2Wgw4gimLv2eAKyk1NB', album: 'Metallica (Black Album)', duration: 331000, popularity: 89, year: 1991 },
+  { id: 'track_047', name: 'Master of Puppets', artist: 'Metallica', artistId: '2ye2Wgw4gimLv2eAKyk1NB', album: 'Master of Puppets', duration: 515000, popularity: 87, year: 1986 },
+  { id: 'track_048', name: 'One', artist: 'Metallica', artistId: '2ye2Wgw4gimLv2eAKyk1NB', album: '...And Justice for All', duration: 446000, popularity: 85, year: 1988 },
+  { id: 'track_049', name: 'Fade to Black', artist: 'Metallica', artistId: '2ye2Wgw4gimLv2eAKyk1NB', album: 'Ride the Lightning', duration: 417000, popularity: 83, year: 1984 },
+  { id: 'track_050', name: 'For Whom the Bell Tolls', artist: 'Metallica', artistId: '2ye2Wgw4gimLv2eAKyk1NB', album: 'Ride the Lightning', duration: 309000, popularity: 81, year: 1984 },
+  
+  { id: 'track_051', name: 'The Number of the Beast', artist: 'Iron Maiden', artistId: '1Yox196W7bzVNZI7RBaPnf', album: 'The Number of the Beast', duration: 292000, popularity: 85, year: 1982 },
+  { id: 'track_052', name: 'Run to the Hills', artist: 'Iron Maiden', artistId: '1Yox196W7bzVNZI7RBaPnf', album: 'The Number of the Beast', duration: 232000, popularity: 83, year: 1982 },
+  { id: 'track_053', name: 'Aces High', artist: 'Iron Maiden', artistId: '1Yox196W7bzVNZI7RBaPnf', album: 'Powerslave', duration: 271000, popularity: 81, year: 1984 },
+  { id: 'track_054', name: 'Hallowed Be Thy Name', artist: 'Iron Maiden', artistId: '1Yox196W7bzVNZI7RBaPnf', album: 'The Number of the Beast', duration: 431000, popularity: 79, year: 1982 },
+  { id: 'track_055', name: 'Fear of the Dark', artist: 'Iron Maiden', artistId: '1Yox196W7bzVNZI7RBaPnf', album: 'Fear of the Dark', duration: 436000, popularity: 77, year: 1992 },
+  
+  { id: 'track_056', name: 'Peace Sells', artist: 'Megadeth', artistId: '1Kg6vYo2JQfyuCjYQpJ5Ej', album: 'Peace Sells... but Who\'s Buying?', duration: 242000, popularity: 82, year: 1986 },
+  { id: 'track_057', name: 'Holy Wars... The Punishment Due', artist: 'Megadeth', artistId: '1Kg6vYo2JQfyuCjYQpJ5Ej', album: 'Rust in Peace', duration: 382000, popularity: 80, year: 1990 },
+  { id: 'track_058', name: 'Hangar 18', artist: 'Megadeth', artistId: '1Kg6vYo2JQfyuCjYQpJ5Ej', album: 'Rust in Peace', duration: 311000, popularity: 78, year: 1990 },
+  { id: 'track_059', name: 'Symphony of Destruction', artist: 'Megadeth', artistId: '1Kg6vYo2JQfyuCjYQpJ5Ej', album: 'Countdown to Extinction', duration: 240000, popularity: 76, year: 1992 },
+  { id: 'track_060', name: 'Tornado of Souls', artist: 'Megadeth', artistId: '1Kg6vYo2JQfyuCjYQpJ5Ej', album: 'Rust in Peace', duration: 319000, popularity: 74, year: 1990 }
 ];
 
 // Generate additional tracks to reach 2000 total

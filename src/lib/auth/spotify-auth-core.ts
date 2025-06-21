@@ -3,16 +3,25 @@ import { spotifyAPI } from '../spotify-api';
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || `${window.location.origin}/callback`;
 
-const SCOPES = [
+// Core scopes that most apps can access
+const CORE_SCOPES = [
   'user-read-private',
   'user-top-read',
-  'user-read-recently-played',
+  'user-read-recently-played'
+];
+
+// Optional scopes that require special permissions (may cause 403)
+const OPTIONAL_SCOPES = [
   'user-read-playback-state',
   'user-modify-playback-state',
   'streaming'
-].join(' ');
+];
+
+// Use only core scopes by default to avoid 403 errors
+const SCOPES = CORE_SCOPES.join(' ');
 
 export const getScopes = () => SCOPES;
+export const getExtendedScopes = () => [...CORE_SCOPES, ...OPTIONAL_SCOPES].join(' ');
 export const getClientId = () => CLIENT_ID;
 export const getRedirectUri = () => REDIRECT_URI;
 
@@ -64,4 +73,21 @@ export const validateTokenScopes = (requiredScopes: string[] = ['streaming']): b
   
   console.log('Validating token scopes for:', requiredScopes);
   return true;
+};
+
+export const hasPlaybackPermissions = (): boolean => {
+  const token = getAccessToken();
+  if (!token || token === 'demo_access_token') {
+    return false;
+  }
+  
+  // For now, assume playback permissions are not available by default
+  // This can be enhanced later to actually check the token scopes
+  return false;
+};
+
+export const shouldEnablePlaybackFeatures = (): boolean => {
+  // Only enable playback features if explicitly requested and permissions are available
+  const enablePlayback = localStorage.getItem('enable_playback_features') === 'true';
+  return enablePlayback && hasPlaybackPermissions();
 };

@@ -33,7 +33,12 @@ export class SpotifyAPI {
       }
       
       if (response.status === 403) {
-        throw new Error('Forbidden. Check your Spotify permissions.');
+        // Handle playback-related 403 errors gracefully
+        if (endpoint.includes('/me/player')) {
+          console.warn('Playback API access denied - this requires Spotify Premium or special app permissions');
+          return null; // Return null instead of throwing for playback endpoints
+        }
+        throw new Error('Access denied. Your Spotify app may need additional permissions.');
       }
       
       throw new Error(`Spotify API error: ${response.status} ${response.statusText}`);

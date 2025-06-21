@@ -5,6 +5,7 @@ import { ErrorDialog } from '@/components/auth/ErrorDialog';
 import { spotifyPlaybackSDK } from '@/lib/spotify-playback-sdk';
 import { LandingPage } from '@/components/LandingPage';
 import { DataLoadingScreen } from '@/components/ui/DataLoadingScreen';
+import { useLoading } from '@/components/providers/LoadingProvider';
 
 interface AuthGuardProps {
   children?: React.ReactNode;
@@ -14,6 +15,7 @@ interface AuthGuardProps {
 
 export const AuthGuard = ({ children, loginComponent, dashboardComponent }: AuthGuardProps) => {
   const { user, isLoading, error } = useAuth();
+  const { isLoadingData } = useLoading();
   const sdkCleanupDone = useRef(false);
   const [errorDialogOpen, setErrorDialogOpen] = React.useState(false);
 
@@ -21,17 +23,26 @@ export const AuthGuard = ({ children, loginComponent, dashboardComponent }: Auth
     user: !!user, 
     isLoading, 
     error, 
+    isLoadingData,
     path: window.location.pathname 
   });
 
-  // Show error dialog if there's an auth error, but not during loading or on dashboard paths
+  // Show error dialog if there's an auth error, but not during loading, data loading, or on dashboard paths, but not during loading or on dashboard paths
   useEffect(() => {
-    if (error && !isLoading && !window.location.pathname.startsWith('/dashboard')) {
+    const shouldShowError = error && 
+      !isLoading && 
+      !isLoadingData && 
+      !window.location.pathname.startsWith('/dashboard') &&
+      window.location.pathname !== '/';
+      
+    if (shouldShowError && !isLoading && !window.location.pathname.startsWith('/dashboard')) {
       setErrorDialogOpen(true);
     } else if (!error) {
       setErrorDialogOpen(false);
+    } else if (!error) {
+      setErrorDialogOpen(false);
     }
-  }, [error, isLoading]);
+  }, [error, isLoading, isLoadingData, isLoading]);
 
   // Clean up Spotify SDK in demo mode
   useEffect(() => {

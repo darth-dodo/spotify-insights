@@ -1,6 +1,7 @@
 
 import { SpotifyPlaybackCore } from './spotify-playback-core';
 import { PlaybackSessionManager } from './spotify-playback-session';
+import { shouldEnablePlaybackFeatures } from './auth/spotify-auth-core';
 import type { HeatmapDay } from './spotify-playback-types';
 
 export class SpotifyPlaybackManager {
@@ -11,17 +12,18 @@ export class SpotifyPlaybackManager {
     this.sessionManager = new PlaybackSessionManager();
     this.core = new SpotifyPlaybackCore(this.sessionManager);
     
-    // Only initialize if we have a token and we're not in demo mode
+    // Only initialize if we have a token, playback features are enabled, and we're not in demo mode
     const token = localStorage.getItem('spotify_access_token');
     const isRootPathWithoutAuth = window.location.pathname === '/' && !token;
+    const playbackEnabled = shouldEnablePlaybackFeatures();
     
-    if (token && !isRootPathWithoutAuth) {
+    if (token && !isRootPathWithoutAuth && playbackEnabled) {
       // Delay initialization slightly to ensure callback is ready
       setTimeout(() => {
         this.core.initialize();
       }, 100);
     } else {
-      console.log('Spotify SDK initialization skipped - no access token or demo mode');
+      console.log('Spotify SDK initialization skipped - playback features disabled or no permissions');
     }
   }
 

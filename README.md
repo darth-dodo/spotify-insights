@@ -46,29 +46,12 @@ A sophisticated analytics platform for Spotify users, offering comprehensive ins
 
 ## 📚 Documentation
 
-### 🚀 **Getting Started**
-- [📋 Quick Start Guide](#quick-start) - Get up and running in minutes
-- [🔧 System Architecture](docs/SYSTEM_ARCHITECTURE.md) - Technical overview and design decisions
-- [🔐 Authentication Setup](docs/AUTHENTICATION_IMPROVEMENTS.md) - Spotify OAuth configuration
+- **Concise Overview** → [docs/OVERVIEW_CONCISE.md](docs/OVERVIEW_CONCISE.md)
+- **Detailed Engineering Guide** → [docs/ENGINEERING.md](docs/ENGINEERING.md)
+- **Metric Formulas** → [docs/METRIC_CALCULATIONS.md](docs/METRIC_CALCULATIONS.md)
+- **Security & Privacy** → [docs/SECURITY.md](docs/SECURITY.md)
 
-### 📊 **Metrics & Analytics**
-- [📈 Metric Calculations](docs/METRIC_CALCULATIONS.md) - Comprehensive guide to all metric formulas
-- [⚡ Quick Reference](docs/METRICS_QUICK_REFERENCE.md) - Developer cheat sheet for formulas
-- [🎯 API Integration](docs/API_INTEGRATION.md) - Spotify API usage and data processing
-
-### 🎨 **Design & Development**
-- [🎨 Design System](docs/DESIGN_SYSTEM.md) - UI components and design patterns
-- [🏗️ Engineering Guide](docs/ENGINEERING.md) - Development practices and code standards
-- [📱 Product Design](docs/PRODUCT_DESIGN.md) - User experience and interface design
-
-### 🔒 **Security & Privacy**
-- [🛡️ Security Overview](docs/SECURITY.md) - Security measures and best practices
-- [🔐 Privacy Architecture](docs/PRIVACY_ARCHITECTURE.md) - Data handling and privacy protection
-- [📋 Privacy Verification](docs/PRIVACY_VERIFICATION.md) - Compliance and verification procedures
-
-### ⚡ **Performance & Optimization**
-- [🚀 Performance Guide](docs/PERFORMANCE_OPTIMIZATION.md) - Optimization strategies and benchmarks
-- [📊 Data Architecture](docs/EXTENDED_DATA_ARCHITECTURE.md) - Data flow and processing optimization
+> Legacy deep-dive docs have been merged into the concise overview for quick onboarding. Refer to the individual files only when you need implementation-level details.
 
 ## 🛠️ Tech Stack
 

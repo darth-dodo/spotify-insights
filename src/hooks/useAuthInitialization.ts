@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { User } from './useAuthState';
+import { useLoading } from '@/components/providers/LoadingProvider';
 
 const USE_DUMMY_DATA = import.meta.env.VITE_USE_DUMMY_DATA === 'true';
 
@@ -11,6 +12,7 @@ export const useAuthInitialization = (
   clearAllUserData: () => void
 ) => {
   const hasInitialized = useRef(false);
+  const { setError: setLoadingError } = useLoading();
 
   useEffect(() => {
     // Prevent multiple initializations
@@ -103,13 +105,67 @@ export const useAuthInitialization = (
       } catch (error: any) {
         console.error('Auth initialization error:', error);
         
+        // Provide more specific error messages based on the error type
+        const getSpecificErrorMessage = (error: any): string => {
+          const errorMessage = error?.message || '';
+          
+          if (errorMessage.includes('CLIENT_ID') || errorMessage.includes('client_id')) {
+            return 'Spotify app configuration error. Please check your client ID setup.';
+          }
+          
+          if (errorMessage.includes('401') || errorMessage.includes('invalid_token')) {
+            return 'Your Spotify session has expired. Please log in again.';
+          }
+          
+          if (errorMessage.includes('403') || errorMessage.includes('forbidden')) {
+            return 'Access denied. Please check your Spotify app permissions.';
+          }
+          
+          if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+            return 'Too many requests. Please wait a moment and try again.';
+          }
+          
+          if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+            return 'Network connection error. Please check your internet connection.';
+          }
+          
+          if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
+            return 'Configuration error. Please check your redirect URI settings.';
+          }
+          
+          // Generic fallback
+          return 'Authentication initialization failed. Please refresh and try again.';
+        };
+        
         // On root path, gracefully fall back to demo mode instead of showing error
         if (window.location.pathname === '/') {
           console.log('Auth error on root path, falling back to demo mode');
           setError(null);
+          setLoadingError(null);
           setUser(null);
+        } else if (window.location.pathname.startsWith('/dashboard')) {
+          // On dashboard paths, only show error if it's not a simple token expiration
+          if (error?.message?.includes('401') || error?.message?.includes('invalid_token')) {
+            console.log('Token expired on dashboard, clearing auth silently');
+            clearAllUserData();
+            setError(null);
+            setLoadingError(null);
+            setUser(null);
+            // Redirect to home for re-authentication
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          } else {
+            const errorMessage = getSpecificErrorMessage(error);
+            setError(errorMessage);
+            setLoadingError(errorMessage);
+            setUser(null);
+          }
         } else {
-          setError('Failed to initialize authentication. Please refresh the page and try again.');
+          // For other paths, show the specific error
+          const errorMessage = getSpecificErrorMessage(error);
+          setError(errorMessage);
+          setLoadingError(errorMessage);
           setUser(null);
         }
       } finally {

@@ -151,17 +151,11 @@ export const ProgressiveLoader = ({
 
   const getMotivationalMessage = () => {
     const progressPercent = getOverallProgress();
-    if (progressPercent < 25) {
-      return "Starting analysis…";
-    } else if (progressPercent < 50) {
-      return "Processing data…";
-    } else if (progressPercent < 75) {
-      return "More than halfway there…";
-    } else if (progressPercent < 95) {
-      return "Wrapping up…";
-    } else {
-      return "Complete. Loading dashboard…";
-    }
+    if (progressPercent < 25) return "Starting…";
+    if (progressPercent < 50) return "Loading…";
+    if (progressPercent < 75) return "Processing…";
+    if (progressPercent < 95) return "Finalizing…";
+    return "Complete";
   };
 
   const getStepStatus = (index: number) => {
@@ -367,8 +361,8 @@ export const ProgressiveLoader = ({
 export const spotifyLoadingSteps: LoadingStep[] = [
   {
     id: 'profile',
-    title: 'Connecting Profile',
-    description: 'Authenticating and loading your Spotify profile',
+    title: 'Connecting',
+    description: 'Loading your profile',
     icon: Users,
     estimatedTime: 3,
     funFact: "Setting up your personalized music universe!",
@@ -376,8 +370,8 @@ export const spotifyLoadingSteps: LoadingStep[] = [
   },
   {
     id: 'tracks',
-    title: 'Analyzing Music Library',
-    description: 'Fetching up to 2000 of your top tracks for comprehensive analysis',
+    title: 'Loading Tracks',
+    description: 'Fetching your top tracks',
     icon: Music,
     estimatedTime: 8,
     funFact: "Discovering patterns in your musical preferences!",
@@ -385,8 +379,8 @@ export const spotifyLoadingSteps: LoadingStep[] = [
   },
   {
     id: 'artists',
-    title: 'Mapping Artist Universe',
-    description: 'Loading artists, genres, and musical relationships',
+    title: 'Loading Artists',
+    description: 'Fetching artists and genres',
     icon: Star,
     estimatedTime: 5,
     funFact: "Building your artist constellation map!",
@@ -394,8 +388,8 @@ export const spotifyLoadingSteps: LoadingStep[] = [
   },
   {
     id: 'recent',
-    title: 'Processing Activity',
-    description: 'Calculating listening patterns, genre diversity, and personalized insights',
+    title: 'Finalizing',
+    description: 'Processing insights',
     icon: TrendingUp,
     estimatedTime: 4,
     funFact: "Finalizing your musical insights dashboard!",

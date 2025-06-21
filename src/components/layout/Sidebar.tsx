@@ -91,8 +91,8 @@ export const Sidebar = ({ isOpen, onToggle, activeView, onViewChange }: SidebarP
       icon: BarChart3,
       items: [
         {
-          id: 'enhanced-trends',
-          title: 'Listening Trends',
+          id: 'listening-activity',
+          title: 'Listening Activity',
           icon: TrendingUp
         },
         {

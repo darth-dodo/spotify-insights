@@ -27,32 +27,32 @@ export const EnhancedLoadingScreen = ({
   const engagementTips = [
     {
       icon: Headphones,
-      title: "Pro Tip",
-      message: "Your music insights are being crafted with detailed statistical analysis of your listening habits!",
+      title: "Processing",
+      message: "Analyzing your listening habits",
       color: "text-blue-500"
     },
     {
       icon: Sparkles,
-      title: "Did You Know?",
-      message: "We analyze acoustic features like danceability, energy, and valence to understand your mood preferences!",
+      title: "Features",
+      message: "Analyzing audio features and mood preferences",
       color: "text-purple-500"
     },
     {
       icon: Heart,
-      title: "Privacy First",
-      message: "All your data processing happens locally on your device - nothing is sent to external servers!",
+      title: "Privacy",
+      message: "All processing happens locally on your device",
       color: "text-red-500"
     },
     {
       icon: Music,
-      title: "Fun Fact",
-      message: "The average music lover has 1,500+ songs in their library, but only listens to about 200 regularly!",
+      title: "Stats",
+      message: "Building your personalized music statistics",
       color: "text-green-500"
     },
     {
       icon: Users,
-      title: "Community",
-      message: "You're joining thousands of music enthusiasts who've discovered amazing insights about their taste!",
+      title: "Insights",
+      message: "Preparing your music insights dashboard",
       color: "text-orange-500"
     }
   ];
@@ -69,11 +69,11 @@ export const EnhancedLoadingScreen = ({
   }, [showTips, engagementTips.length]);
 
   const getLoadingPhaseMessage = () => {
-    if (currentStep === 0) return "Establishing connection...";
-    if (currentStep === 1) return "Deep diving into your music library...";
-    if (currentStep === 2) return "Mapping your musical universe...";
-    if (currentStep === 3) return "Finalizing your personalized dashboard...";
-    return "Preparing your musical insights...";
+    if (currentStep === 0) return "Connecting...";
+    if (currentStep === 1) return "Loading tracks...";
+    if (currentStep === 2) return "Loading artists...";
+    if (currentStep === 3) return "Finalizing...";
+    return "Loading...";
   };
 
   return (

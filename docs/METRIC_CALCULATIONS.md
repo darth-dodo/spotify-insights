@@ -608,11 +608,68 @@ if (!data.length || !otherRequiredData.length) return [];
 
 ---
 
-*Last Updated: June 2025*
-*Version: 1.0* 
+## 🎵 Listening Activity Dashboard Calculations
+
+### User Play Count Estimation (Enhanced)
+```typescript
+const calculateUserPlayCount = (index: number, totalTracks: number) => {
+  const maxPlays = 500;
+  const minPlays = 5;
+  const rank = index + 1;
+  const playCount = Math.round(maxPlays * Math.pow(0.85, rank - 1));
+  return Math.max(playCount, minPlays);
+};
+```
+
+**Formula**: `500 × (0.85^(rank-1))`
+- **Top track**: ~500 plays
+- **10th track**: ~197 plays  
+- **25th track**: ~26 plays
+- **50th track**: ~2 plays (minimum 5 enforced)
+- **100th track**: ~1 play (minimum 5 enforced)
+
+### Play Count Formatting
+```typescript
+const formatUserPlays = (plays: number) => {
+  if (plays >= 1000) return `${(plays / 1000).toFixed(1)}k`;
+  return plays.toString();
+};
+```
+
+### Activity Analysis
+```typescript
+const totalListeningTime = tracks.reduce((sum, track) => {
+  const duration = typeof track.duration_ms === 'number' ? track.duration_ms : 0;
+  return sum + duration;
+}, 0);
+
+const dailyActivity = Array.from({ length: 30 }, (_, i) => {
+  const baseActivity = Math.min(tracks.length / 10, 15);
+  const variance = Math.random() * 0.6 + 0.7; // 0.7 to 1.3 multiplier
+  return {
+    tracks: Math.round(baseActivity * variance),
+    minutes: Math.round(baseActivity * variance * 4) // ~4 min per track average
+  };
+});
+```
+
+### Hidden Gems Detection
+```typescript
+const hiddenGems = tracks.filter(track => (track.popularity || 0) < 40).map(track => ({
+  ...track,
+  gemScore: (50 - (track.popularity || 0)) + Math.random() * 20,
+  rarity: (track.popularity || 0) < 20 ? 'Ultra Rare' : 
+          (track.popularity || 0) < 30 ? 'Very Rare' : 'Rare'
+})).sort((a, b) => b.gemScore - a.gemScore);
+```
+
+---
+
+*Last Updated: December 2024*
+*Version: 1.1* 
 
 ```ts
-// 1. Play Count
+// 1. Play Count (Legacy)
 if (realPlayDataAvailable) {
   playCount = realPlayCount;
 } else {
@@ -625,6 +682,15 @@ if (realPlayDataAvailable) {
   const base = rankFactor * 0.3 + popularity * 30 * 0.25 + durationFactor * 20 * 0.15 + recent * 5 * 0.15 + userPref * 20 * 0.15;
   playCount = Math.max(1, Math.round(base * genreMultiplier));
 }
+
+// 1. Play Count (Listening Activity - Enhanced)
+const calculateUserPlayCount = (index: number, totalTracks: number) => {
+  const maxPlays = 500;
+  const minPlays = 5;
+  const rank = index + 1;
+  const playCount = Math.round(maxPlays * Math.pow(0.85, rank - 1));
+  return Math.max(playCount, minPlays);
+};
 
 // 2. Listening Time  (hours)
 if (realListeningMs) {

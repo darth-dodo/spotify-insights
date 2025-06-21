@@ -43,4 +43,26 @@ Files Changed: 6 files
 - 🔧 ENHANCED: TrackExplorer.tsx - Intelligent data extrapolation
 - 📝 UPDATED: Import statements and type definitions
 
-This implementation provides a foundation for transitioning from estimates to real data while maintaining user experience through intelligent fallbacks and clear quality indicators. 
+This implementation provides a foundation for transitioning from estimates to real data while maintaining user experience through intelligent fallbacks and clear quality indicators.
+
+feat: enhance listening activity dashboard to show all 100 tracks
+
+- Remove 10-track limit from recent activity tab
+- Rename "Recent Tracks" tab to "All Tracks" with count badge
+- Add estimated user play counts using exponential decay formula
+- Display popularity scores alongside play counts
+- Increase scroll area height to 600px for better UX
+- Replace timestamp/session info with play count and popularity
+- Update card title and description to reflect complete track display
+
+Technical changes:
+- Enhanced calculateUserPlayCount with 500 plays max, 15% decay per rank
+- Updated formatUserPlays for k-notation formatting
+- Added Heart icons for play counts and ranking badges
+- Improved visual hierarchy with better spacing and layout
+
+Documentation updates:
+- Added listening activity section to RECENT_CHANGES.md
+- Updated README.md with new analytics component info
+- Enhanced METRIC_CALCULATIONS.md with play count formulas
+- Documented hidden gems detection and activity analysis 

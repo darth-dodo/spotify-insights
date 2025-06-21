@@ -24,7 +24,7 @@ export const OnboardingTour = ({
       // Small delay to ensure DOM elements are ready
       const timer = setTimeout(() => {
         setRun(true);
-      }, 500);
+      }, 300);
       return () => clearTimeout(timer);
     } else {
       setRun(false);
@@ -65,15 +65,15 @@ export const OnboardingTour = ({
       disableScrolling={false}
       disableScrollParentFix={false}
       disableOverlay={false}
-      spotlightClicks={true}
-      spotlightPadding={6}
+      spotlightClicks={false}
+      spotlightPadding={8}
       scrollDuration={300}
       debug={false}
       styles={{
         options: {
           primaryColor: isDark ? 'hsl(217 91% 65%)' : 'hsl(217 91% 60%)',
           width: 350,
-          zIndex: 10000,
+          zIndex: 9999,
         },
         tooltip: {
           borderRadius: 8,
@@ -136,18 +136,17 @@ export const OnboardingTour = ({
           border: 'none',
         },
         spotlight: {
-          borderRadius: 8,
-          border: `2px solid ${isDark ? 'hsl(217 91% 65%)' : 'hsl(217 91% 60%)'}`,
-          boxShadow: isDark
-            ? '0 0 0 2px rgba(59, 130, 246, 0.15)'
-            : '0 0 0 2px rgba(59, 130, 246, 0.1)',
+          border: 'none',
+          boxShadow: 'none',
+          borderRadius: 0,
+          backgroundColor: 'transparent',
         },
         overlay: {
-          backgroundColor: 'rgba(0, 0, 0, 0.15)',
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
           mixBlendMode: 'normal',
         },
         overlayLegacy: {
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
         },
         beacon: {
           borderRadius: '50%',
@@ -229,7 +228,7 @@ export const dashboardTourSteps: Step[] = [
   {
     target: '#top-tracks-section',
     title: '🎤 Your Musical DNA',
-    content: 'This section showcases your most beloved tracks with rich details about each song. You\'ll see popularity scores, duration, and can even open tracks directly in Spotify. These tracks represent your core musical identity!',
+    content: 'This section showcases your most beloved tracks with rich details about each song. You\'ll see your estimated play counts (based on ranking), global popularity scores, duration, and can even open tracks directly in Spotify. These tracks represent your core musical identity!',
     placement: 'top' as const,
     disableBeacon: true,
     offset: 15,

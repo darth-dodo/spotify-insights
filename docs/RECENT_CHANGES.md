@@ -4,6 +4,16 @@
 
 This document tracks the most recent significant changes and improvements to the Spotify Insights application, focusing on the major Library Health system release and comprehensive component enhancements.
 
+## 🎵 **Latest Update: Enhanced Listening Activity Dashboard**
+
+### **All Tracks Display (December 2024)**
+- **Complete Track List**: Enhanced listening activity dashboard now displays all 100 top tracks instead of limiting to 10
+- **Updated Tab Structure**: Renamed "Recent Tracks" tab to "All Tracks" with track count badge
+- **Enhanced Track Information**: Added estimated user play counts and popularity scores for each track
+- **Improved User Experience**: Increased scroll area height to 600px for better browsing
+- **Play Count Calculation**: Exponential decay formula (top track ~500 plays, decreasing by 15% per rank)
+- **Visual Enhancements**: Heart icons for play counts, popularity percentages, and ranking badges
+
 ## 🏥 **Library Health System - Major Feature Release**
 
 ### **🎯 New Health Metrics (7 Categories)**

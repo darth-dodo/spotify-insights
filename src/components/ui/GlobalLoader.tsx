@@ -9,6 +9,11 @@ export const GlobalLoader = () => {
 
   const [visible, setVisible] = useState(false);
 
+  // Never render loader on public landing page
+  if (typeof window !== 'undefined' && window.location.pathname === '/') {
+    return null;
+  }
+
   // Determine visibility
   useEffect(() => {
     const shouldShow = (pct > 0 && pct < 100) || authLoading;

@@ -86,7 +86,10 @@ export const GlobalLoader = () => {
   return (
     <div
       className="fixed inset-0 z-[2000] transition-opacity duration-500"
-      style={{ opacity: pct >= 100 ? 0 : 1 }}
+      style={{ 
+        opacity: pct >= 100 ? 0 : 1,
+        pointerEvents: pct >= 100 ? 'none' : 'auto'
+      }}
     >
       <EnhancedLoadingScreen
         currentStep={currentStep}

@@ -18,6 +18,7 @@ import { DataQualityPage } from "@/pages/DataQualityPage";
 import { MetricCalculationsPage } from "@/pages/MetricCalculationsPage";
 import Index from "@/pages/Index";
 import NotFound from "./pages/NotFound";
+import { AnalysisPage } from "@/pages/Analysis";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="/legal" element={<LegalPage />} />
                 <Route path="/data-quality" element={<DataQualityPage />} />
                 <Route path="/calculations" element={<MetricCalculationsPage />} />
+                <Route path="/analysis" element={<AnalysisPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ApiErrorBoundary>

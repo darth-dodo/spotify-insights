@@ -47,6 +47,24 @@ export const GlobalLoader = () => {
     }
   }, [authError]);
 
+  // Timeout guard (30 s) – if loading not complete redirect to landing
+  useEffect(() => {
+    if (!visible) return;
+
+    const timer = setTimeout(() => {
+      if (pct < 100) {
+        console.warn('Loader timeout; clearing auth and reloading');
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('spotify_') || k === 'user_profile')
+          .forEach((k) => localStorage.removeItem(k));
+        localStorage.setItem('load_error', 'timeout');
+        window.location.replace('/');
+      }
+    }, 30_000);
+
+    return () => clearTimeout(timer);
+  }, [visible, pct]);
+
   if (!visible) return null;
 
   const stepFromStage = (s: string): number => {

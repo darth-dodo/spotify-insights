@@ -18,6 +18,7 @@ import { DataQualityPage } from "@/pages/DataQualityPage";
 import { MetricCalculationsPage } from "@/pages/MetricCalculationsPage";
 import Index from "@/pages/Index";
 import NotFound from "./pages/NotFound";
+import { DashboardBootstrap } from "@/pages/DashboardBootstrap";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,7 +52,7 @@ const App = () => (
                 {/* Authenticated dashboard */}
                 <Route 
                   path="/dashboard" 
-                  element={<AuthGuard dashboardComponent={<Dashboard />} />} 
+                  element={<AuthGuard dashboardComponent={<DashboardBootstrap />} />} 
                 />
 
                 {/* Legacy /index route for backward compatibility */}

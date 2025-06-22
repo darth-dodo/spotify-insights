@@ -22,6 +22,7 @@ Below is an ordered index of the most relevant documentation. Each link jumps to
 4. **Security & Privacy**
    - 🛡️ **[Security](./SECURITY.md)** – auth, threat-model, best practices.
    - 🔐 **[Privacy Architecture](./PRIVACY_ARCHITECTURE.md)** – GDPR compliance & user-control.
+   - 👥 **[User Access Guide](./USER_ACCESS_GUIDE.md)** – Spotify app limitations & user restrictions.
 
 5. **Loading Experience & UX**
    - 🚀 **[Loading Experience Overhaul](./LOADING_EXPERIENCE_OVERHAUL.md)** – product reasoning & user psychology behind enhanced loading.

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { spotifyAuth } from '@/lib/spotify-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -10,8 +10,12 @@ export const CallbackPage = () => {
   const { toast } = useToast();
   const { setStage } = useLoading();
   const [oauthError, setOauthError] = React.useState<string | null>(null);
+  const hasRunRef = useRef(false);
 
   useEffect(() => {
+    if (hasRunRef.current) return; // Guard against double-invocation in React 18 StrictMode (dev)
+    hasRunRef.current = true;
+
     const handleCallback = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);

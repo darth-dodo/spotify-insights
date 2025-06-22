@@ -82,6 +82,24 @@ export const LandingPage = () => {
             Beautiful visualizations and analytics that respect your data.
           </p>
           
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6 max-w-2xl mx-auto">
+            <div className="flex items-start gap-3">
+              <div className="text-amber-600 dark:text-amber-400 mt-0.5">
+                <Users className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-1">
+                  Limited Access Notice
+                </h4>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  This app is in Development Mode with a <strong>25-user limit</strong>. 
+                  To access your real Spotify data, you must be added to the allowlist by the app owner.
+                  Anyone can try the full-featured <strong>Sandbox Mode</strong> with demo data.
+                </p>
+              </div>
+            </div>
+          </div>
+          
           <div className="flex justify-center mb-8">
             <Badge variant="outline" className="text-accent border-accent px-6 py-2 text-base">
               <Shield className="h-4 w-4 mr-2" />
@@ -157,13 +175,13 @@ export const LandingPage = () => {
             {[
               {
                 step: "1",
-                title: "Connect Securely",
-                description: "Authorize through Spotify's official OAuth - we never see your credentials"
+                title: "Get Access",
+                description: "Request to be added to the 25-user allowlist, or try Sandbox Mode instantly"
               },
               {
                 step: "2", 
-                title: "Analyze Locally",
-                description: "Your data stays in your browser - all processing happens on your device"
+                title: "Connect Safely",
+                description: "Authorize through Spotify's official OAuth - your data stays in your browser"
               },
               {
                 step: "3",
@@ -174,7 +192,7 @@ export const LandingPage = () => {
               <div key={index} className="text-center group animate-fadeInUp" style={{ animationDelay: `${1.0 + index * 0.2}s` }}>
                 <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/20 transition-all duration-300 transform group-hover:scale-110 shadow-md group-hover:shadow-lg">
                   <span className="text-2xl font-bold text-accent group-hover:text-accent/90 transition-colors duration-300">{item.step}</span>
-                </div>
+              </div>
                 <h3 className="text-xl font-semibold mb-2 group-hover:text-accent transition-colors duration-300">{item.title}</h3>
                 <p className="text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
                   {item.description}
@@ -184,34 +202,103 @@ export const LandingPage = () => {
           </div>
         </div>
 
-        <Card className="border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+          <Card className="border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Play className="h-6 w-6 text-accent" />
+                Sandbox Mode (Anyone)
+              </CardTitle>
+              <CardDescription className="text-base">
+                Try our complete dashboard with sample data to see the full potential of your music insights.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2 text-accent">Sandbox includes:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Complete dashboard with 500+ sample tracks</li>
+                    <li>• All visualizations and interactive features</li>
+                    <li>• Full privacy controls and settings</li>
+                    <li>• Real-time analytics and trend analysis</li>
+                  </ul>
+                </div>
+                <Button 
+                  onClick={handleSandboxClick}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Try Sandbox Mode
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                Real Data Access (Limited)
+              </CardTitle>
+              <CardDescription className="text-base">
+                Connect your actual Spotify account for personalized insights with your real music data.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2 text-blue-600 dark:text-blue-400">Requirements:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Must be added to 25-user allowlist</li>
+                    <li>• Contact app owner for access</li>
+                    <li>• Provide your Spotify email address</li>
+                    <li>• Same features as Sandbox but with your data</li>
+                  </ul>
+                </div>
+                <Button 
+                  onClick={handleLoginClick}
+                  disabled={isLoading}
+                  variant="outline"
+                  className="w-full flex items-center gap-2 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                >
+                  <LogIn className={`h-4 w-4 ${isLoading ? 'animate-pulse' : ''}`} />
+                  {isLoading ? 'Connecting...' : 'Connect Spotify'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-950/50 dark:to-gray-900/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Play className="h-6 w-6 text-accent" />
-              Experience the Dashboard
+              <Shield className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+              Why the Limitations?
             </CardTitle>
-            <CardDescription className="text-base">
-              Try our complete dashboard with sample data to see the full potential of your music insights.
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 items-start">
-              <div className="flex-1">
-                <h4 className="font-medium mb-2 text-accent">Sandbox includes:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Complete dashboard with 500+ sample tracks from classic artists</li>
-                  <li>• All visualizations and interactive features</li>
-                  <li>• Full privacy controls and settings</li>
-                  <li>• Real-time analytics and trend analysis</li>
-                </ul>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-medium mb-2">Spotify's Development Mode</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  New Spotify apps start in Development Mode, which allows up to 25 users. This is perfect for 
+                  personal projects, beta testing, and small user groups.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Users must be manually added to an allowlist via the Spotify Developer Dashboard.
+                </p>
               </div>
-              <Button 
-                onClick={handleSandboxClick}
-                className="whitespace-nowrap flex items-center gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                Explore Dashboard
-              </Button>
+              <div>
+                <h4 className="font-medium mb-2">Extended Access Requirements</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  As of May 2025, Spotify only grants unlimited access to organizations with 250k+ monthly 
+                  active users and established business entities.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Individual developers and personal projects typically remain in Development Mode.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

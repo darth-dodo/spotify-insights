@@ -28,6 +28,15 @@ A sophisticated analytics platform for Spotify users, offering comprehensive ins
 - **Loading States**: Enhanced loading experiences with contextual feedback
 - **Interactive Charts**: Rich data visualization with hover effects and detailed tooltips
 
+## 🚨 Important: User Access Limitations
+
+**This app operates in Spotify's Development Mode** with the following restrictions:
+- ✅ **Up to 25 users** can access real Spotify data
+- ❌ **Users must be manually allowlisted** by the app owner
+- 🎮 **Sandbox Mode available** for anyone to try with demo data
+
+👉 **Read the full guide**: [User Access & Limitations](docs/USER_ACCESS_GUIDE.md)
+
 ## Quick Start
 
 1. Clone the repository
@@ -46,6 +55,7 @@ A sophisticated analytics platform for Spotify users, offering comprehensive ins
 
 ## 📚 Documentation
 
+- **👥 User Access Guide** → [docs/USER_ACCESS_GUIDE.md](docs/USER_ACCESS_GUIDE.md) - **Start here!**
 - **Concise Overview** → [docs/OVERVIEW_CONCISE.md](docs/OVERVIEW_CONCISE.md)
 - **Detailed Engineering Guide** → [docs/ENGINEERING.md](docs/ENGINEERING.md)
 - **Metric Formulas** → [docs/METRIC_CALCULATIONS.md](docs/METRIC_CALCULATIONS.md)

@@ -14,8 +14,24 @@ export const GlobalLoader = () => {
     const shouldShow = (pct > 0 && pct < 100) || authLoading;
     if (shouldShow && !visible) setVisible(true);
     if (!shouldShow && visible && pct >= 100) {
-      const t = setTimeout(() => setVisible(false), 500);
-      return () => clearTimeout(t);
+      const timeout = setTimeout(() => {
+        if (pct < 100) {
+          console.warn('GlobalLoader timeout – aborting session');
+          // Clear relevant localStorage keys
+          Object.keys(localStorage)
+            .filter((k) => k.startsWith('spotify_') || k === 'user_profile')
+            .forEach((k) => localStorage.removeItem(k));
+
+          localStorage.setItem('load_error', 'timeout');
+
+          // Hide overlay and reset app state
+          setVisible(false);
+
+          // Navigate to landing page for a fresh start
+          window.location.replace('/');
+        }
+      }, 30_000);
+      return () => clearTimeout(timeout);
     }
   }, [pct, authLoading, visible]);
 

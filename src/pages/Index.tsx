@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,10 +5,24 @@ import { Badge } from '@/components/ui/badge';
 import { Music, BarChart3, Users, TrendingUp, Play, Eye, LogIn, Zap, Shield, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/components/ui/use-toast';
 
 const Index = () => {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
+
+  // Show timeout toast if flag present
+  React.useEffect(() => {
+    const reason = localStorage.getItem('load_error');
+    if (reason === 'timeout') {
+      toast({
+        title: 'Load timed out',
+        description: 'Something went wrong while loading your data. Please try connecting again.',
+        variant: 'destructive',
+      });
+      localStorage.removeItem('load_error');
+    }
+  }, []);
 
   const handleSandboxClick = () => {
     navigate('/sandbox');

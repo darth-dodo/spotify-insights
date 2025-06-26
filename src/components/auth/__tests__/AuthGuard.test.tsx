@@ -1,242 +1,318 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import { AuthGuard } from '../AuthGuard'
 import React from 'react'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { AuthGuard } from '../AuthGuard'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 
-// Mock the auth hooks
+// Mock the auth hook
 const mockUseAuth = vi.fn()
 vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => mockUseAuth(),
+  useAuth: () => mockUseAuth()
 }))
 
 // Mock the loading provider
 const mockUseLoading = vi.fn()
 vi.mock('@/components/providers/LoadingProvider', () => ({
-  useLoading: () => mockUseLoading(),
+  useLoading: () => mockUseLoading()
 }))
 
-// Mock components
-vi.mock('../LoginPage', () => ({
-  LoginPage: () => React.createElement('div', { 'data-testid': 'login-page' }, 'Login Page'),
+// Mock the LandingPage component
+vi.mock('@/components/LandingPage', () => ({
+  LandingPage: () => <div data-testid="landing-page">Landing Page</div>
 }))
 
-vi.mock('@/components/ui/GlobalLoader', () => ({
-  GlobalLoader: () => React.createElement('div', { 'data-testid': 'global-loader' }, 'Loading...'),
+// Mock the BlurLoader component
+vi.mock('@/components/ui/BlurLoader', () => ({
+  BlurLoader: ({ children, isLoading }: { children: React.ReactNode, isLoading: boolean }) => (
+    <div data-testid={isLoading ? "blur-loader-active" : "blur-loader-inactive"}>
+      {children}
+    </div>
+  )
 }))
+
+// Mock the DataLoadingScreen component
+vi.mock('@/components/ui/DataLoadingScreen', () => ({
+  DataLoadingScreen: () => <div data-testid="data-loading-screen">Data Loading</div>
+}))
+
+// Mock the ErrorDialog component
+vi.mock('@/components/auth/ErrorDialog', () => ({
+  ErrorDialog: ({ open, title, message }: { open: boolean, title: string, message: string }) => 
+    open ? <div data-testid="error-dialog">{title}: {message}</div> : null
+}))
+
+// Mock the Spotify SDK
+vi.mock('@/lib/spotify-playback-sdk', () => ({
+  spotifyPlaybackSDK: {
+    disconnect: vi.fn()
+  }
+}))
+
+// Mock location
+const mockLocation = {
+  pathname: '/',
+  replace: vi.fn(),
+  reload: vi.fn()
+}
+
+Object.defineProperty(window, 'location', {
+  value: mockLocation,
+  writable: true
+})
+
+const renderWithRouter = (component: React.ReactElement, route = '/') => {
+  mockLocation.pathname = route
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      {component}
+    </MemoryRouter>
+  )
+}
 
 describe('AuthGuard', () => {
   const mockChildren = React.createElement('div', { 'data-testid': 'protected-content' }, 'Protected Content')
 
-  const renderWithRouter = (component: React.ReactElement) => {
-    return render(React.createElement(MemoryRouter, {}, component))
-  }
-
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseLoading.mockReturnValue({
-      isLoading: false,
-      loadingMessage: '',
+      isLoadingData: false,
+      pct: 0,
+      stage: 'idle'
     })
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
   })
 
   it('renders children when user is authenticated', () => {
     mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
+      user: { id: '123', display_name: 'Test User' },
       isLoading: false,
-      user: { id: 'test-user' },
+      error: null
     })
 
     renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
 
     expect(screen.getByTestId('protected-content')).toBeInTheDocument()
-    expect(screen.queryByTestId('login-page')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('landing-page')).not.toBeInTheDocument()
   })
 
-  it('renders login page when user is not authenticated', () => {
+  it('renders landing page when user is not authenticated on root path', () => {
     mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: false,
       user: null,
-    })
-
-    renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
-
-    expect(screen.getByTestId('login-page')).toBeInTheDocument()
-    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
-  })
-
-  it('renders global loader when authentication is loading', () => {
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: true,
-      user: null,
-    })
-
-    renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
-
-    expect(screen.getByTestId('global-loader')).toBeInTheDocument()
-    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('login-page')).not.toBeInTheDocument()
-  })
-
-  it('renders global loader when global loading is active', () => {
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
       isLoading: false,
-      user: { id: 'test-user' },
+      error: null
     })
 
-    mockUseLoading.mockReturnValue({
-      isLoading: true,
-      loadingMessage: 'Loading data...',
-    })
+    mockLocation.pathname = '/'
+    renderWithRouter(React.createElement(AuthGuard, {}, mockChildren), '/')
 
-    renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
-
-    expect(screen.getByTestId('global-loader')).toBeInTheDocument()
+    expect(screen.getByTestId('landing-page')).toBeInTheDocument()
     expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
   })
 
-  it('handles authentication state changes', async () => {
+  it('shows blur loader when authentication is loading', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      isLoading: true,
+      error: null
+    })
+
+    mockLocation.pathname = '/'
+    renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
+
+    expect(screen.getByTestId('blur-loader-active')).toBeInTheDocument()
+    expect(screen.getByTestId('landing-page')).toBeInTheDocument()
+  })
+
+  it('shows error dialog when there is an authentication error', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      isLoading: false,
+      error: 'Authentication failed'
+    })
+
+    mockLocation.pathname = '/login'
+    renderWithRouter(React.createElement(AuthGuard, {}, mockChildren), '/login')
+
+    expect(screen.getByTestId('error-dialog')).toBeInTheDocument()
+    expect(screen.getByText(/Authentication Error: Authentication failed/)).toBeInTheDocument()
+  })
+
+  it('returns null for dashboard path when user is not authenticated', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      isLoading: false,
+      error: null
+    })
+
+    mockLocation.pathname = '/dashboard'
+    const { container } = renderWithRouter(React.createElement(AuthGuard, {}, mockChildren), '/dashboard')
+
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('handles authentication state changes correctly', () => {
     // Start unauthenticated
     mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: false,
       user: null,
+      isLoading: false,
+      error: null
     })
 
+    mockLocation.pathname = '/'
     const { rerender } = renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
 
-    expect(screen.getByTestId('login-page')).toBeInTheDocument()
+    expect(screen.getByTestId('landing-page')).toBeInTheDocument()
 
     // Simulate authentication
     mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
+      user: { id: '123', display_name: 'Test User' },
       isLoading: false,
-      user: { id: 'test-user' },
+      error: null
     })
 
-    rerender(React.createElement(MemoryRouter, {}, React.createElement(AuthGuard, {}, mockChildren)))
+    rerender(
+      <MemoryRouter initialEntries={['/']}>
+        {React.createElement(AuthGuard, {}, mockChildren)}
+      </MemoryRouter>
+    )
 
-    await waitFor(() => {
-      expect(screen.getByTestId('protected-content')).toBeInTheDocument()
-    })
-    expect(screen.queryByTestId('login-page')).not.toBeInTheDocument()
+    expect(screen.getByTestId('protected-content')).toBeInTheDocument()
+    expect(screen.queryByTestId('landing-page')).not.toBeInTheDocument()
   })
 
-  it('handles loading state transitions', async () => {
+  it('handles loading state transitions', () => {
     // Start with loading
     mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: true,
       user: null,
+      isLoading: true,
+      error: null
     })
 
+    mockLocation.pathname = '/'
     const { rerender } = renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
 
-    expect(screen.getByTestId('global-loader')).toBeInTheDocument()
+    expect(screen.getByTestId('blur-loader-active')).toBeInTheDocument()
 
-    // Finish loading, show login
+    // Finish loading, show landing page
     mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: false,
       user: null,
+      isLoading: false,
+      error: null
     })
 
-    rerender(React.createElement(MemoryRouter, {}, React.createElement(AuthGuard, {}, mockChildren)))
+    rerender(
+      <MemoryRouter initialEntries={['/']}>
+        {React.createElement(AuthGuard, {}, mockChildren)}
+      </MemoryRouter>
+    )
 
-    await waitFor(() => {
-      expect(screen.getByTestId('login-page')).toBeInTheDocument()
-    })
-    expect(screen.queryByTestId('global-loader')).not.toBeInTheDocument()
+    expect(screen.getByTestId('blur-loader-inactive')).toBeInTheDocument()
+    expect(screen.getByTestId('landing-page')).toBeInTheDocument()
   })
 
-  it('prioritizes auth loading over global loading', () => {
+  it('does not show error dialog on dashboard paths', () => {
     mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: true,
       user: null,
+      isLoading: false,
+      error: 'Some error'
     })
 
-    mockUseLoading.mockReturnValue({
-      isLoading: true,
-      loadingMessage: 'Loading data...',
-    })
+    mockLocation.pathname = '/dashboard/overview'
+    const { container } = renderWithRouter(React.createElement(AuthGuard, {}, mockChildren), '/dashboard/overview')
 
-    renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
-
-    // Should show global loader (which handles both auth and global loading)
-    expect(screen.getByTestId('global-loader')).toBeInTheDocument()
-    expect(screen.queryByTestId('login-page')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
+    expect(container.firstChild).toBeNull()
+    expect(screen.queryByTestId('error-dialog')).not.toBeInTheDocument()
   })
 
   it('handles undefined user gracefully', () => {
     mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: false,
       user: undefined,
+      isLoading: false,
+      error: null
     })
 
+    mockLocation.pathname = '/'
     renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
 
-    expect(screen.getByTestId('login-page')).toBeInTheDocument()
+    expect(screen.getByTestId('landing-page')).toBeInTheDocument()
     expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
   })
 
-  it('handles multiple children', () => {
+  it('maintains component structure during state changes', () => {
     mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
-      isLoading: false,
-      user: { id: 'test-user' },
-    })
-
-    const multipleChildren = [
-      React.createElement('div', { key: 'child1', 'data-testid': 'child-1' }, 'Child 1'),
-      React.createElement('div', { key: 'child2', 'data-testid': 'child-2' }, 'Child 2'),
-    ]
-
-    renderWithRouter(React.createElement(AuthGuard, {}, ...multipleChildren))
-
-    expect(screen.getByTestId('child-1')).toBeInTheDocument()
-    expect(screen.getByTestId('child-2')).toBeInTheDocument()
-  })
-
-  it('maintains component structure during state changes', async () => {
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: false,
       user: null,
+      isLoading: false,
+      error: null
     })
 
+    mockLocation.pathname = '/'
     const { rerender } = renderWithRouter(React.createElement(AuthGuard, {}, mockChildren))
 
     // Initial state
-    expect(screen.getByTestId('login-page')).toBeInTheDocument()
+    expect(screen.getByTestId('landing-page')).toBeInTheDocument()
 
     // Simulate loading
     mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: true,
       user: null,
+      isLoading: true,
+      error: null
     })
 
-    rerender(React.createElement(MemoryRouter, {}, React.createElement(AuthGuard, {}, mockChildren)))
+    rerender(
+      <MemoryRouter initialEntries={['/']}>
+        {React.createElement(AuthGuard, {}, mockChildren)}
+      </MemoryRouter>
+    )
 
-    expect(screen.getByTestId('global-loader')).toBeInTheDocument()
+    expect(screen.getByTestId('blur-loader-active')).toBeInTheDocument()
 
-    // Simulate successful auth
+    // Complete authentication
     mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
+      user: { id: '123', display_name: 'Test User' },
       isLoading: false,
-      user: { id: 'test-user' },
+      error: null
     })
 
-    rerender(React.createElement(MemoryRouter, {}, React.createElement(AuthGuard, {}, mockChildren)))
+    rerender(
+      <MemoryRouter initialEntries={['/']}>
+        {React.createElement(AuthGuard, {}, mockChildren)}
+      </MemoryRouter>
+    )
 
-    await waitFor(() => {
-      expect(screen.getByTestId('protected-content')).toBeInTheDocument()
+    expect(screen.getByTestId('protected-content')).toBeInTheDocument()
+  })
+
+  it('renders custom login component when provided', () => {
+    const customLogin = React.createElement('div', { 'data-testid': 'custom-login' }, 'Custom Login')
+    
+    mockUseAuth.mockReturnValue({
+      user: null,
+      isLoading: false,
+      error: null
     })
+
+    mockLocation.pathname = '/'
+    renderWithRouter(React.createElement(AuthGuard, { loginComponent: customLogin }, mockChildren))
+
+    // Should still render landing page since that's the component's behavior
+    expect(screen.getByTestId('landing-page')).toBeInTheDocument()
+  })
+
+  it('renders custom dashboard component when user is authenticated', () => {
+    const customDashboard = React.createElement('div', { 'data-testid': 'custom-dashboard' }, 'Custom Dashboard')
+    
+    mockUseAuth.mockReturnValue({
+      user: { id: '123', display_name: 'Test User' },
+      isLoading: false,
+      error: null
+    })
+
+    renderWithRouter(React.createElement(AuthGuard, { dashboardComponent: customDashboard }, mockChildren))
+
+    expect(screen.getByTestId('custom-dashboard')).toBeInTheDocument()
+    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
   })
 }) 

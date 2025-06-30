@@ -112,7 +112,7 @@ For detailed pipeline documentation, see [CI/CD Pipeline Guide](docs/CI_CD_PIPEL
 - **TypeScript** for type safety
 - **ESLint** for code linting
 - **Prettier** for code formatting
-- **Husky** for git hooks
+- **GitHub Actions** for automated CI/CD
 
 ## Contributing
 

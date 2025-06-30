@@ -32,8 +32,7 @@
     "ci:full": "npm run lint && npm run test:coverage && npm run test:e2e && npm run build",
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "prepare": "husky install"
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

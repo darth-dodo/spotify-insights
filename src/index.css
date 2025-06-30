@@ -118,6 +118,15 @@
   .border-gradient-secondary {
     @apply border border-secondary/30;
   }
+
+  /* Modern gradient button animations */
+  .bg-size-200 {
+    background-size: 200% 200%;
+  }
+  
+  .bg-pos-100 {
+    background-position: 100% 0;
+  }
 }
 
 /* Enhanced scrollbar with prominent colors */

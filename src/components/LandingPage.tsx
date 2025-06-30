@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DevelopmentLimitationsModal } from '@/components/ui/DevelopmentLimitationsModal';
 import { 
   Music, 
   BarChart3, 
   Users, 
   TrendingUp, 
-  Play, 
+  Play,
   Eye, 
   LogIn, 
   Zap, 
@@ -22,7 +22,8 @@ import {
   Heart,
   Star,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -30,6 +31,7 @@ import { useAuth } from '@/hooks/useAuth';
 export const LandingPage = () => {
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
+  const [limitationsModalOpen, setLimitationsModalOpen] = useState(false);
 
   const handleSandboxClick = () => {
     navigate('/sandbox');
@@ -86,61 +88,58 @@ export const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/5 dark:from-background dark:via-slate-900/50 dark:to-accent/5">
-      <div className="container mx-auto px-4 py-12 lg:py-20">
+      <div className="container mx-auto px-3 sm:px-4 py-8 sm:py-12 lg:py-20">
         
         {/* Hero Section */}
-        <div className="text-center mb-20">
-          <div className="flex justify-center mb-8">
+        <div className="text-center mb-16 sm:mb-20">
+          <div className="flex justify-center mb-6 sm:mb-8">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-primary/20 rounded-full blur-xl scale-110"></div>
-              <div className="relative p-6 bg-gradient-to-r from-accent/10 to-primary/10 rounded-full backdrop-blur-sm border border-accent/20 dark:border-accent/30">
-                <Music className="h-16 w-16 text-accent dark:text-accent" />
+              <div className="relative p-4 sm:p-6 bg-gradient-to-r from-accent/10 to-primary/10 rounded-full backdrop-blur-sm border border-accent/20 dark:border-accent/30">
+                <Music className="h-12 w-12 sm:h-16 sm:w-16 text-accent dark:text-accent" />
               </div>
             </div>
           </div>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-4 sm:mb-6 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text px-2">
             Spotify Insights
-            <span className="block text-transparent bg-gradient-to-r from-accent to-primary bg-clip-text mt-2">
+            <span className="block text-transparent bg-gradient-to-r from-accent to-primary bg-clip-text mt-1 sm:mt-2">
               Dashboard
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
             Unlock deep insights into your music listening habits with complete privacy. 
             Beautiful visualizations and analytics that respect your data.
           </p>
           
-          {/* Development Mode Alert */}
-          <Alert className="max-w-4xl mx-auto mb-8 border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            <AlertDescription className="text-left">
-              <div className="space-y-3">
-                <h4 className="font-semibold text-amber-800 dark:text-amber-200 text-lg">
-                  🚧 Spotify Development Mode Limitations
-                </h4>
-                <div className="grid md:grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-2">
-                    <p className="text-amber-700 dark:text-amber-300">
-                      <strong>Real Data Access:</strong> Limited to 25 users maximum due to Spotify's Development Mode restrictions. 
-                      Users must be manually allowlisted via Spotify Developer Dashboard.
+          {/* Development Mode Limitations - Clean Alert */}
+          <div className="max-w-4xl mx-auto mb-6 sm:mb-8 px-2 sm:px-0">
+            <div className="bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200 dark:border-amber-700 rounded-lg p-3 sm:p-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="flex items-start sm:items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-amber-900 dark:text-amber-100 text-sm sm:text-base">
+                      🚧 Real Data Access Limited to 25 Users
                     </p>
-                    <p className="text-amber-700 dark:text-amber-300">
-                      <strong>Why Limited?</strong> As of 2025, Spotify only grants unlimited access to organizations with 250k+ MAU and established business entities.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-amber-700 dark:text-amber-300">
-                      <strong>Good News:</strong> Everyone can access the full-featured Sandbox Mode with realistic demo data to explore all capabilities.
-                    </p>
-                    <p className="text-amber-700 dark:text-amber-300">
-                      <strong>Personal Projects:</strong> Individual developers typically remain in Development Mode permanently.
+                    <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300 mt-1">
+                      Due to Spotify Development Mode restrictions. <span className="font-medium">Sandbox Mode available for everyone!</span>
                     </p>
                   </div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLimitationsModalOpen(true)}
+                  className="self-start sm:self-auto whitespace-nowrap border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/20 text-xs sm:text-sm px-3 py-2 h-auto"
+                >
+                  <Info className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                  Learn More
+                </Button>
               </div>
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
           
           <div className="flex justify-center mb-8">
             <Badge variant="outline" className="text-accent border-accent/50 dark:border-accent/70 px-6 py-3 text-base font-medium bg-accent/5 dark:bg-accent/10">
@@ -150,42 +149,42 @@ export const LandingPage = () => {
           </div>
           
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-12 sm:mb-16 px-4">
             <Button 
               size="lg" 
               onClick={handleLoginClick}
               disabled={isLoading}
-              className="group relative overflow-hidden flex items-center gap-3 text-lg px-10 py-4 bg-gradient-to-r from-primary via-accent to-primary bg-size-200 hover:bg-pos-100 transition-all duration-500 transform hover:scale-105 shadow-lg hover:shadow-2xl hover:shadow-accent/25"
+              className="group relative overflow-hidden flex items-center gap-2 sm:gap-3 text-base sm:text-lg px-6 sm:px-10 py-3 sm:py-4 w-full sm:w-auto min-h-[48px] bg-gradient-to-r from-primary via-accent to-primary bg-size-200 hover:bg-pos-100 transition-all duration-500 transform hover:scale-105 shadow-lg hover:shadow-2xl hover:shadow-accent/25"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <LogIn className={`h-5 w-5 relative z-10 ${isLoading ? 'animate-pulse' : 'group-hover:rotate-12 transition-transform duration-300'}`} />
-              <span className="relative z-10">{isLoading ? 'Connecting...' : 'Connect Spotify Account'}</span>
-              {!isLoading && <ArrowRight className="h-4 w-4 relative z-10 group-hover:translate-x-1 transition-transform duration-300" />}
+              <LogIn className={`h-4 w-4 sm:h-5 sm:w-5 relative z-10 flex-shrink-0 ${isLoading ? 'animate-pulse' : 'group-hover:rotate-12 transition-transform duration-300'}`} />
+              <span className="relative z-10 text-center">{isLoading ? 'Connecting...' : 'Connect Spotify Account'}</span>
+              {!isLoading && <ArrowRight className="h-4 w-4 relative z-10 group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0" />}
             </Button>
             
             <Button 
               variant="outline" 
               size="lg"
               onClick={handleSandboxClick}
-              className="group flex items-center gap-3 text-lg px-10 py-4 border-2 hover:bg-accent/10 dark:hover:bg-accent/20 hover:border-accent/50 hover:text-accent transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+              className="group flex items-center gap-2 sm:gap-3 text-base sm:text-lg px-6 sm:px-10 py-3 sm:py-4 w-full sm:w-auto min-h-[48px] border-2 hover:bg-accent/10 dark:hover:bg-accent/20 hover:border-accent/50 hover:text-accent transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
             >
-              <Eye className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-              <span>Try Sandbox Mode</span>
-              <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform duration-300" />
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5 group-hover:scale-110 transition-transform duration-300 flex-shrink-0" />
+              <span className="text-center">Try Sandbox Mode</span>
+              <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
             </Button>
           </div>
 
           {/* Privacy Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto mb-12 sm:mb-16 px-4">
             {privacyFeatures.map((feature, index) => (
-              <div key={index} className="group p-4 rounded-lg bg-accent/5 dark:bg-accent/10 border border-accent/10 dark:border-accent/20 hover:border-accent/30 transition-all duration-300 hover:shadow-md">
+              <div key={index} className="group p-4 sm:p-5 rounded-lg bg-accent/5 dark:bg-accent/10 border border-accent/10 dark:border-accent/20 hover:border-accent/30 transition-all duration-300 hover:shadow-md">
                 <div className="flex items-start gap-3">
-                  <div className="text-accent group-hover:scale-110 transition-transform duration-300 mt-0.5">
+                  <div className="text-accent group-hover:scale-110 transition-transform duration-300 mt-0.5 flex-shrink-0">
                     {feature.icon}
                   </div>
-                  <div className="text-left">
-                    <div className="font-semibold text-foreground mb-1">{feature.title}</div>
-                    <div className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+                  <div className="text-left min-w-0">
+                    <div className="font-semibold text-foreground mb-1 text-sm sm:text-base">{feature.title}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300 leading-relaxed">
                       {feature.description}
                     </div>
                   </div>
@@ -196,17 +195,17 @@ export const LandingPage = () => {
         </div>
 
         {/* Features Section */}
-        <div className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <div className="mb-16 sm:mb-20">
+          <div className="text-center mb-8 sm:mb-12 px-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
               Powerful Analytics Features
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Discover patterns in your music consumption with enterprise-grade analytics
             </p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 px-2 sm:px-0">
             {features.map((feature, index) => (
               <Card 
                 key={index} 
@@ -234,17 +233,17 @@ export const LandingPage = () => {
         </div>
 
         {/* How It Works Section */}
-        <div className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <div className="mb-16 sm:mb-20">
+          <div className="text-center mb-8 sm:mb-12 px-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4">
               How It Works
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Get started in minutes with either real data or sandbox mode
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 px-2 sm:px-0">
             {[
               {
                 step: "1",
@@ -289,7 +288,7 @@ export const LandingPage = () => {
         </div>
 
         {/* Access Options */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-12 sm:mb-16 px-2 sm:px-0">
           {/* Sandbox Mode Card */}
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-500/5"></div>
@@ -449,6 +448,12 @@ export const LandingPage = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Development Limitations Modal */}
+      <DevelopmentLimitationsModal 
+        open={limitationsModalOpen}
+        onOpenChange={setLimitationsModalOpen}
+      />
     </div>
   );
 };

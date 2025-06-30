@@ -5,7 +5,7 @@ export const setDemoAuth = async (page: import('@playwright/test').Page) => {
     localStorage.setItem('spotify_refresh_token', 'demo_refresh_token');
     localStorage.setItem('spotify_token_expiry', (Date.now() + 3600_000).toString());
   });
-};
+}; 
 
 // @ts-ignore -- dev dependency type
 export const mockSpotifyAuth = async (page: import('@playwright/test').Page) => {

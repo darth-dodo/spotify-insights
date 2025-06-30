@@ -1,27 +1,27 @@
 
-import { extensiveTopTracks, extensiveTopArtists, extensiveRecentlyPlayed } from '@/lib/extensive-dummy-data';
+import { improvedTopTracks, improvedTopArtists, improvedRecentlyPlayed } from '@/lib/improved-sandbox-data';
 import type { DataStrategy } from './AuthStrategy';
 
 export class SandboxDataStrategy implements DataStrategy {
   async getTopTracks(limit: number = 50): Promise<any[]> {
     console.log('Using sandbox data for top tracks');
-    return extensiveTopTracks.items.slice(0, limit);
+    return improvedTopTracks.items.slice(0, limit);
   }
 
   async getTopArtists(limit: number = 50): Promise<any[]> {
     console.log('Using sandbox data for top artists');
-    return extensiveTopArtists.items.slice(0, limit);
+    return improvedTopArtists.items.slice(0, limit);
   }
 
   async getRecentlyPlayed(limit: number = 50): Promise<any[]> {
     console.log('Using sandbox data for recently played');
-    return extensiveRecentlyPlayed.items.slice(0, limit);
+    return improvedRecentlyPlayed.items.slice(0, limit);
   }
 
   getStats() {
-    const tracks = extensiveTopTracks.items;
-    const artists = extensiveTopArtists.items;
-    const recent = extensiveRecentlyPlayed.items;
+    const tracks = improvedTopTracks.items;
+    const artists = improvedTopArtists.items;
+    const recent = improvedRecentlyPlayed.items;
 
     const allGenres = artists.flatMap((artist: any) => artist.genres || []);
     const uniqueGenres = [...new Set(allGenres)];
@@ -40,7 +40,7 @@ export class SandboxDataStrategy implements DataStrategy {
   }
 
   getGenreAnalysis() {
-    const artists = extensiveTopArtists.items;
+    const artists = improvedTopArtists.items;
     const genreCounts: Record<string, { count: number; tracks: number; artists: Set<string>; hours: number; color: string }> = {};
     const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
     let colorIndex = 0;

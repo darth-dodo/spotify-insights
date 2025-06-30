@@ -1,6 +1,6 @@
 
 import { sanitizeUserData } from '@/lib/data-utils';
-import { dummySpotifyUser } from '@/lib/dummy-data';
+import { improvedUserProfile } from '@/lib/improved-sandbox-data';
 import type { AuthStrategy } from './AuthStrategy';
 import type { User } from '@/hooks/useAuthState';
 
@@ -11,7 +11,7 @@ export class SandboxAuthStrategy implements AuthStrategy {
 
   constructor() {
     // Initialize with sandbox user immediately
-    this.user = sanitizeUserData(dummySpotifyUser);
+    this.user = sanitizeUserData(improvedUserProfile);
   }
 
   async login(): Promise<void> {
@@ -21,7 +21,7 @@ export class SandboxAuthStrategy implements AuthStrategy {
     // Simulate async login
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    this.user = sanitizeUserData(dummySpotifyUser);
+    this.user = sanitizeUserData(improvedUserProfile);
     this.loading = false;
     
     console.log('Sandbox login completed');

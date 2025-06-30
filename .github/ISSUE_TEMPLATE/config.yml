@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/yourusername/spotify-insights/tree/main/docs
+    about: Check our comprehensive documentation for guides and FAQs
+  - name: 💬 Discussions
+    url: https://github.com/yourusername/spotify-insights/discussions
+    about: Ask questions, share ideas, or get help from the community
+  - name: 🚀 Live Demo
+    url: https://spotify-insights.netlify.app
+    about: Try the application live with sandbox mode
+  - name: 🔒 Privacy & Security
+    url: https://github.com/yourusername/spotify-insights/blob/main/docs/SECURITY.md
+    about: Learn about our privacy practices and security measures 

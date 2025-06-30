@@ -1,0 +1,173 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for Spotify Insights
+title: "[Feature]: "
+labels: ["✨ enhancement", "🔍 triage"]
+projects: ["spotify-insights"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! 🚀
+        
+        Help us understand your idea and how it would improve the Spotify Insights experience.
+
+  - type: textarea
+    id: feature-summary
+    attributes:
+      label: ✨ Feature Summary
+      description: A brief, clear description of the feature you'd like to see
+      placeholder: What feature would you like us to add?
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: 🎯 Problem Statement
+      description: What problem does this feature solve? What's the current limitation?
+      placeholder: Describe the problem or limitation you're experiencing
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: 💡 Proposed Solution
+      description: How would you like this feature to work? Be as detailed as possible.
+      placeholder: Describe your proposed solution in detail
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: 📊 Feature Category
+      description: Which area of the app does this feature relate to?
+      options:
+        - 📈 Analytics & Insights
+        - 🎵 Music Discovery
+        - 📱 User Interface
+        - 🔒 Privacy & Security
+        - ⚡ Performance
+        - 🎮 Gamification
+        - 📊 Dashboard & Visualizations
+        - 🔍 Search & Filtering
+        - 📱 Mobile Experience
+        - 🎨 Theming & Customization
+        - 🔧 Developer Experience
+        - 📚 Documentation
+        - 🚀 Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature-priority
+    attributes:
+      label: 🚨 Priority Level
+      description: How important is this feature to you?
+      options:
+        - 🔴 Critical (essential for core functionality)
+        - 🟠 High (would significantly improve experience)
+        - 🟡 Medium (nice to have improvement)
+        - 🟢 Low (minor enhancement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-stories
+    attributes:
+      label: 👤 User Stories
+      description: Describe how different users would benefit from this feature
+      placeholder: |
+        As a [type of user], I want [feature] so that [benefit].
+        
+        Example:
+        As a music enthusiast, I want to see my listening streaks so that I can track my music discovery habits.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternative Solutions
+      description: Have you considered any alternative approaches or workarounds?
+      placeholder: Describe any alternative solutions you've considered
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: 🎨 Mockups/Examples
+      description: Do you have any mockups, wireframes, or examples from other apps?
+      placeholder: Attach images or describe similar features from other applications
+
+  - type: checkboxes
+    id: implementation-considerations
+    attributes:
+      label: 🔧 Implementation Considerations
+      description: Are there any technical considerations for this feature?
+      options:
+        - label: This feature would require Spotify API changes
+        - label: This feature might impact performance
+        - label: This feature involves user privacy considerations
+        - label: This feature would need new UI components
+        - label: This feature requires data storage/caching
+        - label: This feature might need user authentication updates
+
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: 👤 Your User Type
+      description: What type of user are you?
+      options:
+        - 🎵 Allowlisted Spotify user
+        - 🎮 Sandbox mode user
+        - 🔧 Developer/Contributor
+        - 👀 Interested observer
+    validations:
+      required: true
+
+  - type: textarea
+    id: success-metrics
+    attributes:
+      label: 📊 Success Metrics
+      description: How would we measure the success of this feature?
+      placeholder: |
+        How would we know this feature is successful?
+        - User engagement metrics
+        - Feature usage statistics
+        - User feedback
+        - etc.
+
+  - type: checkboxes
+    id: research
+    attributes:
+      label: 🔍 Research Done
+      description: Have you done any research on this feature?
+      options:
+        - label: I've checked if this feature already exists
+        - label: I've searched existing feature requests
+        - label: I've looked at similar features in other apps
+        - label: I've considered the technical feasibility
+        - label: I've thought about the user experience implications
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📋 Additional Context
+      description: Any other information that might be helpful
+      placeholder: Add any additional context, links, or information here
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: ✅ Confirmation
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I have provided a clear problem statement and solution
+          required: true
+        - label: I understand this is for feature requests only (not bug reports)
+          required: true
+        - label: I'm willing to provide feedback during development (if selected)
+          required: false 

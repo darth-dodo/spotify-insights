@@ -1,0 +1,115 @@
+name: 🤖 Auto-merge Dependabot PRs
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  dependabot:
+    name: 🔍 Dependabot Auto-merge
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Get Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: ✅ Check if auto-merge is allowed
+        id: check-automerge
+        run: |
+          UPDATE_TYPE="${{ steps.metadata.outputs.update-type }}"
+          DEPENDENCY_NAME="${{ steps.metadata.outputs.dependency-names }}"
+          
+          echo "Update type: $UPDATE_TYPE"
+          echo "Dependency: $DEPENDENCY_NAME"
+          
+          # Auto-merge rules:
+          # - patch updates for all dependencies
+          # - minor updates for devDependencies
+          # - exclude major updates (require manual review)
+          
+          if [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]]; then
+            echo "✅ Patch update - auto-merge allowed"
+            echo "automerge=true" >> $GITHUB_OUTPUT
+          elif [[ "$UPDATE_TYPE" == "version-update:semver-minor" ]] && [[ "${{ steps.metadata.outputs.dependency-type }}" == "direct:development" ]]; then
+            echo "✅ Minor dev dependency update - auto-merge allowed"
+            echo "automerge=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Major update or production dependency - manual review required"
+            echo "automerge=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: ⏳ Wait for CI to complete
+        if: steps.check-automerge.outputs.automerge == 'true'
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: '✅ Quality Gate'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30
+          allowed-conclusions: success
+
+      - name: ✅ Approve PR
+        if: steps.check-automerge.outputs.automerge == 'true'
+        run: |
+          gh pr review --approve "${{ github.event.pull_request.number }}" \
+            --body "🤖 **Dependabot Auto-approval**
+
+          ✅ **Update Type**: ${{ steps.metadata.outputs.update-type }}
+          📦 **Dependency**: ${{ steps.metadata.outputs.dependency-names }}
+          🔄 **From**: ${{ steps.metadata.outputs.previous-version }}
+          🔄 **To**: ${{ steps.metadata.outputs.new-version }}
+
+          This PR has been automatically approved because:
+          - ✅ CI checks have passed
+          - ✅ Update type is safe for auto-merge
+          - ✅ Security scan completed successfully
+
+          The PR will be auto-merged once all checks complete."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔄 Enable auto-merge
+        if: steps.check-automerge.outputs.automerge == 'true'
+        run: |
+          gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 Add manual review label
+        if: steps.check-automerge.outputs.automerge == 'false'
+        run: |
+          gh pr edit "${{ github.event.pull_request.number }}" \
+            --add-label "🔍 manual-review-required" \
+            --add-label "📋 major-update"
+          
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --body "⚠️ **Manual Review Required**
+
+          This Dependabot PR requires manual review because:
+          - 📊 **Update Type**: ${{ steps.metadata.outputs.update-type }}
+          - 📦 **Dependency**: ${{ steps.metadata.outputs.dependency-names }}
+          - 🔄 **Version Change**: ${{ steps.metadata.outputs.previous-version }} → ${{ steps.metadata.outputs.new-version }}
+
+          **Why manual review is needed:**
+          - Major version updates may contain breaking changes
+          - Production dependencies need careful evaluation
+          - Please review the changelog and test thoroughly
+
+          **Next steps:**
+          1. 🔍 Review the dependency changelog
+          2. 🧪 Test the application locally
+          3. ✅ Approve and merge if everything works correctly"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

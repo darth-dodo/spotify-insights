@@ -1,6 +1,6 @@
 
 import { spotifyAPI } from '../spotify-api';
-import { extensiveTopTracks, extensiveTopArtists, extensiveRecentlyPlayed } from '../extensive-dummy-data';
+import { improvedTopTracks, improvedTopArtists, improvedRecentlyPlayed } from '../improved-sandbox-data';
 import type { IntegratedTrackData, IntegratedArtistData } from '../spotify-data-types';
 
 export const shouldUseDummyData = (): boolean => {
@@ -25,7 +25,7 @@ export const validateTrackData = (track: any): boolean => {
 
 export const fetchRecentlyPlayedData = async (limit: number = 200): Promise<any[]> => {
   if (shouldUseDummyData()) {
-    return extensiveRecentlyPlayed.items.slice(0, limit);
+    return improvedRecentlyPlayed.items.slice(0, limit);
   }
 
   const token = localStorage.getItem('spotify_access_token');
@@ -59,7 +59,7 @@ export const fetchRecentlyPlayedData = async (limit: number = 200): Promise<any[
 
 export const fetchTopTracksData = async (timeRange: string, totalLimit: number): Promise<any> => {
   if (shouldUseDummyData()) {
-    return { items: extensiveTopTracks.items.slice(0, totalLimit) };
+    return { items: improvedTopTracks.items.slice(0, totalLimit) };
   }
 
   const token = localStorage.getItem('spotify_access_token');
@@ -78,7 +78,7 @@ export const fetchTopTracksData = async (timeRange: string, totalLimit: number):
 
 export const fetchTopArtistsData = async (timeRange: string, totalLimit: number): Promise<any> => {
   if (shouldUseDummyData()) {
-    return { items: extensiveTopArtists.items.slice(0, totalLimit) };
+    return { items: improvedTopArtists.items.slice(0, totalLimit) };
   }
 
   const token = localStorage.getItem('spotify_access_token');

@@ -11,12 +11,12 @@ import { ApiErrorBoundary } from "@/components/error-states/ApiErrorBoundary";
 import { Dashboard } from "@/components/Dashboard";
 import { CallbackPage } from "@/components/auth/CallbackPage";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { LandingPage } from "@/components/LandingPage";
 import { SandboxMode } from "@/components/SandboxMode";
 import { HelpPage } from "@/pages/HelpPage";
 import { LegalPage } from "@/pages/LegalPage";
 import { DataQualityPage } from "@/pages/DataQualityPage";
 import { MetricCalculationsPage } from "@/pages/MetricCalculationsPage";
-import Index from "@/pages/Index";
 import NotFound from "./pages/NotFound";
 import { DashboardBootstrap } from "@/pages/DashboardBootstrap";
 
@@ -47,7 +47,7 @@ const App = () => (
             <ApiErrorBoundary>
               <Routes>
                 {/* Public landing page */}
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<LandingPage />} />
 
                 {/* Authenticated dashboard */}
                 <Route 
@@ -56,7 +56,7 @@ const App = () => (
                 />
 
                 {/* Legacy /index route for backward compatibility */}
-                <Route path="/index" element={<Index />} />
+                <Route path="/index" element={<LandingPage />} />
 
                 {/* Other routes */}
                 <Route path="/sandbox" element={<SandboxMode />} />

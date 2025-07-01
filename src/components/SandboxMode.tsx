@@ -6,7 +6,6 @@ import { SandboxAuthStrategy } from '@/strategies/SandboxAuthStrategy';
 import { SandboxBanner } from '@/components/ui/SandboxBanner';
 import { DismissibleProjectDisclaimer } from '@/components/ui/DismissibleProjectDisclaimer';
 import { Footer } from '@/components/layout/Footer';
-import { CyclingTips } from '@/components/ui/CyclingTips';
 import { TestMarker } from '@/components/ui/TestMarker';
 import { clearLocalUserData } from '@/lib/clear-user-data';
 
@@ -37,11 +36,6 @@ export const SandboxMode = () => {
           <div className="container mx-auto px-4 py-6">
             <DismissibleProjectDisclaimer />
             <Dashboard />
-          </div>
-          
-          {/* Fixed cycling tips at bottom */}
-          <div className="fixed bottom-4 left-4 right-4 z-50">
-            <CyclingTips className="max-w-4xl mx-auto" />
           </div>
           
           <Footer />

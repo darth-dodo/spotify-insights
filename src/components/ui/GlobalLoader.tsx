@@ -9,10 +9,8 @@ export const GlobalLoader = () => {
 
   const [visible, setVisible] = useState(false);
 
-  // Never render loader on public landing page
-  if (typeof window !== 'undefined' && window.location.pathname === '/') {
-    return null;
-  }
+  // Determine if we are on the public landing page
+  const isLandingPage = typeof window !== 'undefined' && window.location.pathname === '/';
 
   // Determine visibility
   useEffect(() => {
@@ -65,6 +63,9 @@ export const GlobalLoader = () => {
 
     return () => clearTimeout(timer);
   }, [visible, pct]);
+
+  // Early exit for landing page (after hooks to keep counts stable)
+  if (isLandingPage) return null;
 
   if (!visible) return null;
 

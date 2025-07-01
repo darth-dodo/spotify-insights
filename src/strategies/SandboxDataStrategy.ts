@@ -1,11 +1,49 @@
-
 import { improvedTopTracks, improvedTopArtists, improvedRecentlyPlayed } from '@/lib/improved-sandbox-data';
+import { extensiveTopTracks } from '@/lib/extensive-dummy-data';
 import type { DataStrategy } from './AuthStrategy';
+import albumArt from 'album-art';
+
+// Simple in-memory cache so we don't hit the external service repeatedly at runtime
+const albumArtCache: Record<string, string> = {};
 
 export class SandboxDataStrategy implements DataStrategy {
   async getTopTracks(limit: number = 50): Promise<any[]> {
     console.log('Using sandbox data for top tracks');
-    return improvedTopTracks.items.slice(0, limit);
+    const slice = extensiveTopTracks.items.slice(0, limit);
+
+    // Trigger album art enrichment asynchronously so we don't block initial render
+    void this.enrichAlbumArtForTracks(slice);
+
+    return slice;
+  }
+
+  /**
+   * Enrich tracks with album art lazily (non-blocking).
+   */
+  private async enrichAlbumArtForTracks(tracks: any[]) {
+    await Promise.allSettled(
+      tracks.map(async (track) => {
+        if (!track?.album) return;
+
+        const cacheKey = `${track.artists?.[0]?.name ?? ''}-${track.album.name}`;
+        const albumObj: any = track.album;
+
+        if (albumObj.images && albumObj.images.length) return; // Already has image
+
+        if (albumArtCache[cacheKey]) {
+          albumObj.images = [{ url: albumArtCache[cacheKey], height: 640, width: 640 }];
+          return;
+        }
+
+        try {
+          const url: string = await albumArt(track.artists?.[0]?.name ?? '', track.album.name, 'large');
+          albumArtCache[cacheKey] = url;
+          albumObj.images = [{ url, height: 640, width: 640 }];
+        } catch {
+          albumObj.images = [{ url: '/placeholder.svg', height: 640, width: 640 }];
+        }
+      })
+    );
   }
 
   async getTopArtists(limit: number = 50): Promise<any[]> {
@@ -15,11 +53,18 @@ export class SandboxDataStrategy implements DataStrategy {
 
   async getRecentlyPlayed(limit: number = 50): Promise<any[]> {
     console.log('Using sandbox data for recently played');
-    return improvedRecentlyPlayed.items.slice(0, limit);
+    const slice = improvedRecentlyPlayed.items.slice(0, limit);
+
+    // Fire-and-forget enrichment
+    void this.enrichAlbumArtForTracks(
+      slice.map((p) => p.track)
+    );
+
+    return slice;
   }
 
   getStats() {
-    const tracks = improvedTopTracks.items;
+    const tracks = extensiveTopTracks.items;
     const artists = improvedTopArtists.items;
     const recent = improvedRecentlyPlayed.items;
 

@@ -151,17 +151,6 @@ graph TD
 - Production environment targeting
 - Release-specific deployment
 
-### 4. 🤖 Dependency Management (`dependabot-auto-merge.yml`)
-
-**Features:**
-- Automatic Dependabot PR approval
-- Smart auto-merge rules:
-  - ✅ Patch updates (all dependencies)
-  - ✅ Minor updates (dev dependencies)
-  - ❌ Major updates (manual review required)
-- CI integration and validation
-- Detailed PR commenting
-
 ## Environment Variables
 
 ### Required Secrets
@@ -329,7 +318,6 @@ docs(readme): update installation instructions
   - ❌ Direct pushes disabled
 
 ### Security
-- Regular dependency updates via Dependabot
 - Automated security scanning
 - Secret management through GitHub Secrets
 - Environment variable validation

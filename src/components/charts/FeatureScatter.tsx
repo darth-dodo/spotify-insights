@@ -1,5 +1,13 @@
 import React from 'react';
-import { Axis, Grid, XYChart, Tooltip, AnimatedPointSeries } from '@visx/xychart';
+import {
+  ScatterChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip as RTooltip,
+  Scatter,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface Datum {
   x: number;
@@ -18,37 +26,44 @@ interface Props {
  * FeatureScatter renders an interactive scatter plot using @visx/xychart.
  */
 export const FeatureScatter: React.FC<Props> = ({ data, xLabel = 'X', yLabel = 'Y' }) => {
-  const accessors = {
-    xAccessor: (d: Datum) => d.x,
-    yAccessor: (d: Datum) => d.y,
-  };
-
   return (
-    <XYChart height={320} xScale={{ type: 'linear' }} yScale={{ type: 'linear' }}>
-      <Grid columns={false} numTicks={10} stroke="#e4e4e7" />
-      <AnimatedPointSeries
-        dataKey="Series 1"
-        data={data}
-        {...accessors}
-        colorAccessor={(d) => d.color || '#3b82f6'}
-        sizeAccessor={() => 6}
-      />
-      <Axis orientation="bottom" label={xLabel} tickFormat={(v) => `${v}`} />
-      <Axis orientation="left" label={yLabel} />
-      <Tooltip<Datum>
-        renderTooltip={({ datum }) => (
-          <div className="px-2 py-1 text-sm">
-            <div className="font-medium">{datum.label}</div>
-            <div>
-              {xLabel}: {datum.x}
-            </div>
-            <div>
-              {yLabel}: {datum.y}
-            </div>
-          </div>
-        )}
-      />
-    </XYChart>
+    <ResponsiveContainer width="100%" height={320}>
+      <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+        <XAxis
+          dataKey="x"
+          name={xLabel}
+          type="number"
+          label={{ value: xLabel, position: 'insideBottom', offset: -5 }}
+        />
+        <YAxis
+          dataKey="y"
+          name={yLabel}
+          type="number"
+          label={{ value: yLabel, angle: -90, position: 'insideLeft' }}
+        />
+        <RTooltip
+          cursor={{ strokeDasharray: '3 3' }}
+          content={({ active, payload }) => {
+            if (active && payload && payload[0]) {
+              const d = payload[0].payload as Datum;
+              return (
+                <div className="bg-background border border-border rounded-lg p-2 text-xs">
+                  <div className="font-medium mb-1">{d.label}</div>
+                  <div>{xLabel}: {d.x}</div>
+                  <div>{yLabel}: {d.y}</div>
+                </div>
+              );
+            }
+            return null;
+          }}
+        />
+        <Scatter
+          data={data}
+          fill="hsl(var(--accent))"
+        />
+      </ScatterChart>
+    </ResponsiveContainer>
   );
 };
 

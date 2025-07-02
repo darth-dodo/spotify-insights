@@ -13,7 +13,7 @@ interface TopTracksPreviewProps {
 export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
   const { useEnhancedTopTracks } = useSpotifyData();
   const { data: tracks = [], isLoading } = useEnhancedTopTracks('medium_term', 2000);
-  const tracksData = { items: tracks.slice(0, 50) }; // Use first 50 from the full dataset
+  const tracksData = { items: tracks.slice(0, 50) }; // Keep first 50 for stats, show 10 below
 
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -45,13 +45,17 @@ export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
   };
 
   const totalMinutes = Math.round(calculateTotalDuration() / 60000);
-  const avgPopularity = tracksData?.items ? 
-    Math.round(tracksData.items.reduce((acc: number, track: any) => acc + (track.popularity || 0), 0) / tracksData.items.length) : 0;
+
+  // Tracks to display in the list (top 10)
+  const displayedTracks = tracksData.items.slice(0, 10);
+
+  const avgPopularity = displayedTracks.length > 0 ? 
+    Math.round(displayedTracks.reduce((acc: number, track: any) => acc + (track.popularity || 0), 0) / displayedTracks.length) : 0;
   
   // Calculate average user play count
-  const avgUserPlays = tracksData?.items ? 
-    Math.round(tracksData.items.reduce((acc: number, track: any, index: number) => 
-      acc + calculateUserPlayCount(index, tracksData.items.length), 0) / tracksData.items.length) : 0;
+  const avgUserPlays = displayedTracks.length > 0 ? 
+    Math.round(displayedTracks.reduce((acc: number, track: any, index: number) => 
+      acc + calculateUserPlayCount(index, displayedTracks.length), 0) / displayedTracks.length) : 0;
 
   if (isLoading) {
     return (
@@ -127,7 +131,7 @@ export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
               { label: "Total Duration", value: `${totalMinutes}m`, description: "Combined length of top tracks" },
               { label: "Avg User Plays", value: formatUserPlays(avgUserPlays), description: "Average estimated user play count" },
               { label: "Avg Popularity", value: `${avgPopularity}/100`, description: "Average global popularity score" },
-              { label: "Track Count", value: `${tracksData.items.length}`, description: "Number of top tracks shown" },
+              { label: "Track Count", value: `${displayedTracks.length}`, description: "Number of top tracks shown" },
             ]}
           />
         </CardTitle>
@@ -139,12 +143,26 @@ export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="text-center p-3 bg-primary/10 rounded-lg border border-primary/20">
-            <div className="text-lg font-bold text-primary">{tracksData.items.length}</div>
+            <div className="text-lg font-bold text-primary">{displayedTracks.length}</div>
             <div className="text-xs text-muted-foreground">Top Tracks</div>
           </div>
-          <div className="text-center p-3 bg-accent/10 rounded-lg border border-accent/20">
+          <div className="relative p-3 bg-accent/10 rounded-lg border border-accent/20 text-center">
             <div className="text-lg font-bold text-accent">{formatUserPlays(avgUserPlays)}</div>
-            <div className="text-xs text-muted-foreground">Avg User Plays</div>
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+              Avg User Plays
+              <InfoButton
+                title="Average User Plays"
+                description="Estimated average number of times you have played each top track based on its ranking in your list."
+                calculation="We estimate play counts using an exponential decay model: higher-ranked tracks receive proportionally more plays than lower-ranked ones."
+                funFacts={[
+                  'Top ranked songs often account for the majority of total listens',
+                  'A single favourite track can rack up hundreds of plays per year',
+                  'Play counts help infer song attachment and repeat-listening habits'
+                ]}
+                metrics={[{ label: 'Avg Plays', value: formatUserPlays(avgUserPlays), description: 'Across your top 10 tracks' }]}
+                className="h-4 w-4"
+              />
+            </div>
           </div>
           <div className="text-center p-3 bg-secondary/10 rounded-lg border border-secondary/20">
             <div className="text-lg font-bold text-secondary">{totalMinutes}m</div>
@@ -154,7 +172,7 @@ export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
 
         {/* Top Tracks List */}
         <div className="space-y-3">
-          {tracksData.items.slice(0, 5).map((track: any, index: number) => (
+          {displayedTracks.map((track: any, index: number) => (
             <div key={track.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
               <div className="flex items-center justify-center w-8 h-8 bg-primary/20 rounded-full">
                 <span className="text-sm font-bold text-primary">#{index + 1}</span>
@@ -169,8 +187,8 @@ export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
               )}
               
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate">{track.name}</h4>
-                <p className="text-xs text-muted-foreground truncate">
+                <h4 className="font-medium text-sm break-words whitespace-normal">{track.name}</h4>
+                <p className="text-xs text-muted-foreground break-words whitespace-normal">
                   {track.artists?.map((artist: any) => artist.name).join(', ')}
                 </p>
               </div>
@@ -182,10 +200,7 @@ export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
                 </div>
                 <div className="flex items-center gap-1">
                   <Badge variant="outline" className="text-xs">
-                    {formatUserPlays(calculateUserPlayCount(index, tracksData.items.length))} plays
-                  </Badge>
-                  <Badge variant="secondary" className="text-xs">
-                    {track.popularity}%
+                    {formatUserPlays(calculateUserPlayCount(index, displayedTracks.length))} plays
                   </Badge>
                 </div>
               </div>
@@ -205,7 +220,7 @@ export const TopTracksPreview = ({ onNavigate }: TopTracksPreviewProps) => {
         </div>
 
         {/* More tracks indicator */}
-        {tracksData.items.length > 5 && (
+        {tracksData.items.length > 10 && (
           <div className="mt-4 text-center">
             <Button 
               variant="outline" 

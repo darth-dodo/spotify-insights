@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,13 +9,13 @@ import { calculateStats, calculateGenreAnalysis } from '@/lib/spotify-data-utils
 
 export const MusicInsightsSummary = () => {
   const { useEnhancedTopTracks, useEnhancedTopArtists, useEnhancedRecentlyPlayed } = useSpotifyData();
-  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term', 2000);
-  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term', 2000);
+  const { data: tracks = [], isLoading: tracksLoading } = useEnhancedTopTracks('medium_term' as any, 2000);
+  const { data: artists = [], isLoading: artistsLoading } = useEnhancedTopArtists('medium_term' as any, 2000);
   const { data: recentlyPlayed = [], isLoading: recentLoading } = useEnhancedRecentlyPlayed(200);
   const isLoading = tracksLoading || artistsLoading || recentLoading;
 
   const calculateEnhancedInsights = () => {
-    const stats = calculateStats(tracks, artists, recentlyPlayed, 'medium_term');
+    const stats = calculateStats(tracks, artists, recentlyPlayed, 'medium_term' as any);
     const genreAnalysis = calculateGenreAnalysis(artists);
 
     // Check if we have any data
@@ -89,7 +88,7 @@ export const MusicInsightsSummary = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6">
         <Card className="lg:col-span-2 animate-pulse">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -114,7 +113,7 @@ export const MusicInsightsSummary = () => {
 
   if (!insights.hasData) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -151,9 +150,9 @@ export const MusicInsightsSummary = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6">
       {/* Enhanced Music Profile - Mobile Responsive */}
-      <Card className="lg:col-span-2 xl:col-span-3">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Star className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -316,7 +315,7 @@ export const MusicInsightsSummary = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 gap-2 sm:gap-3 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 text-center">
               <div className="p-2 sm:p-3 bg-accent/5 rounded-lg border border-accent/20">
                 <div className="text-base sm:text-lg font-bold text-accent">{insights.recentActivity}</div>
                 <div className="text-xs text-muted-foreground">Recent Activity</div>

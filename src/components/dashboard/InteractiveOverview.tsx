@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { calculateStats, calculateGenreAnalysis } from '@/lib/spotify-data-utils';
@@ -7,7 +6,6 @@ import { StatsOverview } from './overview/StatsOverview';
 import { MusicInsightsSummary } from './overview/MusicInsightsSummary';
 import { TopTracksPreview } from './overview/TopTracksPreview';
 import { GamificationPreview } from './overview/GamificationPreview';
-import { RecentActivity } from './overview/RecentActivity';
 import { EngagementCTA } from './overview/EngagementCTA';
 import { BlurLoader } from '@/components/ui/BlurLoader';
 import { ErrorDialog } from '@/components/auth/ErrorDialog';
@@ -81,23 +79,14 @@ export const InteractiveOverview = ({ onNavigate }: InteractiveOverviewProps) =>
         {/* 3. PERSONAL CONNECTION: Gamification First (if enabled) */}
         <GamificationPreview onNavigate={handleNavigation} />
 
-        {/* 4. DISCOVERY & INSIGHTS: Optimized Desktop Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 xl:col-span-2">
-            <TopTracksPreview onNavigate={handleNavigation} />
-          </div>
-          <div className="lg:col-span-1 xl:col-span-1">
-            {/* 5. INSIGHTS: Music Profile */}
-            <MusicInsightsSummary />
-          </div>
-        </div>
-
-
-
-        {/* 6. ENGAGEMENT: Recent Activity */}
+        {/* 4. DISCOVERY & INSIGHTS: Full-width Top Tracks followed by Insights */}
         <div className="space-y-6">
-          <RecentActivity />
+          <TopTracksPreview onNavigate={handleNavigation} />
+          {/* 5. INSIGHTS: Music Profile */}
+          <MusicInsightsSummary />
         </div>
+
+        {/* 6. (Removed Recent Activity section as per design refresh) */}
 
         {/* 7. CONVERSION: Final Call-to-Action */}
         <EngagementCTA onNavigate={handleNavigation} />

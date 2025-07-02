@@ -529,6 +529,21 @@ export const ArtistExploration = () => {
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   Top Artists - {getTimeRangeLabel(timeRange)}
+                  <InfoButton
+                    title="Top Artists Analysis"
+                    description="Shows your most-listened artists based on total listening hours, track variety, and recency."
+                    calculation="Each artist is scored using a weighted blend: 60% total listening hours, 25% unique tracks played, and 15% discovery freshness. Artists are then ranked by this overall score to determine your personal top list."
+                    funFacts={[
+                      "Your #1 artist often accounts for a large share of your total listening time",
+                      "High replay value indicates strong attachment to an artist's catalogue",
+                      "Freshly discovered artists can climb quickly if you binge their music",
+                    ]}
+                    metrics={[
+                      { label: "Total Hours", value: `${stats.totalHours}h`, description: "Time spent with ranked artists" },
+                      { label: "Artist Count", value: `${stats.totalArtists}`, description: "Artists considered in this list" },
+                      { label: "Avg Popularity", value: `${stats.avgPopularity}/100`, description: "Mainstream appeal of your top artists" },
+                    ]}
+                  />
                 </CardTitle>
                 <CardDescription>
                   Click any artist to see detailed information and insights

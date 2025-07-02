@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
 import { Music, TrendingUp, Users, Clock, Disc, Star, Eye, BarChart3 } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { calculateGenreAnalysis, mapUITimeRangeToAPI, getTimeRangeLabel } from '@/lib/spotify-data-utils';
+import GenreTrendsStream from '@/components/charts/GenreTrendsStream';
 
 export const EnhancedGenreAnalysis = () => {
   const [timeRange, setTimeRange] = useState('6months');
@@ -359,24 +359,10 @@ export const EnhancedGenreAnalysis = () => {
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[300px] md:h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={genreEvolution}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="month" className="text-muted-foreground" />
-                    <YAxis className="text-muted-foreground" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    {genreAnalysis.genres.slice(0, 5).map((genre, index) => (
-                      <Line 
-                        key={genre.name}
-                        type="monotone" 
-                        dataKey={genre.name}
-                        stroke={chartColors[index % chartColors.length]}
-                        strokeWidth={2}
-                        dot={{ r: 4 }}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
+                <GenreTrendsStream
+                  data={genreEvolution as any}
+                  keys={genreAnalysis.genres.slice(0, 5).map((g) => g.name)}
+                />
               </ChartContainer>
             </CardContent>
           </Card>

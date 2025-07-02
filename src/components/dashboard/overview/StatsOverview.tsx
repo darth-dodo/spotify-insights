@@ -168,7 +168,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" data-tour="stats-overview" id="stats-overview-loading">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4" data-tour="stats-overview" id="stats-overview-loading">
         {statCards.map((card) => {
           const Icon = card.icon;
           
@@ -193,7 +193,7 @@ export const StatsOverview = ({ selectedCard, onCardSelect }: StatsOverviewProps
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" data-tour="stats-overview" id="stats-overview-section">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4" data-tour="stats-overview" id="stats-overview-section">
       {statCards.map((card, index) => {
         const Icon = card.icon;
         const isSelected = selectedCard === card.id;

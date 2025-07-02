@@ -1,4 +1,3 @@
-
 @import url('./styles/accents.css');
 @import url('./styles/enhanced-theme.css');
 @tailwind base;
@@ -224,4 +223,13 @@
 
 .__floater__body {
   max-width: inherit !important;
+}
+
+/* Mobile text wrapping override */
+@media (max-width: 639px) {
+  .truncate {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
 }

@@ -13,14 +13,14 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { ImprovedGenreAnalysis } from './dashboard/ImprovedGenreAnalysis';
-import { RefactoredGenreAnalysis } from './dashboard/RefactoredGenreAnalysis';
 import { TrackExplorer } from './dashboard/TrackExplorer';
 import { ImprovedListeningTrends } from './dashboard/ImprovedListeningTrends';
 import { useLoading } from '@/components/providers/LoadingProvider';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { OnboardingTour, useOnboarding, dashboardTourSteps } from '@/components/ui/OnboardingTour';
 import { EnhancedListeningActivity } from './dashboard/EnhancedListeningActivity';
+import { ImprovedArtistExplorer } from '@/components/dashboard/ImprovedArtistExplorer';
+import { EnhancedGenreAnalysis } from './dashboard/EnhancedGenreAnalysis';
 
 export const Dashboard = () => {
   const { user, isLoading, error, clearError, refreshToken } = useAuth();
@@ -171,8 +171,8 @@ export const Dashboard = () => {
               <div className="container-responsive">
                 {activeView === 'overview' && <InteractiveOverview onNavigate={handleViewChange} />}
                 {activeView === 'listening-activity' && <EnhancedListeningActivity />}
-                {activeView === 'genres' && <RefactoredGenreAnalysis />}
-                {activeView === 'artists' && <ArtistExploration />}
+                {activeView === 'genres' && <EnhancedGenreAnalysis />}
+                {activeView === 'artists' && <ImprovedArtistExplorer />}
                 {activeView === 'tracks' && <TrackExplorer />}
                 {activeView === 'library-health' && <LibraryHealth />}
                 {activeView === 'gamification' && <SimpleGamification />}

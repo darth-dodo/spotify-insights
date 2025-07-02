@@ -13,6 +13,7 @@ import { Users, TrendingUp, Music, Clock, Star, Info, Play, Album, Calendar, Spa
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { cn } from '@/lib/utils';
 import { InfoButton } from '@/components/ui/InfoButton';
+import { FeatureScatter } from '@/components/charts';
 
 interface ExplanationModalProps {
   isOpen: boolean;
@@ -563,52 +564,27 @@ export const ImprovedArtistExplorer = () => {
               </CardContent>
             </Card>
 
-            {/* Popularity vs Tracks Bar Chart */}
+            {/* Popularity vs Style Scatter Chart */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm md:text-base">Popularity Distribution</CardTitle>
+                <CardTitle className="text-sm md:text-base">Popularity vs Unique Style</CardTitle>
                 <CardDescription className="text-xs md:text-sm">
-                  Artist positioning by mainstream appeal
+                  Correlation between mainstream popularity and your unique-style score
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="w-full overflow-x-auto">
                   <div className="min-w-[300px]">
-                    <ChartContainer config={{}} className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis 
-                            dataKey="name" 
-                            className="text-muted-foreground text-xs"
-                            interval={0}
-                            angle={-45}
-                            textAnchor="end"
-                            height={60}
-                          />
-                          <YAxis className="text-muted-foreground text-xs" />
-                          <ChartTooltip 
-                            content={({ active, payload }) => {
-                              if (active && payload && payload[0]) {
-                                const data = payload[0].payload;
-                                return (
-                                  <div className="bg-background border border-border rounded-lg p-3 shadow-md">
-                                    <p className="font-medium text-sm">{data.fullName}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      Popularity: {data.popularity}/100
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      Tracks: {data.tracks}
-                                    </p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Bar dataKey="popularity" fill="hsl(var(--accent))" radius={[2, 2, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
+                    <ChartContainer config={{}} className="h-[320px]">
+                      <FeatureScatter
+                        data={chartData.map(d => ({
+                          x: d.popularity,
+                          y: d.uniqueStyle,
+                          label: d.fullName ?? d.name,
+                        }))}
+                        xLabel="Popularity"
+                        yLabel="Unique Style"
+                      />
                     </ChartContainer>
                   </div>
                 </div>

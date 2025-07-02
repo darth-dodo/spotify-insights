@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Heart, TrendingUp, Users, Gem, Award, Star, Music, Clock } from 'lucide-react';
 import { useSpotifyData } from '@/hooks/useSpotifyData';
 import { InfoButton } from '@/components/ui/InfoButton';
+import { LibraryHealthGauge } from '@/components/charts';
 
 export const EnhancedLibraryHealth = () => {
   const [timeRange, setTimeRange] = useState('medium_term');
@@ -127,13 +127,7 @@ export const EnhancedLibraryHealth = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Overall Health</span>
-                    <Badge variant={libraryAnalysis.health.overall > 70 ? 'default' : 'secondary'}>
-                      {Math.round(libraryAnalysis.health.overall)}/100
-                    </Badge>
-                  </div>
-                  <Progress value={libraryAnalysis.health.overall} className="h-2" />
+                  <LibraryHealthGauge score={libraryAnalysis.health.overall} />
                 </CardContent>
               </Card>
 
